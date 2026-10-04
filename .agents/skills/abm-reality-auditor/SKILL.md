@@ -72,6 +72,12 @@ Dalam sains simulasi, kegagalan realitas terjadi ketika modeler memberlakukan at
     2. *Pola Spasial*: Terkonsentrasinya pemukiman di sepanjang lembah sungai dan sumber air tawar.
     3. *Pola Pasar*: Terbentuknya gradien harga di mana komoditas langka bernilai lebih tinggi di wilayah yang tidak memiliki akses langsung.
 
+### Dimensi 7: Riset Internet Empiris Berbasis Waktu Terkini (search_web [Bulan] [Tahun])
+- [ ] **Kewajiban Validasi Riset Terkini**:
+  - Untuk setiap fenomena biofisik, ekologis, atau demografis yang terdeteksi anomali atau belum optimal, agen **WAJIB MELAKUKAN PENELUSURAN INTERNET** via `search_web` dengan menyematkan Bulan dan Tahun berjalan (misal: `"October 2026"`, `"2026"`).
+  - Mengintegrasikan model matematika dan literatur ilmiah mutakhir (seperti persamaan logistik pemanenan periodik non-otonom dengan jendela pemijahan, kurva peluruhan pangan empiris forager, atau formula carrying capacity multi-spesies).
+  - Menghindari asumsi spekulatif tanpa rujukan ilmiah terindeks.
+
 ---
 
 ## 🛠️ Checklist Praktis Saat Mengaudit Kode Spasial & Lingkungan di `src/`

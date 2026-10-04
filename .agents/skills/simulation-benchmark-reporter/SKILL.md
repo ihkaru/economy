@@ -52,6 +52,18 @@ Skill ini menetapkan **Standar Operasional Prosedur (SOP) Baku** untuk menjamin 
      4. *Apakah ada notasi Big-O ($O(1)$ vs $O(N)$) terbaik yang bisa diterapkan?* (Konversi scanning riwayat berulang $O(N)$ menjadi *running accumulators* amortized $O(1)$ atau $O(\log N)$, direct table indexing, dan optimasi komparator sort).
    - Hasil audit ini wajib langsung ditindaklanjuti pada iterasi implementasi berikutnya.
 
+8. **Kewajiban Riset Internet Berbasis Waktu Terkini (Mandatory Time-Anchored Web Research Rule)**:
+   - Setiap kali mengidentifikasi kesenjangan (*gaps*), anomali realitas biofisik/sejarah, atau masalah performa komputasi (bottleneck, alokasi heap berlebih, kompleksitas algoritma, deplesi ekologis, laju peluruhan material, patologi, dsb.), agen **WAJIB MELAKUKAN RISET INTERNET** menggunakan tool `search_web`.
+   - **Penyematan Waktu Presisi (Bulan & Tahun Berjalan)**:
+     Setiap kueri pencarian **wajib menyematkan Bulan dan Tahun saat ini** (misal: "October 2026", "2026") untuk memperoleh literatur terkini, pola arsitektur mutakhir (*modern software architecture patterns*), dan *best practices* industri terdepan.
+     - *Contoh Kueri Performa*: `"Rust zero allocation event ledger metadata pattern 2026"`, `"Rust fast event sourcing arena bitfield October 2026"`.
+     - *Contoh Kueri Realitas*: `"sustainable fishery harvest model seasonal spawning logistic equation October 2026"`, `"empirical perishability organic decay rate hunter gatherer 2026"`.
+   - **Kewajiban Dokumentasi Sitasi**:
+     Setiap laporan benchmark wajib menyertakan ringkasan hasil riset internet ini pada Bab 13 dan 14, mencakup:
+     1. Kueri pencarian yang digunakan dengan timestamp bulan & tahun.
+     2. Temuan pola/best practice mutakhir dari komunitas ilmiah & engineering global.
+     3. Rencana adopsi konkret pada iterasi implementasi berikutnya.
+
 ---
 
 ## 🔬 Matriks Evaluasi Kondisi Awal vs Akhir Terhadap Realita Sejarah
@@ -81,16 +93,17 @@ flowchart TD
     D -->|"Uji Skala 1,000 Tahun (365k ticks)"| F["4b. Eksekusi Millennial Run (<90 detik)"]
     E --> G["5. Ekstraksi Parquet & Evaluasi Realitas Empiris"]
     F --> G
-    G --> H["6. Deteksi Anomali Sejarah & Diagnosa Akar Masalah"]
-    H --> I["7. Buat Laporan Resmi: reports/REPORT_<commit>_<topic>.md"]
-    I --> J["8. Commit Laporan & Push ke GitHub"]
+    G --> H["6. Deteksi Anomali Sejarah & Masalah Performa"]
+    H --> I["7. Riset Web Waktu Terkini (search_web [Bulan Tahun])"]
+    I --> J["8. Buat Laporan Resmi: reports/REPORT_<commit>_<topic>.md"]
+    J --> K["9. Commit Laporan & Push ke GitHub"]
 ```
 
 ---
 
 ## 📋 Struktur Standard Laporan Benchmark (`reports/REPORT_<commit>_*.md`)
 
-Setiap laporan wajib memuat 13 bab eksekutif berikut:
+Setiap laporan wajib memuat 14 bab eksekutif berikut:
 
 1. **Header Metadata Eksekusi**:
    - Commit Hash (Short & Full)
@@ -144,8 +157,12 @@ Setiap laporan wajib memuat 13 bab eksekutif berikut:
       2. *Apakah ada potensi untuk optimasi?* (Peluang reduksi footprint komputasi, penghapusan deep cloning, zero allocation).
       3. *Apakah masalah parsing dan serialisasi sudah menggunakan algoritma tercepat?* (Evaluasi overhead AST `serde_json::Value` pada hot path jutaan transaksi, perbandingan terhadap typed binary/zero-copy representation, dan eliminasi format string berulang).
       4. *Apakah ada notasi Big-O ($O(1)$ vs $O(N)$) terbaik yang bisa diterapkan?* (Konversi scanning riwayat berulang $O(N)$ menjadi *running accumulators* amortized $O(1)$ atau $O(\log N)$, direct table indexing, dan optimasi komparator sort).
+    - **Sub-Bab Wajib: Riset Web & Best Practice Terkini ([Bulan] [Tahun])**:
+      - Kueri pencarian `search_web` presisi bertanggal bulan & tahun saat ini (misal: `"Rust zero allocation event ledger metadata pattern 2026"`).
+      - Ringkasan pola arsitektur mutakhir (seperti bitfield encoding, embedded storage, periodic non-autonomous logistic harvesting models).
+      - Rencana implementasi konkret pada kode sumber.
 14. **Rekomendasi Langkah Pengembangan & Rencana Iterasi Berikutnya**:
-    - Usulan perbaikan mekanisme mikro untuk iterasi berikutnya berdasarkan evaluasi realitas dan hasil profiler.
+    - Usulan perbaikan mekanisme mikro untuk iterasi berikutnya berdasarkan evaluasi realitas, hasil profiler, dan solusi best practice dari riset internet.
 
 ---
 
