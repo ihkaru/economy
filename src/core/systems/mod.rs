@@ -1,6 +1,7 @@
 pub mod lifecycle_system;
 pub mod environment_system;
 pub mod exchange_system;
+pub mod exchange;
 pub mod statistic_system;
 pub mod metabolism_system;
 

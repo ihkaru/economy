@@ -69,7 +69,12 @@ fn test_debug_reproduction_engine() {
 
     let mut engine = SimulationEngine::new(config, agent_store, ledger_store, env_store, stat_store, rng_adapter, exporter, statistic_system, 51);
 
+    let _ = std::fs::remove_dir_all("output/test_scratch");
+
     let summary = engine.run().unwrap();
     println!("Engine 10-year run finished: Total agents: {}, Living: {}", summary.total_agents, summary.living_agents);
     assert!(summary.total_agents > 50, "Expected new births to increase total agents above 50! Found {}", summary.total_agents);
+
+    let _ = std::fs::remove_dir_all("output/test_scratch");
 }
+

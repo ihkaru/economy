@@ -5,6 +5,7 @@ pub mod definition;
 pub mod record;
 pub mod table;
 pub mod table_calculator;
+pub mod table_calculators;
 pub mod renderer;
 
 pub use schedule::ReleaseSchedule;
