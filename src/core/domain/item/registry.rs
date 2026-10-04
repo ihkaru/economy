@@ -212,6 +212,23 @@ impl ItemRegistry {
 
         reg.register(
             ItemDefinition::new(
+                ItemId::HERBAL_MEDICINE,
+                "Tanaman Obat Liar (Medicinal Herbs)",
+                ItemCategory::Good,
+                serde_json::json!({
+                    "historical_era": "Paleolithic_Foraging",
+                    "unit": "ikat",
+                    "utility_type": "Healthcare",
+                    "cures_disease": true,
+                    "description": "Tanaman herbal alami (seperti daun willow, mint liar, jahe hutan) untuk meredakan infeksi demam"
+                }),
+            )
+            .with_weight(0.1)
+            .with_perishable(false),
+        );
+
+        reg.register(
+            ItemDefinition::new(
                 ItemId::KNOWLEDGE_RAFT_BUILDING,
                 "Gagasan Konstruksi Rakit (Maritime Raft Blueprint)",
                 ItemCategory::Knowledge,
@@ -333,6 +350,23 @@ impl ItemRegistry {
             )
             .with_weight(0.0)
             .with_perishable(false),
+        );
+
+        reg.register(
+            ItemDefinition::new(
+                ItemId::KNOWLEDGE_HERBAL_MEDICINE,
+                "Gagasan Ramuan Obat Tradisional (Herbal Medicine Blueprint)",
+                ItemCategory::Knowledge,
+                serde_json::json!({
+                    "historical_era": "Neolithic_Division_Of_Labor",
+                    "unit": "idea",
+                    "utility_type": "Skill",
+                    "rivalry": "NonRival",
+                    "description": "Gagasan teknologi identifikasi flora obat dan peracikan ramuan untuk menyembuhkan penyakit"
+                }),
+            )
+            .with_weight(0.0)
+            .with_nature(ItemNature::NonRivalKnowledge),
         );
 
         // -------------------------------------------------------------------------

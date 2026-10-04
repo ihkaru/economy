@@ -231,6 +231,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             serde_json::json!({"resource": "RockSalt", "biome": "IslandVolcano", "maritime_required": true}),
         )
         .with_pace(RegenerationPace::Geological),
+        ResourceNode::new(
+            6,
+            "Medicinal Herbal Grove",
+            ItemId::HERBAL_MEDICINE,
+            economy::core::domain::spatial::GeoCoordinate::new(14, 25),
+            400,
+            1000,
+            20.0,
+            1.5,
+            0.0, // Non-caloric medicinal flora
+            serde_json::json!({"resource": "HerbalMedicine", "biome": "RiverbankMeadow"}),
+        )
+        .with_pace(RegenerationPace::Medium),
     ];
     let world_map = economy::core::domain::spatial::WorldMap::generate_continent_and_archipelago(50, 50);
     let env_store = MemoryEnvironmentStore::new(climate, resource_nodes).with_world_map(world_map);

@@ -80,6 +80,13 @@ impl ExchangeSystem {
                     {
                         discoveries.push((*id, ItemId::KNOWLEDGE_TOOL_CRAFTING, "Tool Crafting Blueprint"));
                     }
+                    // Herbal medicine knowledge discovery (if holding Herbal Medicine)
+                    if agent.has_item(ItemId::HERBAL_MEDICINE)
+                        && !agent.has_item(ItemId::KNOWLEDGE_HERBAL_MEDICINE)
+                        && rng.check_probability(0.03)
+                    {
+                        discoveries.push((*id, ItemId::KNOWLEDGE_HERBAL_MEDICINE, "Herbal Medicine Blueprint"));
+                    }
                 }
             }
         }
@@ -163,6 +170,15 @@ impl ExchangeSystem {
             if actual_harvested > 0 {
                 if let Some(agent) = agent_store.get_human_mut(agent_id) {
                     agent.add_item(node.item_id, actual_harvested);
+
+                    // Capital tool wear-and-tear degradation:
+                    if tool_efficiency > 1.0 {
+                        if node.item_id == ItemId::TIMBER && rng.check_probability(0.025) {
+                            let _ = agent.remove_item(ItemId::STONE_AXE, 1);
+                        } else if node.item_id == ItemId::FISH && rng.check_probability(0.02) {
+                            let _ = agent.remove_item(ItemId::FISHING_NET, 1);
+                        }
+                    }
                 }
 
                 // Record transaction in Ultimate Ledger: Nature -> Agent
@@ -199,53 +215,61 @@ impl ExchangeSystem {
 
                 let _ = ledger_store.record(entry);
 
-                // Knowledge-gated Autonomous Crafting Emergence (Roundabout Capital Production):
-                let mut crafted_items: Vec<(ItemId, u32, u32, &'static str)> = Vec::new();
+                // Knowledge-gated Autonomous Crafting Emergence (Roundabout Capital Production & Pharmacopoeia):
+                let mut crafted_items: Vec<(ItemId, u32, ItemId, u32, &'static str, &'static str, &'static str)> = Vec::new();
                 if let Some(agent) = agent_store.get_human(agent_id) {
                     let timber_stock = agent.inventory.get(&ItemId::TIMBER).copied().unwrap_or(0);
+                    let berry_stock = agent.inventory.get(&ItemId::BERRIES).copied().unwrap_or(0);
                     // Craft Stone Axe if agent has tool knowledge, no axe, and >= 5 timber
                     if agent.has_item(ItemId::KNOWLEDGE_TOOL_CRAFTING)
                         && !agent.has_item(ItemId::STONE_AXE)
                         && timber_stock >= 5
                     {
-                        crafted_items.push((ItemId::STONE_AXE, 1, 5, "Stone Axe"));
+                        crafted_items.push((ItemId::STONE_AXE, 1, ItemId::TIMBER, 5, "Stone Axe", "CapitalGood", "capital_tool_production"));
                     }
                     // Craft Fishing Net if agent has tool knowledge, no net, and >= 4 timber
                     else if agent.has_item(ItemId::KNOWLEDGE_TOOL_CRAFTING)
                         && !agent.has_item(ItemId::FISHING_NET)
                         && timber_stock >= 4
                     {
-                        crafted_items.push((ItemId::FISHING_NET, 1, 4, "Fishing Net"));
+                        crafted_items.push((ItemId::FISHING_NET, 1, ItemId::TIMBER, 4, "Fishing Net", "CapitalGood", "capital_tool_production"));
                     }
                     // Craft Raft if agent knows raft building, has no raft, and >= 10 timber
                     else if agent.has_item(ItemId::KNOWLEDGE_RAFT_BUILDING)
                         && !agent.has_item(ItemId::RAFT)
                         && timber_stock >= 10
                     {
-                        crafted_items.push((ItemId::RAFT, 1, 10, "Maritime Raft"));
+                        crafted_items.push((ItemId::RAFT, 1, ItemId::TIMBER, 10, "Maritime Raft", "CapitalGood", "capital_tool_production"));
+                    }
+                    // Prepare Herbal Medicine if agent knows herbal medicine, has no medicine, and >= 3 berries
+                    else if agent.has_item(ItemId::KNOWLEDGE_HERBAL_MEDICINE)
+                        && !agent.has_item(ItemId::HERBAL_MEDICINE)
+                        && berry_stock >= 3
+                    {
+                        crafted_items.push((ItemId::HERBAL_MEDICINE, 1, ItemId::BERRIES, 3, "Herbal Medicine", "MedicalGood", "pharmacopoeia_preparation"));
                     }
                 }
 
-                for (tool_id, tool_qty, cost_timber, tool_name) in crafted_items {
+                for (prod_id, prod_qty, input_id, input_qty, prod_name, nature, trx_type) in crafted_items {
                     if let Some(agent) = agent_store.get_human_mut(agent_id) {
-                        let _ = agent.remove_item(ItemId::TIMBER, cost_timber);
-                        agent.add_item(tool_id, tool_qty);
+                        let _ = agent.remove_item(input_id, input_qty);
+                        agent.add_item(prod_id, prod_qty);
                     }
 
-                    let spent_timber = ItemInstance::new(
-                        ItemId::TIMBER,
-                        cost_timber,
+                    let spent_input = ItemInstance::new(
+                        input_id,
+                        input_qty,
                         serde_json::json!({"nature": "ConsumedRawMaterial"}),
                     )
                     .with_instance_id(ItemInstanceId::new(self.next_instance_id));
                     self.next_instance_id += 1;
 
-                    let produced_tool = ItemInstance::new(
-                        tool_id,
-                        tool_qty,
+                    let produced_item = ItemInstance::new(
+                        prod_id,
+                        prod_qty,
                         serde_json::json!({
-                            "nature": "CapitalGood",
-                            "tool_name": tool_name,
+                            "nature": nature,
+                            "item_name": prod_name,
                         }),
                     )
                     .with_instance_id(ItemInstanceId::new(self.next_instance_id));
@@ -257,12 +281,14 @@ impl ExchangeSystem {
                         current_tick,
                         agent_id,
                         agent_id, // Internal transformation / production ledger
-                        vec![spent_timber],
-                        vec![produced_tool],
+                        vec![spent_input],
+                        vec![produced_item],
                         serde_json::json!({
-                            "transaction_type": "capital_tool_production",
-                            "tool_crafted": tool_name,
-                            "timber_invested": cost_timber,
+                            "transaction_type": trx_type,
+                            "product_name": prod_name,
+                            "input_item_id": input_id.0,
+                            "input_invested": input_qty,
+                            "tool_crafted": prod_name,
                         }),
                     );
                     self.next_trx_id += 1;
@@ -298,6 +324,15 @@ impl ExchangeSystem {
             };
 
             if can_reach {
+                // Maritime journey wear-and-tear on raft
+                if _dist > 10.0 && rng.check_probability(0.01) {
+                    if let Some(agent_a) = agent_store.get_human_mut(agent_a_id) {
+                        if agent_a.has_item(ItemId::RAFT) {
+                            let _ = agent_a.remove_item(ItemId::RAFT, 1);
+                        }
+                    }
+                }
+
                 perform_trade_and_services(
                     run_id,
                     current_tick,

@@ -33,12 +33,117 @@ pub fn perform_trade_and_services(
         .map(|b| (b.calorie_reserve, b.inventory.clone()))
         .unwrap_or((0.0, BTreeMap::new()));
 
-    // Case A: Knowledge Service Trade (Apprenticeship/Education)
+    // Case A: Medical Caregiving Service (Emergency Healthcare)
+    let mut medical_service_occurred = false;
+    let a_sick = agent_store.get_human(agent_a_id).map(|a| a.is_sick()).unwrap_or(false);
+    let b_sick = agent_store.get_human(agent_b_id).map(|b| b.is_sick()).unwrap_or(false);
+
+    if b_sick && !a_sick && (a_inv.contains_key(&ItemId::KNOWLEDGE_HERBAL_MEDICINE) || a_inv.contains_key(&ItemId::SERVICE_MEDICAL)) {
+        let b_food = [ItemId::GRAIN, ItemId::FISH, ItemId::BERRIES, ItemId::TIMBER]
+            .into_iter()
+            .find(|f| b_inv.get(f).copied().unwrap_or(0) >= 1);
+
+        if let Some(fee_item) = b_food {
+            if let Some(agent_a) = agent_store.get_human_mut(agent_a_id) {
+                agent_a.add_item(fee_item, 1);
+            }
+            if let Some(agent_b) = agent_store.get_human_mut(agent_b_id) {
+                let _ = agent_b.remove_item(fee_item, 1);
+                agent_b.set_sick(false);
+            }
+
+            let inst_service = ItemInstance::new(
+                ItemId::SERVICE_MEDICAL,
+                1,
+                serde_json::json!({"nature": "IntangibleHealthcareService"}),
+            ).with_instance_id(ItemInstanceId::new(*next_instance_id));
+            *next_instance_id += 1;
+
+            let inst_fee = ItemInstance::new(
+                fee_item,
+                1,
+                serde_json::json!({"nature": "RivalPhysical"}),
+            ).with_instance_id(ItemInstanceId::new(*next_instance_id));
+            *next_instance_id += 1;
+
+            let entry = LedgerEntry::new(
+                *next_trx_id,
+                run_id.clone(),
+                current_tick,
+                agent_a_id,
+                agent_b_id,
+                vec![inst_service],
+                vec![inst_fee],
+                serde_json::json!({
+                    "transaction_type": "medical_care_service",
+                    "patient_id": agent_b_id.0,
+                    "healer_id": agent_a_id.0,
+                    "service_rendered": "Herbal Treatment & Healing",
+                    "fee_paid_item_id": fee_item.0,
+                }),
+            );
+            *next_trx_id += 1;
+            let _ = ledger_store.record(entry);
+            medical_service_occurred = true;
+        }
+    } else if a_sick && !b_sick && (b_inv.contains_key(&ItemId::KNOWLEDGE_HERBAL_MEDICINE) || b_inv.contains_key(&ItemId::SERVICE_MEDICAL)) {
+        let a_food = [ItemId::GRAIN, ItemId::FISH, ItemId::BERRIES, ItemId::TIMBER]
+            .into_iter()
+            .find(|f| a_inv.get(f).copied().unwrap_or(0) >= 1);
+
+        if let Some(fee_item) = a_food {
+            if let Some(agent_b) = agent_store.get_human_mut(agent_b_id) {
+                agent_b.add_item(fee_item, 1);
+            }
+            if let Some(agent_a) = agent_store.get_human_mut(agent_a_id) {
+                let _ = agent_a.remove_item(fee_item, 1);
+                agent_a.set_sick(false);
+            }
+
+            let inst_service = ItemInstance::new(
+                ItemId::SERVICE_MEDICAL,
+                1,
+                serde_json::json!({"nature": "IntangibleHealthcareService"}),
+            ).with_instance_id(ItemInstanceId::new(*next_instance_id));
+            *next_instance_id += 1;
+
+            let inst_fee = ItemInstance::new(
+                fee_item,
+                1,
+                serde_json::json!({"nature": "RivalPhysical"}),
+            ).with_instance_id(ItemInstanceId::new(*next_instance_id));
+            *next_instance_id += 1;
+
+            let entry = LedgerEntry::new(
+                *next_trx_id,
+                run_id.clone(),
+                current_tick,
+                agent_b_id,
+                agent_a_id,
+                vec![inst_service],
+                vec![inst_fee],
+                serde_json::json!({
+                    "transaction_type": "medical_care_service",
+                    "patient_id": agent_a_id.0,
+                    "healer_id": agent_b_id.0,
+                    "service_rendered": "Herbal Treatment & Healing",
+                    "fee_paid_item_id": fee_item.0,
+                }),
+            );
+            *next_trx_id += 1;
+            let _ = ledger_store.record(entry);
+            medical_service_occurred = true;
+        }
+    }
+
+    // Case B: Knowledge Service Trade (Apprenticeship/Education)
     let mut knowledge_trade_occurred = false;
-    for k_id in [
+    if !medical_service_occurred {
+        for k_id in [
         ItemId::KNOWLEDGE_RAFT_BUILDING,
         ItemId::KNOWLEDGE_FISH_CURING,
         ItemId::KNOWLEDGE_TOOL_CRAFTING,
+        ItemId::KNOWLEDGE_HERBAL_MEDICINE,
     ] {
         if a_inv.contains_key(&k_id) && !b_inv.contains_key(&k_id) {
             let b_food = [ItemId::GRAIN, ItemId::FISH, ItemId::BERRIES]
@@ -91,9 +196,10 @@ pub fn perform_trade_and_services(
             }
         }
     }
+    }
 
-    // Case B: Bilateral Physical Goods Barter (if no knowledge trade occurred)
-    if !knowledge_trade_occurred {
+    // Case C: Bilateral Physical Goods Barter (if no service occurred)
+    if !medical_service_occurred && !knowledge_trade_occurred {
         let a_informed = agent_has_market_access(agent_a_id, agent_store);
         let b_informed = agent_has_market_access(agent_b_id, agent_store);
 

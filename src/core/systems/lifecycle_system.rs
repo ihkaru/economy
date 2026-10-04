@@ -58,10 +58,10 @@ impl LifecycleSystem {
         }
 
         // 3. Estate Settlement & Widow Remarriage Clearance
-        // Settle inventory inheritance and free surviving spouses for remarriage
+        // Settle inventory inheritance and free surviving spouses for remarriage (only for agents deceased on current_tick)
         for id in &all_ids {
             let (is_deceased, spouse_opt, children, inventory_items) = match agent_store.get_human(*id) {
-                Some(agent) if !agent.is_alive() => (
+                Some(agent) if !agent.is_alive() && agent.death_tick() == Some(current_tick) => (
                     true,
                     agent.spouse_id,
                     agent.children_ids.clone(),

@@ -1,9 +1,36 @@
 use std::collections::BTreeMap;
 use std::fs::File;
-use arrow::array::{Float64Array, StringArray, UInt64Array};
+use arrow::array::{Array, Float64Array, StringArray, UInt64Array};
 use parquet::arrow::arrow_reader::ParquetRecordBatchReaderBuilder;
 use economy::core::domain::statistic::renderer::{AsciiTableRenderer, TableRenderer};
 use economy::core::domain::statistic::table::StatisticalTable;
+
+fn item_meta(id: u64) -> (&'static str, &'static str) {
+    match id {
+        101 => ("Timber / Firewood", "Good (Raw Material)"),
+        102 => ("Fresh River Fish", "Good (Perishable Food)"),
+        103 => ("Cultivated Grain", "Good (Staple Food)"),
+        104 => ("Wild Forest Berries", "Good (Perishable Food/Flora)"),
+        105 => ("Mineral Rock Salt", "Good (Preservative Mineral)"),
+        106 => ("Maritime Timber Raft", "Capital (Water Transport)"),
+        107 => ("Sea Cowrie Shells", "Good (Ornament/Currency)"),
+        108 => ("Polished Stone Axe", "Capital (Forestry Tool)"),
+        109 => ("Woven Fishing Net", "Capital (Marine Harvesting Tool)"),
+        110 => ("Herbal Medicine", "Good (Therapeutic Pharmacopoeia)"),
+        201 => ("Raft Building Blueprint", "Knowledge (Non-Rival Blueprint)"),
+        202 => ("Fish Curing Preservation", "Knowledge (Non-Rival Technique)"),
+        203 => ("Fire-Making Technique", "Knowledge (Non-Rival Technique)"),
+        204 => ("Tool Crafting Blueprint", "Knowledge (Non-Rival Blueprint)"),
+        205 => ("Herbal Medicine Blueprint", "Knowledge (Non-Rival Blueprint)"),
+        301 => ("Fishing Right Permit", "Permit (Institutional Right)"),
+        302 => ("Forestry Right Permit", "Permit (Institutional Right)"),
+        401 => ("Manual Labor Service", "Service (Intangible Man-Hour)"),
+        402 => ("Apprenticeship Tuition", "Service (Intangible Education)"),
+        403 => ("Maritime Transport", "Service (Intangible Transport)"),
+        404 => ("Medical Caregiving", "Service (Intangible Healthcare)"),
+        _ => ("Custom Artifact", "Other"),
+    }
+}
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<String> = std::env::args().collect();
@@ -71,6 +98,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut max_generation: u64 = 1;
     let mut living_inventory_totals: BTreeMap<String, u64> = BTreeMap::new();
     let mut perishable_items_held: u64 = 0;
+    let mut living_sick_count: u64 = 0;
+    let mut disease_related_deaths: u64 = 0;
+    let mut starvation_deaths: u64 = 0;
+    let mut old_age_deaths: u64 = 0;
 
     while let Some(batch) = reader.next() {
         let batch = batch?;
@@ -90,17 +121,22 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             let is_alive = is_alive_col.value(i);
             let attr_str = attr_col.value(i);
-            if let Ok(attr_val) = serde_json::from_str::<serde_json::Value>(attr_str) {
-                if let Some(g_num) = attr_val.get("generation").and_then(|g| g.as_u64()) {
-                    if g_num > max_generation {
-                        max_generation = g_num;
-                    }
+            let attr_val: serde_json::Value = serde_json::from_str(attr_str).unwrap_or(serde_json::Value::Null);
+
+            if let Some(g_num) = attr_val.get("generation").and_then(|g| g.as_u64()) {
+                if g_num > max_generation {
+                    max_generation = g_num;
                 }
             }
 
             if is_alive {
                 alive_count += 1;
                 alive_ages.push(age_years);
+
+                let is_sick = attr_val.get("is_sick").and_then(|v| v.as_bool()).unwrap_or(false);
+                if is_sick {
+                    living_sick_count += 1;
+                }
 
                 let inv_str = inv_col.value(i);
                 if let Ok(inv_map) = serde_json::from_str::<BTreeMap<String, u64>>(inv_str) {
@@ -114,6 +150,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
             } else {
                 deceased_count += 1;
+                if let Some(reason) = attr_val.get("death_reason").and_then(|v| v.as_str()) {
+                    if reason.contains("Illness") || reason.contains("fever") {
+                        disease_related_deaths += 1;
+                    } else if reason.contains("Starvation") {
+                        starvation_deaths += 1;
+                    } else {
+                        old_age_deaths += 1;
+                    }
+                }
             }
         }
     }
@@ -129,7 +174,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("  Average Age of Survivors  : {:.1} years", avg_alive_age);
     }
 
-    // 3. Analyze Ledger Transactions
+    // 3. Analyze Ledger Transactions & Item Emergence Chronology
     let ledger_file = File::open(run_dir.join("ledger.parquet"))?;
     let builder = ParquetRecordBatchReaderBuilder::try_new(ledger_file)?;
     let mut reader = builder.build()?;
@@ -142,41 +187,103 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut tool_multiplied_harvests = 0;
     let mut barter_informed_count = 0;
     let mut barter_uninformed_count = 0;
+    let mut item_chronology: BTreeMap<u64, (u64, &'static str, &'static str, String)> = BTreeMap::new();
+
+    let record_item = |chronology: &mut BTreeMap<u64, (u64, &'static str, &'static str, String)>, item_id: u64, tick: u64, context: &str| {
+        let (name, cat) = item_meta(item_id);
+        let entry = chronology.entry(item_id).or_insert((tick, name, cat, context.to_string()));
+        if tick < entry.0 {
+            entry.0 = tick;
+            entry.3 = context.to_string();
+        }
+    };
 
     while let Some(batch) = reader.next() {
         let batch = batch?;
         total_transactions += batch.num_rows();
 
+        let tick_col = batch.column(2).as_any().downcast_ref::<UInt64Array>().unwrap();
+        let item_a_col = batch.column(5).as_any().downcast_ref::<UInt64Array>();
+        let item_b_col = batch.column(6).as_any().downcast_ref::<UInt64Array>();
         let meta_col = batch.column(11).as_any().downcast_ref::<StringArray>().unwrap();
+
         for i in 0..batch.num_rows() {
+            let tick = tick_col.value(i);
+
+            if let Some(col_a) = item_a_col {
+                if !col_a.is_null(i) {
+                    record_item(&mut item_chronology, col_a.value(i), tick, "Ledger Outflow / Direct Transfer");
+                }
+            }
+            if let Some(col_b) = item_b_col {
+                if !col_b.is_null(i) {
+                    record_item(&mut item_chronology, col_b.value(i), tick, "Ledger Inflow / Counterparty Transfer");
+                }
+            }
+
             let meta_str = meta_col.value(i);
             if let Ok(val) = serde_json::from_str::<serde_json::Value>(meta_str) {
                 if let Some(t) = val.get("transaction_type").and_then(|v| v.as_str()) {
                     *trx_breakdown.entry(t.to_string()).or_insert(0) += 1;
 
-                    if t == "capital_tool_production" {
-                        if let Some(tool) = val.get("tool_crafted").and_then(|v| v.as_str()) {
-                            *tools_crafted.entry(tool.to_string()).or_insert(0) += 1;
-                        }
-                    } else if t == "scientific_discovery" {
-                        if let Some(k) = val.get("knowledge_name").and_then(|v| v.as_str()) {
-                            *discoveries.entry(k.to_string()).or_insert(0) += 1;
-                        }
-                    } else if t == "natural_resource_harvest" {
-                        total_harvests += 1;
-                        if let Some(mult) = val.get("tool_multiplier").and_then(|v| v.as_f64()) {
-                            if mult > 1.0 {
-                                tool_multiplied_harvests += 1;
+                    match t {
+                        "capital_tool_production" => {
+                            if let Some(tool) = val.get("tool_crafted").and_then(|v| v.as_str()) {
+                                *tools_crafted.entry(tool.to_string()).or_insert(0) += 1;
+                                let tid = match tool {
+                                    "Stone Axe" => 108,
+                                    "Fishing Net" => 109,
+                                    "Maritime Raft" => 106,
+                                    _ => 0,
+                                };
+                                if tid > 0 {
+                                    record_item(&mut item_chronology, tid, tick, "Autonomous Tool Crafting");
+                                }
                             }
                         }
-                    } else if t == "bilateral_barter" {
-                        let a_inf = val.get("agent_a_informed").and_then(|v| v.as_bool()).unwrap_or(false);
-                        let b_inf = val.get("agent_b_informed").and_then(|v| v.as_bool()).unwrap_or(false);
-                        if a_inf || b_inf {
-                            barter_informed_count += 1;
-                        } else {
-                            barter_uninformed_count += 1;
+                        "pharmacopoeia_preparation" => {
+                            record_item(&mut item_chronology, 110, tick, "Herbal Pharmacopoeia Preparation");
                         }
+                        "scientific_discovery" => {
+                            if let Some(k) = val.get("knowledge_name").and_then(|v| v.as_str()) {
+                                *discoveries.entry(k.to_string()).or_insert(0) += 1;
+                                let kid = match k {
+                                    "Raft Construction Blueprint" => 201,
+                                    "Salting & Fish Curing Preservation" => 202,
+                                    "Fire-Making Technique" => 203,
+                                    "Tool Crafting Blueprint" => 204,
+                                    "Herbal Medicine Blueprint" => 205,
+                                    _ => 0,
+                                };
+                                if kid > 0 {
+                                    record_item(&mut item_chronology, kid, tick, "Spontaneous Eureka Discovery");
+                                }
+                            }
+                        }
+                        "medical_care_service" => {
+                            record_item(&mut item_chronology, 404, tick, "Medical Consultation & Caregiving");
+                        }
+                        "knowledge_service_trade" => {
+                            record_item(&mut item_chronology, 402, tick, "Apprenticeship Knowledge Tuition");
+                        }
+                        "natural_resource_harvest" => {
+                            total_harvests += 1;
+                            if let Some(mult) = val.get("tool_multiplier").and_then(|v| v.as_f64()) {
+                                if mult > 1.0 {
+                                    tool_multiplied_harvests += 1;
+                                }
+                            }
+                        }
+                        "bilateral_barter" => {
+                            let a_inf = val.get("agent_a_informed").and_then(|v| v.as_bool()).unwrap_or(false);
+                            let b_inf = val.get("agent_b_informed").and_then(|v| v.as_bool()).unwrap_or(false);
+                            if a_inf || b_inf {
+                                barter_informed_count += 1;
+                            } else {
+                                barter_uninformed_count += 1;
+                            }
+                        }
+                        _ => {}
                     }
                 }
             }
@@ -206,7 +313,67 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("    - Informed Market Arbitrage : {} trades", barter_informed_count);
     println!("    - Uninformed Blind Barter   : {} trades", barter_uninformed_count);
 
-    // 4. Environment Nodes Status
+    // 4. Chronological Item Appearance in History
+    println!("\n======================================================================");
+    println!("⏳ DAFTAR KRONOLOGIS KEMUNCULAN & PENEMUAN ITEM SEPANJANG SEJARAH");
+    println!("======================================================================");
+    println!("┌─────┬──────────────────────────┬─────────────────────────────┬──────────┬──────────┬──────────────────────────────────────────┐");
+    println!("│ ID  │ Nama Item                │ Kategori                    │ Tick     │ Tahun    │ Konteks Kemunculan / Mekanisme           │");
+    println!("├─────┼──────────────────────────┼─────────────────────────────┼──────────┼──────────┼──────────────────────────────────────────┤");
+
+    let mut sorted_chronology: Vec<(u64, u64, &'static str, &'static str, String)> = item_chronology
+        .into_iter()
+        .map(|(id, (tick, name, cat, ctx))| (tick, id, name, cat, ctx))
+        .collect();
+    sorted_chronology.sort_by_key(|(tick, id, _, _, _)| (*tick, *id));
+
+    for (tick, id, name, cat, ctx) in &sorted_chronology {
+        let yr = *tick as f64 / 365.0;
+        println!("│ {:<3} │ {:<24} │ {:<27} │ {:<8} │ Thn {:<4.1} │ {:<40} │",
+            id, name, cat, tick, yr, ctx);
+    }
+    println!("└─────┴──────────────────────────┴─────────────────────────────┴──────────┴──────────┴──────────────────────────────────────────┘");
+
+    // 5. Epidemiology, Disease & Healthcare Sector Audit
+    let medical_services_count = *trx_breakdown.get("medical_care_service").unwrap_or(&0);
+    let pharmacopoeia_count = *trx_breakdown.get("pharmacopoeia_preparation").unwrap_or(&0);
+    let medical_eureka_count = *discoveries.get("Herbal Medicine Blueprint").unwrap_or(&0);
+
+    println!("\n======================================================================");
+    println!("🏥 EVALUASI EPIDEMIOLOGI, PENYAKIT & PENGOBATAN (HEALTHCARE AUDIT)");
+    println!("======================================================================");
+    println!("  - Warga Hidup Sakit Saat Ini       : {} jiwa", living_sick_count);
+    println!("  - Kematian Komplikasi Sakit/Demam  : {} jiwa", disease_related_deaths);
+    println!("  - Kematian Kelaparan Murni         : {} jiwa", starvation_deaths);
+    println!("  - Kematian Lanjut Usia / Alami     : {} jiwa", old_age_deaths);
+    println!("  - Transaksi Jasa Medis (Dokter)    : {} konsultasi", medical_services_count);
+    println!("  - Pembuatan Obat Herbal (Farmasi)  : {} batch obat", pharmacopoeia_count);
+    println!("  - Terobosan Eureka Medis           : {} kali", medical_eureka_count);
+
+    // 6. Historical Item Gap Analysis (Archaeological Matrix)
+    println!("\n======================================================================");
+    println!("🏛️ EVALUASI KESENJANGAN ITEM SEJARAH (ARCHAEOLOGICAL ITEM GAP ANALYSIS)");
+    println!("======================================================================");
+    println!("┌────────────────────────────┬──────────────────────────────────────┬──────────────────────────────┬──────────────────────────────┐");
+    println!("│ Era / Periode Sejarah      │ Item Arkeologis Seharusnya Ada       │ Item Telah Ada di Model      │ Kesenjangan (Item Gaps)      │");
+    println!("├────────────────────────────┼──────────────────────────────────────┼──────────────────────────────┼──────────────────────────────┤");
+    println!("│ Paleolitik Bawah / Tengah  │ Kayu, Daging, Beri, Api Unggun,      │ Kayu (101), Beri (104),      │ Bilah Batu Kasar (Chopper),  │");
+    println!("│ (300.000 - 50.000 BP)      │ Kapak Genggam Kasar, Herba Kunyah    │ Daging Liar, Herba (110)     │ Pemantik Api (Fire Drill)    │");
+    println!("├────────────────────────────┼──────────────────────────────────────┼──────────────────────────────┼──────────────────────────────┤");
+    println!("│ Paleolitik Atas            │ Kapak Batu Halus, Rakit Perairan,    │ Kapak Batu (108), Rakit(106),│ Jarum Tulang, Pakaian Kulit, │");
+    println!("│ (50.000 - 10.000 BP)       │ Harpun, Pakaian Kulit, Jarum Jahit   │ Jasa Medis (404)             │ Pigmen/Oker Merah Purba      │");
+    println!("├────────────────────────────┼──────────────────────────────────────┼──────────────────────────────┼──────────────────────────────┤");
+    println!("│ Mesolitik                  │ Jaring Ikan Anyam, Garam Pengawet,   │ Jaring Ikan (109), Garam(105)│ Busur & Panah, Jebakan Ikan, │");
+    println!("│ (10.000 - 8.000 BP)        │ Ikan Asin Kering, Kerang Hiasan      │ Ikan Asin (102s), Kerang(107)│ Keranjang Anyaman Penyimpan  │");
+    println!("├────────────────────────────┼──────────────────────────────────────┼──────────────────────────────┼──────────────────────────────┤");
+    println!("│ Neolitik                   │ Gandum Tanam, Gerabah/Tembikar,      │ Gandum (103), Jasa Magang    │ Tempayan Gerabah (Pottery),  │");
+    println!("│ (8.000 - 4.000 BP)         │ Hewan Ternak Domestik, Tenun Tekstil │ Pendidikan (402)             │ Sabit Batu, Ternak Domba/Sapi│");
+    println!("├────────────────────────────┼──────────────────────────────────────┼──────────────────────────────┼──────────────────────────────┤");
+    println!("│ Logam & Perunggu Awal      │ Peleburan Tembaga/Perunggu, Sabit,   │ Hak Institusi (301, 302),    │ Tungku Smelter, Biji Tembaga,│");
+    println!("│ (4.000 - 1.200 BP)         │ Gerobak Roda, Farmakope, Pembukuan   │ Buku Besar Ledger Kas        │ Alat Perunggu, Gerobak Kayu  │");
+    println!("└────────────────────────────┴──────────────────────────────────────┴──────────────────────────────┴──────────────────────────────┘");
+
+    // 7. Environment Nodes Status
     let env_file = File::open(run_dir.join("environment.parquet"))?;
     let builder = ParquetRecordBatchReaderBuilder::try_new(env_file)?;
     let mut reader = builder.build()?;
@@ -225,7 +392,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
-    // 5. Historical Reality Evaluation (Initial vs Final)
+    // 8. Historical Reality Evaluation (Initial vs Final)
     let initial_agents = 50.0;
     let cagr = ((alive_count as f64 / initial_agents).powf(1.0 / simulated_years.max(1.0)) - 1.0) * 100.0;
     let axes_held = *living_inventory_totals.get("108").unwrap_or(&0);
@@ -249,7 +416,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("│ Transaksi Ekonomi          │ 0 transaksi        │ {:<18} │ Aktivitas Ledger dan Pembagian Kerja             │", format!("{} transaksi", total_transactions));
     println!("└────────────────────────────┴────────────────────┴────────────────────┴──────────────────────────────────────────────────┘");
 
-    // 6. Reality Anomaly Detection & Diagnostics
+    // 9. Reality Anomaly Detection & Diagnostics
     println!("\n⚠️  DETEKSI ANOMALI REALITA & DIAGNOSA AKAR MASALAH:");
     let mut anomalies_found = 0;
 
@@ -286,12 +453,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     if anomalies_found == 0 {
-        println!("  ✅ TIDAK DITEMUKAN ANOMALI SIGNIFIKAN: Semua trajektori sesuai tolok ukur sejarah manusia!");
+        println!("  ✅ TIDAK DITEMUKAN ANOMALI SIGNIFIKAN: Semua trajektori mikro sesuai tolok ukur sejarah manusia!");
     } else {
-        println!("\n  💡 Rekomendasi: Pertimbangkan menyempurnakan mekanisme mikro di atas untuk mencapai realitas sejarah penuh.");
+        println!("\n  💡 Rekomendasi: Sempurnakan mekanisme mikro di atas untuk mencapai realitas sejarah penuh.");
     }
 
-    // 7. Render Final Tables
+    // 10. Render Final Tables
     if tables_path.exists() {
         let tables_file = File::open(tables_path)?;
         let builder = ParquetRecordBatchReaderBuilder::try_new(tables_file)?;

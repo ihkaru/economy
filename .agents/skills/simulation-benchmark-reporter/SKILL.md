@@ -81,7 +81,7 @@ flowchart TD
 
 ## 📋 Struktur Standard Laporan Benchmark (`reports/REPORT_<commit>_*.md`)
 
-Setiap laporan wajib memuat 8 bab eksekutif berikut:
+Setiap laporan wajib memuat 11 bab eksekutif berikut:
 
 1. **Header Metadata Eksekusi**:
    - Commit Hash (Short & Full)
@@ -95,20 +95,35 @@ Setiap laporan wajib memuat 8 bab eksekutif berikut:
    - Tabel komparasi 6 dimensi realitas sejarah.
    - Evaluasi kelayakan antropologis.
 4. **Deteksi Anomali Realita & Diagnosa Mekanisme (*Root Cause Diagnostics*)**:
-   - Identifikasi anomali (misal: modal abadi, pangan tidak membusuk, dsb.).
+   - Identifikasi anomali (misal: modal abadi, pangan tidak membusuk, kepunahan demografis, dsb.).
    - Analisis kode modul mana yang belum memodelkan hukum fisika/biologi terkait.
 5. **Audit Siklus Hidup & Demografi Multi-Generasi**:
    - Populasi hidup vs total kelahiran historis.
    - Piramida usia dan generasi terdalam yang tercapai.
    - Rasio ketergantungan dan rasio jenis kelamin.
-6. **Audit Transaksi Ledger & Sirkulasi Aset (Ultimate Ledger)**:
-   - Rincian jenis transaksi atomik (panen, manufaktur alat, barter, jasa magang, eureka).
+6. **Evaluasi Epidemiologi, Penyakit & Pengobatan (*Healthcare & Pathology Audit*)**:
+   - Pemodelan kondisi patologis: demam/kedinginan (`is_sick`), beban metabolisme panas tubuh (+300 kkal), dan risiko mortalitas meningkat.
+   - Angka kesakitan warga hidup, kematian akibat komplikasi infeksi/demam vs kelaparan vs usia tua.
+   - Intervensi terapeutik: swamedikasi obat herbal, jasa pengobatan keluarga, dan transaksi jasa dokter/tabib (`SERVICE_MEDICAL`).
+7. **Audit Transaksi Ledger & Sirkulasi Aset (Ultimate Ledger)**:
+   - Rincian jenis transaksi atomik (panen, manufaktur alat, farmakope, jasa medis, barter, jasa magang, eureka).
    - Sirkulasi dan intensitas barang modal.
-7. **Daya Dukung Ekologis & Kelestarian Sumber Daya (*Carrying Capacity*)**:
-   - Status biomassa dan tingkat kematangan (*maturity %*) seluruh simpul alam.
-8. **Profil Performa Komputasi & Rekomendasi Langkah Berikutnya**:
-   - Analisis throughput TPS.
-   - Usulan perbaikan mekanisme mikro untuk iterasi berikutnya.
+8. **Daftar Kronologis Kemunculan & Penemuan Item Sepanjang Sejarah**:
+   - Tabel urutan kronologis pertama kali setiap item muncul / ditemukan (ID, Nama Item, Kategori, Tick, Tahun Sejarah, Konteks Kemunculan).
+   - Analisis pola kemunculan barang (dari foraging primitif -> perkakas modal -> teknologi pengawetan -> jasa keahlian medis dan edukasi).
+9. **Evaluasi Kesenjangan Item Sejarah (*Archaeological Item Gap Analysis*)**:
+   - Matriks evaluasi 5 era arkeologi peradaban manusia:
+     - *Paleolitik Bawah/Tengah (300k - 50k BP)*: Api, kapak genggam kasar, perburuan, herba kunyah.
+     - *Paleolitik Atas (50k - 10k BP)*: Kapak batu halus, rakit perairan, pakaian kulit, jarum tulang.
+     - *Mesolitik (10k - 8k BP)*: Jaring ikan anyam, garam & pengasinan, panah/jebakan, kerang hias.
+     - *Neolitik (8k - 4k BP)*: Budidaya gandum, tembikar/gerabah penyimpan pangan, hewan domestik, tenun tekstil.
+     - *Logam & Perunggu (4k - 1.2k BP)*: Metalurgi, tungku smelter, roda/gerobak, farmakope formal, sistem pembukuan/uang.
+   - Evaluasi komparatif: apa yang telah ada di model vs apa yang berstatus kesenjangan (*item gaps*) yang perlu dikembangkan berikutnya.
+10. **Daya Dukung Ekologis & Kelestarian Sumber Daya (*Carrying Capacity*)**:
+    - Status biomassa dan tingkat kematangan (*maturity %*) seluruh simpul alam.
+11. **Profil Performa Komputasi & Rekomendasi Langkah Berikutnya**:
+    - Analisis throughput TPS dan wall-clock duration.
+    - Usulan perbaikan mekanisme mikro untuk iterasi berikutnya.
 
 ---
 

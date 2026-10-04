@@ -57,16 +57,8 @@ impl StatisticalTableCalculator for CommodityCirculationTableCalculator {
             *nature_reserves.entry(node.item_id).or_insert(0) += node.current_stock;
         }
 
-        // 3. Count transaction velocity from Ultimate Ledger
-        let mut item_trade_velocity: BTreeMap<ItemId, u64> = BTreeMap::new();
-        for entry in ctx.ledger.all_entries() {
-            for it in &entry.items_from_a {
-                *item_trade_velocity.entry(it.item_id).or_insert(0) += 1;
-            }
-            for it in &entry.items_from_b {
-                *item_trade_velocity.entry(it.item_id).or_insert(0) += 1;
-            }
-        }
+        // 3. Count transaction velocity from Ultimate Ledger (O(1) amortized indexed query)
+        let item_trade_velocity = ctx.ledger.item_transaction_counts();
 
         let registry = crate::core::domain::item::ItemRegistry::canonical();
         let mut total_circulating_physical: u64 = 0;

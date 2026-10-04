@@ -114,6 +114,17 @@ impl MetabolismSystem {
                     }
                 }
                 agent.inventory.retain(|_, v| *v > 0);
+
+                // Perishable food spoilage decay
+                let has_salt = agent.has_item(ItemId::SALT);
+                // Fresh fish rots quickly without salt preservation (10% daily decay chance per unit)
+                if !has_salt && agent.has_item(ItemId::FISH) && rng.check_probability(0.10) {
+                    let _ = agent.remove_item(ItemId::FISH, 1);
+                }
+                // Fresh berries rot if kept unconsumed (5% daily decay chance per unit)
+                if agent.has_item(ItemId::BERRIES) && rng.check_probability(0.05) {
+                    let _ = agent.remove_item(ItemId::BERRIES, 1);
+                }
             }
 
             // Liebig's Law of the Minimum: Electrolyte preservation via Salt
@@ -124,6 +135,59 @@ impl MetabolismSystem {
                 .unwrap_or(false);
             if has_salt {
                 calories_gained *= 1.10;
+            }
+
+            // Disease / Infection status check
+            let mut is_sick = false;
+            let mut spouse_id_opt = None;
+            if let Some(agent) = agent_store.get_human(id) {
+                is_sick = agent.attributes.get("is_sick").and_then(|v| v.as_bool()).unwrap_or(false);
+                spouse_id_opt = agent.spouse_id;
+            }
+
+            // Pathogen infection hazard from severe cold exposure or malnutrition
+            if !is_sick {
+                let infection_risk = if raw_cold_penalty > 0.0 && !has_firewood {
+                    0.02 // Chills & respiratory fever
+                } else if days_starving > 0 {
+                    0.03 // Opportunistic infection under starvation
+                } else {
+                    0.0
+                };
+
+                if infection_risk > 0.0 && rng.check_probability(infection_risk) {
+                    is_sick = true;
+                }
+            }
+
+            // Treatment & Healing
+            if is_sick {
+                if let Some(agent) = agent_store.get_human_mut(id) {
+                    // Self-medication with Herbal Medicine
+                    if agent.has_item(ItemId::HERBAL_MEDICINE) {
+                        let _ = agent.remove_item(ItemId::HERBAL_MEDICINE, 1);
+                        is_sick = false;
+                    }
+                }
+
+                // Family Caregiving & Traditional Healing
+                if is_sick {
+                    if let Some(spouse_id) = spouse_id_opt {
+                        if let Some(spouse) = agent_store.get_human(spouse_id) {
+                            if (spouse.has_item(ItemId::SERVICE_MEDICAL)
+                                || spouse.has_item(ItemId::KNOWLEDGE_HERBAL_MEDICINE))
+                                && rng.check_probability(0.50)
+                            {
+                                is_sick = false;
+                            }
+                        }
+                    }
+                }
+
+                // Natural immune recovery if well nourished
+                if is_sick && (calorie_balance + calories_gained) > 5000.0 && rng.check_probability(0.15) {
+                    is_sick = false;
+                }
             }
 
             // 2. Parental Care: Young dependent children receive food from living parents
@@ -166,7 +230,7 @@ impl MetabolismSystem {
                 }
             }
 
-            // 4. Caloric Expenditure Calculation (scaled for children) + local cold penalty
+            // 4. Caloric Expenditure Calculation (scaled for children) + local cold/heat/fever penalty
             let child_factor = if age_years < 5.0 {
                 0.4
             } else if age_years < 12.0 {
@@ -174,11 +238,16 @@ impl MetabolismSystem {
             } else {
                 1.0
             };
-            let total_expenditure = (self.base_daily_calories * child_factor) + cold_penalty + heat_penalty;
+            let fever_penalty = if is_sick { 300.0 } else { 0.0 };
+            let total_expenditure = (self.base_daily_calories * child_factor) + cold_penalty + heat_penalty + fever_penalty;
 
             // 5. Update agent state
             if let Some(agent) = agent_store.get_human_mut(id) {
                 agent.calorie_reserve += calories_gained;
+
+                if let Some(obj) = agent.attributes.as_object_mut() {
+                    obj.insert("is_sick".to_string(), serde_json::json!(is_sick));
+                }
 
                 if agent.calorie_reserve >= total_expenditure {
                     agent.calorie_reserve -= total_expenditure;
@@ -189,14 +258,17 @@ impl MetabolismSystem {
                     days_starving = agent.days_starving;
                 }
 
-                // 6. Starvation mortality hazard
-                if days_starving > 3 {
-                    let hazard = (0.08 * (days_starving - 3) as f64).min(0.85);
+                // 6. Starvation and illness mortality hazard
+                if days_starving > 3 || (is_sick && days_starving > 1) {
+                    let sick_multiplier = if is_sick { 1.5 } else { 1.0 };
+                    let hazard = ((0.08 * (days_starving.saturating_sub(2)) as f64) * sick_multiplier).min(0.85);
                     if rng.check_probability(hazard) {
-                        agent.mark_deceased(
-                            current_tick,
-                            format!("Starvation after {} consecutive days without food", days_starving),
-                        );
+                        let cause = if is_sick {
+                            format!("Illness complication and starvation after {} days without food", days_starving)
+                        } else {
+                            format!("Starvation after {} consecutive days without food", days_starving)
+                        };
+                        agent.mark_deceased(current_tick, cause);
                     }
                 }
             }

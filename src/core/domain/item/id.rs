@@ -13,12 +13,14 @@ impl ItemId {
     pub const SHELLS: ItemId = ItemId(107);
     pub const STONE_AXE: ItemId = ItemId(108);
     pub const FISHING_NET: ItemId = ItemId(109);
+    pub const HERBAL_MEDICINE: ItemId = ItemId(110);
 
     // Non-rival Knowledge / Recipes
     pub const KNOWLEDGE_RAFT_BUILDING: ItemId = ItemId(201);
     pub const KNOWLEDGE_FISH_CURING: ItemId = ItemId(202);
     pub const KNOWLEDGE_FIRE_MAKING: ItemId = ItemId(203);
     pub const KNOWLEDGE_TOOL_CRAFTING: ItemId = ItemId(204);
+    pub const KNOWLEDGE_HERBAL_MEDICINE: ItemId = ItemId(205);
 
     // Institutional Permits / Concessions
     pub const PERMIT_FISHING_RIGHT: ItemId = ItemId(301);

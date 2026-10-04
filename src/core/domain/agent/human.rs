@@ -92,10 +92,34 @@ impl Human {
     }
 
     pub fn mark_deceased(&mut self, current_tick: Tick, reason: impl Into<String>) {
+        let r = reason.into();
         self.status = VitalStatus::Deceased {
             tick_of_death: current_tick,
-            reason: reason.into(),
+            reason: r.clone(),
         };
+        if let Some(obj) = self.attributes.as_object_mut() {
+            obj.insert("death_reason".to_string(), serde_json::json!(r));
+        }
+    }
+
+    pub fn death_tick(&self) -> Option<Tick> {
+        match &self.status {
+            VitalStatus::Alive => None,
+            VitalStatus::Deceased { tick_of_death, .. } => Some(*tick_of_death),
+        }
+    }
+
+    pub fn is_sick(&self) -> bool {
+        self.attributes
+            .get("is_sick")
+            .and_then(|v| v.as_bool())
+            .unwrap_or(false)
+    }
+
+    pub fn set_sick(&mut self, sick: bool) {
+        if let Some(obj) = self.attributes.as_object_mut() {
+            obj.insert("is_sick".to_string(), serde_json::json!(sick));
+        }
     }
 }
 
