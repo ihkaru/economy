@@ -14,7 +14,7 @@ use economy::core::systems::exchange::perform_autonomous_crafting;
 #[test]
 fn test_canonical_recipe_registry_specifications() {
     let registry = RecipeRegistry::canonical();
-    assert_eq!(registry.all().len(), 6, "Expected 6 canonical recipes");
+    assert_eq!(registry.all().len(), 8, "Expected 8 canonical recipes");
 
     let cured_fish_recipe = registry.get_recipe(6).expect("Recipe 6 (Cured Fish) should exist");
     assert_eq!(cured_fish_recipe.name, "Salt-Cured Preserved Fish");
@@ -24,6 +24,11 @@ fn test_canonical_recipe_registry_specifications() {
     assert_eq!(cured_fish_recipe.outputs.len(), 1);
     assert_eq!(cured_fish_recipe.outputs[0].item_id, ItemId::CURED_FISH);
     assert_eq!(cured_fish_recipe.outputs[0].quantity, 2);
+
+    let smoked_fish_recipe = registry.get_recipe(8).expect("Recipe 8 (Smoked Fish) should exist");
+    assert_eq!(smoked_fish_recipe.name, "Wood-Smoked Preserved Fish");
+    assert_eq!(smoked_fish_recipe.required_knowledge, Some(ItemId::KNOWLEDGE_FIRE_MAKING));
+    assert_eq!(smoked_fish_recipe.outputs[0].item_id, ItemId::SMOKED_FISH);
 }
 
 #[test]

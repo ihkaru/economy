@@ -180,6 +180,38 @@ pub fn build_canonical_items() -> Vec<ItemDefinition> {
         .with_perishable(false),
 
         ItemDefinition::new(
+            ItemId::DRIED_BERRIES,
+            "Buah Beri Kering (Sun-Dried Desiccated Berries)",
+            ItemCategory::Good,
+            serde_json::json!({
+                "historical_era": "Paleolithic_Pyrotechnology",
+                "unit": "kg",
+                "utility_type": "Nutrition",
+                "calories_per_unit": 400.0,
+                "shelf_life_days": 730,
+                "description": "Buah beri hasil penjemuran dehidrasi: kadar air rendah mencegah pembusukan mikroba"
+            }),
+        )
+        .with_weight(0.1)
+        .with_perishable(false),
+
+        ItemDefinition::new(
+            ItemId::SMOKED_FISH,
+            "Ikan Asap Kayu (Wood-Smoked Preserved Fish)",
+            ItemCategory::Good,
+            serde_json::json!({
+                "historical_era": "Paleolithic_Pyrotechnology",
+                "unit": "ekor",
+                "utility_type": "Nutrition",
+                "calories_per_unit": 600.0,
+                "shelf_life_days": 1095,
+                "description": "Ikan hasil pengasapan kayu: senyawa fenolik asap menghambat bakteri pembusuk tanpa garam"
+            }),
+        )
+        .with_weight(0.4)
+        .with_perishable(false),
+
+        ItemDefinition::new(
             ItemId::KNOWLEDGE_BASKET_WEAVING,
             "Gagasan Anyaman Wadah Angkut (Basket Weaving Blueprint)",
             ItemCategory::Knowledge,

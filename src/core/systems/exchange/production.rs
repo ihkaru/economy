@@ -72,7 +72,8 @@ pub fn perform_autonomous_crafting(
                 ItemId::WOVEN_BASKET => current_holding < 2,
                 ItemId::STONE_AXE | ItemId::FISHING_NET | ItemId::RAFT => current_holding == 0,
                 ItemId::HERBAL_MEDICINE => is_sick || current_holding < 2,
-                ItemId::CURED_FISH => current_holding < 10,
+                ItemId::CURED_FISH | ItemId::SMOKED_FISH => current_holding < 8,
+                ItemId::DRIED_BERRIES => current_holding < 6,
                 _ => current_holding < 3,
             };
 

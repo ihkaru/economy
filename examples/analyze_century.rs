@@ -19,6 +19,8 @@ fn item_meta(id: u64) -> (&'static str, &'static str) {
         110 => ("Herbal Medicine", "Good (Therapeutic Pharmacopoeia)"),
         111 => ("Woven Carrying Basket", "Capital (Logistics Container)"),
         112 => ("Salt-Cured Preserved Fish", "Good (Preserved Food)"),
+        113 => ("Sun-Dried Desiccated Berries", "Good (Preserved Food)"),
+        114 => ("Wood-Smoked Preserved Fish", "Good (Preserved Food)"),
         201 => ("Raft Building Blueprint", "Knowledge (Non-Rival Blueprint)"),
         202 => ("Fish Curing Preservation", "Knowledge (Non-Rival Technique)"),
         203 => ("Fire-Making Technique", "Knowledge (Non-Rival Technique)"),
@@ -239,6 +241,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                                     "Maritime Raft" | "Maritime Timber Raft" => 106,
                                     "Woven Basket" | "Woven Carrying Basket" => 111,
                                     "Salt-Cured Preserved Fish" | "Salt-Cured Fish" => 112,
+                                    "Sun-Dried Desiccated Berries" | "Sun-Dried Berries" => 113,
+                                    "Wood-Smoked Preserved Fish" | "Wood-Smoked Fish" => 114,
                                     _ => 0,
                                 };
                                 if tid > 0 {
@@ -439,13 +443,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("     - Diagnosa  : Belum ada mekanisme keausan fisik (durability / wear-and-tear) per kali panen.");
     }
 
-    // Check Anomaly 2: Perishability Spoilage
-    if perishable_items_held > 0 {
+    // Check Anomaly 2: Perishability Spoilage & Hoarding
+    let perishable_per_capita = if alive_count > 0 { perishable_items_held as f64 / alive_count as f64 } else { 0.0 };
+    if perishable_per_capita > 6.0 {
         anomalies_found += 1;
-        println!("  2. 🟡 ANOMALI: PANGAN SEGAR TIDAK MEMBUSUK (Perishability Immunity)");
-        println!("     - Observasi : {} unit makanan segar (ikan/beri) disimpan di tas tanpa pengawetan garam.", perishable_items_held);
-        println!("     - Realita   : Protein basah membusuk dalam beberapa hari jika tidak diasinkan/dikeringkan.");
-        println!("     - Diagnosa  : `is_perishable: true` hanya metadata pasif, belum dieksekusi pembusukan harian di MetabolismSystem.");
+        println!("  2. 🟡 ANOMALI: PENIMBUNAN PANGAN SEGAR TIDAK WAJAR (Perishability Hoarding Trap)");
+        println!("     - Observasi : {} unit makanan segar ({:.1} unit/kapita) disimpan tanpa pengawetan garam/asap/jemur.", perishable_items_held, perishable_per_capita);
+        println!("     - Realita   : Protein basah dan buah beri membusuk dalam beberapa hari jika melebihi jatah konsumsi harian.");
+        println!("     - Diagnosa  : Pembusukan harian belum mengimbangi laju panen segar agen kenyang.");
     }
 
     // Check Anomaly 3: Population Trajectory

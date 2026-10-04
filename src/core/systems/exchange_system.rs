@@ -86,6 +86,13 @@ impl ExchangeSystem {
                     {
                         discoveries.push((*id, ItemId::KNOWLEDGE_BASKET_WEAVING, "Basket Weaving Blueprint"));
                     }
+                    // Fire-making pyrotechnology discovery (if holding Timber)
+                    if agent.has_item(ItemId::TIMBER)
+                        && !agent.has_item(ItemId::KNOWLEDGE_FIRE_MAKING)
+                        && rng.check_probability(0.02)
+                    {
+                        discoveries.push((*id, ItemId::KNOWLEDGE_FIRE_MAKING, "Fire-Making Technique"));
+                    }
                 }
             }
         }

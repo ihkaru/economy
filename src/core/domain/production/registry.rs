@@ -96,6 +96,33 @@ impl RecipeRegistry {
                 0.0,
                 60.0,
             ),
+            // 7. Desiccation Preservation: Sun-Dried Desiccated Berries
+            ProductionRecipe::new(
+                7,
+                "Sun-Dried Desiccated Berries",
+                "food_preservation",
+                &[RecipeIngredient { item_id: ItemId::BERRIES, quantity: 3 }],
+                &[RecipeIngredient { item_id: ItemId::DRIED_BERRIES, quantity: 2 }],
+                None, // Simple traditional sun desiccation
+                None,
+                0.0,
+                40.0,
+            ),
+            // 8. Pyrotechnic Antimicrobial Smoking: Wood-Smoked Preserved Fish
+            ProductionRecipe::new(
+                8,
+                "Wood-Smoked Preserved Fish",
+                "food_preservation",
+                &[
+                    RecipeIngredient { item_id: ItemId::FISH, quantity: 2 },
+                    RecipeIngredient { item_id: ItemId::TIMBER, quantity: 1 },
+                ],
+                &[RecipeIngredient { item_id: ItemId::SMOKED_FISH, quantity: 2 }],
+                Some(ItemId::KNOWLEDGE_FIRE_MAKING),
+                None,
+                0.0,
+                80.0,
+            ),
         ])
     }
 }

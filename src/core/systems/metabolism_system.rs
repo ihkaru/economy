@@ -85,10 +85,12 @@ impl MetabolismSystem {
             let mut calories_gained = 0.0;
             if let Some(agent) = agent_store.get_human_mut(id) {
                 let edible_cal = [
-                    (ItemId::GRAIN, 800.0),      // Grain
-                    (ItemId::FISH, 500.0),       // Fresh Fish (eat perishable first)
-                    (ItemId::BERRIES, 300.0),    // Berries
-                    (ItemId::CURED_FISH, 650.0), // Salt-Cured Preserved Fish
+                    (ItemId::GRAIN, 800.0),         // Grain
+                    (ItemId::FISH, 500.0),          // Fresh Fish (eat perishable first)
+                    (ItemId::BERRIES, 300.0),       // Fresh Berries
+                    (ItemId::SMOKED_FISH, 600.0),   // Wood-Smoked Preserved Fish
+                    (ItemId::CURED_FISH, 650.0),    // Salt-Cured Preserved Fish
+                    (ItemId::DRIED_BERRIES, 400.0), // Sun-Dried Desiccated Berries
                 ];
 
                 for (item_id, cal_per_unit) in edible_cal {
