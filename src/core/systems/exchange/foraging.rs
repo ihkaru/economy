@@ -9,6 +9,8 @@ use crate::core::ports::environment_store::EnvironmentStorePort;
 use crate::core::ports::ledger_store::LedgerStorePort;
 use crate::core::ports::rng_port::RngPort;
 
+use crate::core::domain::spatial::coordinate::GeoCoordinate;
+
 /// Executes agent-centric optimal foraging and autonomous crafting under biophysical constraints
 pub fn perform_agent_centric_foraging(
     run_id: &RunId,
@@ -21,8 +23,10 @@ pub fn perform_agent_centric_foraging(
     next_trx_id: &mut u64,
     next_instance_id: &mut u64,
 ) {
+    let settlement_loc = GeoCoordinate::new(15, 25);
+
     for &agent_id in living_agent_ids {
-        let (loc, calorie_reserve, is_sick, inventory_weight, capacity, timber_count, herb_count, clay_count, stone_count, has_axe, has_spear) = {
+        let (loc, calorie_reserve, is_sick, inventory_weight, capacity, timber_count, herb_count, clay_count, stone_count, has_axe, has_spear, has_raft) = {
             if let Some(agent) = agent_store.get_human(agent_id) {
                 (
                     agent.location,
@@ -36,6 +40,7 @@ pub fn perform_agent_centric_foraging(
                     agent.inventory.get(&ItemId::STONE).copied().unwrap_or(0),
                     agent.has_item(ItemId::STONE_AXE),
                     agent.has_item(ItemId::HUNTING_SPEAR),
+                    agent.has_item(ItemId::RAFT),
                 )
             } else {
                 continue;
@@ -43,8 +48,14 @@ pub fn perform_agent_centric_foraging(
         };
 
         // If carrying capacity is fully saturated (less than 0.5 kg remaining), agent cannot forage raw goods
+        // Instead, agent steps back toward central settlement to trade or deposit goods
         let remaining_capacity_kg = capacity - inventory_weight;
-        if remaining_capacity_kg < 0.2 {
+        if remaining_capacity_kg < 0.5 {
+            if loc != settlement_loc {
+                if let Some(agent) = agent_store.get_human_mut(agent_id) {
+                    agent.location = agent.location.step_towards(&settlement_loc);
+                }
+            }
             continue;
         }
 
@@ -52,15 +63,16 @@ pub fn perform_agent_centric_foraging(
         let mut best_node_id = None;
         let mut best_score = 0.0_f64;
         let mut best_tool_multiplier = 1.0_f64;
+        let mut best_node_loc = loc;
 
         for node in env_store.nodes_mut() {
             if node.current_stock == 0 {
                 continue;
             }
 
-            // Spatial accessibility (within 5 cells radius, or across water)
+            // Spatial accessibility (within 8 cells radius on mainland, or offshore if raft available)
             let distance = loc.euclidean_distance(&node.location);
-            if distance > 5.0 {
+            if distance > 8.0 && !has_raft {
                 continue;
             }
 
@@ -110,6 +122,7 @@ pub fn perform_agent_centric_foraging(
                 best_score = score;
                 best_node_id = Some(node.id);
                 best_tool_multiplier = tool_multiplier;
+                best_node_loc = node.location;
             }
         }
 
@@ -131,6 +144,7 @@ pub fn perform_agent_centric_foraging(
 
                         if actual_harvested > 0 {
                             if let Some(agent) = agent_store.get_human_mut(agent_id) {
+                                agent.location = agent.location.step_towards(&best_node_loc);
                                 agent.add_item(node.item_id, actual_harvested);
 
                                 // Hunting by-product: animal raw hide from terrestrial game hunting

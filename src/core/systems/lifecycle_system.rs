@@ -1,6 +1,6 @@
 use crate::core::domain::agent::human::{Human, Sex};
 use crate::core::domain::agent::id::AgentId;
-use crate::core::domain::agent::traits::{HasLifecycle, SocialActor};
+use crate::core::domain::agent::traits::{EconomicActor, HasLifecycle, SocialActor};
 use crate::core::domain::time::{Tick, TickDuration};
 use crate::core::ports::agent_store::AgentStorePort;
 use crate::core::ports::rng_port::RngPort;
@@ -224,6 +224,57 @@ impl LifecycleSystem {
             }
 
             agent_store.insert_human(newborn);
+        }
+
+        // 6. Vertical Cultural Transmission (Parental Education)
+        // Living parents pass non-rival knowledge blueprints to adolescent children (ages 10..=22)
+        if current_tick.0 % 30 == 0 {
+            let mut transmissions = Vec::new();
+            for id in &living_ids {
+                if let Some(child) = agent_store.get_human(*id) {
+                    let age_years = (child.age_ticks as f64) * fractional_years;
+                    if child.is_alive() && (10.0..=22.0).contains(&age_years) {
+                        let father_id = child.father_id;
+                        let mother_id = child.mother_id;
+                        let child_id = *id;
+
+                        let mut parent_knowledges = Vec::new();
+                        if let Some(f_id) = father_id {
+                            if let Some(father) = agent_store.get_human(f_id) {
+                                if father.is_alive() {
+                                    for (&k, _) in &father.inventory {
+                                        if k.is_knowledge() && !child.inventory.contains_key(&k) {
+                                            parent_knowledges.push(k);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        if let Some(m_id) = mother_id {
+                            if let Some(mother) = agent_store.get_human(m_id) {
+                                if mother.is_alive() {
+                                    for (&k, _) in &mother.inventory {
+                                        if k.is_knowledge()
+                                            && !child.inventory.contains_key(&k)
+                                            && !parent_knowledges.contains(&k)
+                                        {
+                                            parent_knowledges.push(k);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        for k in parent_knowledges {
+                            transmissions.push((child_id, k));
+                        }
+                    }
+                }
+            }
+            for (child_id, k) in transmissions {
+                if let Some(child) = agent_store.get_human_mut(child_id) {
+                    child.add_item(k, 1);
+                }
+            }
         }
     }
 }

@@ -26,6 +26,25 @@ impl GeoCoordinate {
     pub fn euclidean_distance(&self, other: &GeoCoordinate) -> f64 {
         (self.distance_squared(other) as f64).sqrt()
     }
+
+    /// Step one cell toward a target coordinate (Chebyshev/Moore 8-way step)
+    pub fn step_towards(&self, target: &GeoCoordinate) -> GeoCoordinate {
+        let new_x = if self.x < target.x {
+            self.x + 1
+        } else if self.x > target.x {
+            self.x - 1
+        } else {
+            self.x
+        };
+        let new_y = if self.y < target.y {
+            self.y + 1
+        } else if self.y > target.y {
+            self.y - 1
+        } else {
+            self.y
+        };
+        GeoCoordinate::new(new_x, new_y)
+    }
 }
 
 impl std::fmt::Display for GeoCoordinate {

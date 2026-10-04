@@ -90,6 +90,17 @@ Saat meninjau berkas atau merancang modul baru di `src/`, jalankan 9 pemeriksaan
   - Seluruh bilangan acak berakar dari `ChaCha8Rng` yang diinjeksi via `RngPort`.
   - `cargo test` wajib memverifikasi bahwa dua simulasi dengan seed yang sama menghasilkan bit-exact data yang identik.
 
+### 10. Uji Kemunculan Spontan Institusi Ekonomi (Emergence of Currency, Banking & Firm)
+- [ ] **Pertanyaan**: Apa yang menghambat atau mencegah munculnya mata uang, bank/kredit, dan perusahaan secara murni emergent?
+- [ ] **Red Flags**:
+  - *Hambatan Mata Uang (Barter Trap)*: Agen hanya mau bertukar jika terjadi *double coincidence of wants* langsung. Agen menolak menerima barang berlikuiditas tinggi (garam, kerang, gandum) yang tidak langsung mereka konsumsi sendiri, sehingga *indirect exchange* (Carl Menger) tidak pernah lahir.
+  - *Hambatan Perbankan & Kredit (Zero-Storage Lending Trap)*: Agen kaya yang memiliki surplus pangan di lumbung/tempayan membiarkan barangnya menganggur, sementara agen miskin di musim paceklik kelaparan karena tidak ada mekanisme pinjam-meminjam dengan janji bayar di masa panen (*credit ledger / promissory IOUs*).
+  - *Hambatan Perusahaan / Firma (Autarkic Enterprise Trap)*: Setiap agen bekerja sendiri-sendiri (*pure individual autarky*). Tidak ada kontrak kerja sama (Ronald Coase, *Theory of the Firm*) di mana pemilik alat modal (misal: pemilik batu gilang atau rakit) mempekerjakan agen lain dan membagi hasil produksi secara proporsional.
+- [ ] **Solusi Emergent**:
+  - *Mata Uang Mengerian*: Agen mengevaluasi daya jual pasar (*saleability / Absatzfähigkeit*) komoditas: jika komoditas $C$ (misal `COWRIE_SHELLS`, `SALT`, `GRAIN`) memiliki rasio likuiditas dan keawetan jauh lebih tinggi daripada barang yang dipegang, agen rasional menerima $C$ sebagai perantara tukar (*medium of exchange*).
+  - *Lumbung Kredit & Perbankan Purba*: Agen dapat menitipkan surplus pangan ke tempayan/lumbung bersama dan memperoleh unit kredit/hak klaim yang dapat dipinjamkan dengan bunga wajar bahan.
+  - *Proto-Firma / Koalisi Produksi Coasean*: Dua atau lebih agen dapat membentuk aliansi kerja sama: pemilik alat modal menyediakan katalis, pekerja menyediakan tenaga kerja, dan hasil panen/manufaktur dibagi bersama.
+
 ---
 
 ## 🛠️ Perintah Eksekusi Audit Otomatis

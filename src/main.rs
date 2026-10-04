@@ -9,6 +9,7 @@ use economy::core::domain::agent::id::AgentId;
 use economy::core::domain::environment::climate::ClimateState;
 use economy::core::domain::environment::resource::{RegenerationPace, ResourceNode};
 use economy::core::domain::item::id::ItemId;
+use economy::core::domain::spatial::GeoCoordinate;
 use economy::core::domain::statistic::access::AccessRequirement;
 use economy::core::domain::statistic::calculator::{
     EmergentCurrencyCalculator, PopulationDemographyCalculator, ResourceScarcityCalculator,
@@ -166,123 +167,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Initialize environment and natural resource spawner nodes across biomes
     let climate = ClimateState::default_spring();
     let resource_nodes = vec![
-        ResourceNode::new(
-            1,
-            "Ancient Oak Forest",
-            ItemId::TIMBER,
-            economy::core::domain::spatial::GeoCoordinate::new(15, 28),
-            500,
-            1000,
-            10.0,
-            2.0,
-            0.0, // Non-edible building material
-            serde_json::json!({"resource": "Timber", "biome": "Forest"}),
-        )
-        .with_pace(RegenerationPace::Slow),
-        ResourceNode::new(
-            2,
-            "Silver Creek Fishery",
-            ItemId::FISH,
-            economy::core::domain::spatial::GeoCoordinate::new(15, 25),
-            2500,
-            10000,
-            80.0,
-            2.0,
-            500.0, // Edible fresh fish
-            serde_json::json!({"resource": "Fish", "biome": "River"}),
-        )
-        .with_pace(RegenerationPace::Medium),
-        ResourceNode::new(
-            3,
-            "Sunlit Wheat Plains",
-            ItemId::GRAIN,
-            economy::core::domain::spatial::GeoCoordinate::new(16, 24),
-            4000,
-            20000,
-            120.0,
-            3.0,
-            800.0, // Edible wild grain
-            serde_json::json!({"resource": "Wheat", "biome": "Agricultural"}),
-        )
-        .with_pace(RegenerationPace::Medium),
-        ResourceNode::new(
-            4,
-            "Wild Berry Woods",
-            ItemId::BERRIES,
-            economy::core::domain::spatial::GeoCoordinate::new(14, 26),
-            1500,
-            5000,
-            60.0,
-            2.0,
-            300.0, // Edible berries
-            serde_json::json!({"resource": "Berries", "biome": "Forest"}),
-        )
-        .with_pace(RegenerationPace::Fast),
-        ResourceNode::new(
-            5,
-            "Volcanic Island Salt Mine",
-            ItemId::SALT,
-            economy::core::domain::spatial::GeoCoordinate::new(45, 25), // Offshore island across DeepOcean!
-            800,
-            2000,
-            5.0,
-            0.5,
-            0.0,
-            serde_json::json!({"resource": "RockSalt", "biome": "IslandVolcano", "maritime_required": true}),
-        )
-        .with_pace(RegenerationPace::Geological),
-        ResourceNode::new(
-            6,
-            "Medicinal Herbal Grove",
-            ItemId::HERBAL_MEDICINE,
-            economy::core::domain::spatial::GeoCoordinate::new(14, 25),
-            400,
-            1000,
-            20.0,
-            1.5,
-            0.0, // Non-caloric medicinal flora
-            serde_json::json!({"resource": "HerbalMedicine", "biome": "RiverbankMeadow"}),
-        )
-        .with_pace(RegenerationPace::Medium),
-        ResourceNode::new(
-            7,
-            "Riverbank Clay Deposit",
-            ItemId::CLAY,
-            economy::core::domain::spatial::GeoCoordinate::new(15, 26),
-            1000,
-            5000,
-            40.0,
-            2.0,
-            0.0, // Non-caloric ceramic raw material
-            serde_json::json!({"resource": "Clay", "biome": "Riverbank"}),
-        )
-        .with_pace(RegenerationPace::Medium),
-        ResourceNode::new(
-            8,
-            "Highland Game Hunting Grounds",
-            ItemId::RAW_MEAT,
-            economy::core::domain::spatial::GeoCoordinate::new(16, 27),
-            1500,
-            6000,
-            50.0,
-            2.0,
-            650.0, // Terrestrial wild game meat & hides
-            serde_json::json!({"resource": "RawMeat", "biome": "HighlandForest"}),
-        )
-        .with_pace(RegenerationPace::Medium),
-        ResourceNode::new(
-            9,
-            "Rocky Riverbed Stone Quarry",
-            ItemId::STONE,
-            economy::core::domain::spatial::GeoCoordinate::new(14, 27),
-            2000,
-            5000,
-            10.0,
-            2.0,
-            0.0, // Lithic raw material for axes
-            serde_json::json!({"resource": "Stone", "biome": "RiverbedQuarry"}),
-        )
-        .with_pace(RegenerationPace::Geological),
+        ResourceNode::new(1, "Ancient Oak Forest", ItemId::TIMBER, GeoCoordinate::new(15, 28), 500, 1000, 10.0, 2.0, 0.0, serde_json::json!({"resource": "Timber", "biome": "Forest"})).with_pace(RegenerationPace::Slow),
+        ResourceNode::new(2, "Silver Creek Fishery", ItemId::FISH, GeoCoordinate::new(15, 25), 2500, 10000, 80.0, 2.0, 500.0, serde_json::json!({"resource": "Fish", "biome": "River"})).with_pace(RegenerationPace::Medium),
+        ResourceNode::new(3, "Sunlit Wheat Plains", ItemId::GRAIN, GeoCoordinate::new(16, 24), 4000, 20000, 120.0, 3.0, 800.0, serde_json::json!({"resource": "Wheat", "biome": "Agricultural"})).with_pace(RegenerationPace::Medium),
+        ResourceNode::new(4, "Wild Berry Woods", ItemId::BERRIES, GeoCoordinate::new(14, 26), 1500, 5000, 60.0, 2.0, 300.0, serde_json::json!({"resource": "Berries", "biome": "Forest"})).with_pace(RegenerationPace::Fast),
+        ResourceNode::new(5, "Volcanic Island Salt Mine", ItemId::SALT, GeoCoordinate::new(45, 25), 800, 2000, 5.0, 0.5, 0.0, serde_json::json!({"resource": "RockSalt", "biome": "IslandVolcano", "maritime_required": true})).with_pace(RegenerationPace::Geological),
+        ResourceNode::new(6, "Medicinal Herbal Grove", ItemId::HERBAL_MEDICINE, GeoCoordinate::new(14, 25), 400, 1000, 20.0, 1.5, 0.0, serde_json::json!({"resource": "HerbalMedicine", "biome": "RiverbankMeadow"})).with_pace(RegenerationPace::Medium),
+        ResourceNode::new(7, "Riverbank Clay Deposit", ItemId::CLAY, GeoCoordinate::new(15, 26), 1000, 5000, 40.0, 2.0, 0.0, serde_json::json!({"resource": "Clay", "biome": "Riverbank"})).with_pace(RegenerationPace::Medium),
+        ResourceNode::new(8, "Highland Game Hunting Grounds", ItemId::RAW_MEAT, GeoCoordinate::new(16, 27), 1500, 6000, 50.0, 2.0, 650.0, serde_json::json!({"resource": "RawMeat", "biome": "HighlandForest"})).with_pace(RegenerationPace::Medium),
+        ResourceNode::new(9, "Rocky Riverbed Stone Quarry", ItemId::STONE, GeoCoordinate::new(14, 27), 2000, 5000, 10.0, 2.0, 0.0, serde_json::json!({"resource": "Stone", "biome": "RiverbedQuarry"})).with_pace(RegenerationPace::Geological),
+        ResourceNode::new(10, "Mainland Saline Mineral Spring", ItemId::SALT, GeoCoordinate::new(17, 26), 600, 1500, 15.0, 1.0, 0.0, serde_json::json!({"resource": "RockSalt", "biome": "MineralSpring"})).with_pace(RegenerationPace::Slow),
     ];
     let world_map = economy::core::domain::spatial::WorldMap::generate_continent_and_archipelago(50, 50);
     let env_store = MemoryEnvironmentStore::new(climate, resource_nodes).with_world_map(world_map);

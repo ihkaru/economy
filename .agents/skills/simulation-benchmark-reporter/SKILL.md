@@ -81,6 +81,13 @@ Skill ini menetapkan **Standar Operasional Prosedur (SOP) Baku** untuk menjamin 
          - *Pengecualian Kurikulum Magang* (pengetahuan tidak terdaftar di daftar barter magang `trade.rs`, sehingga punah saat penemu meninggal tanpa ahli waris).
          - *Ketiadaan Tradisi Lisan Antargenerasi* (orang tua tidak mengajarkan keahlian kepada anak selama masa hidupnya).
 
+11. **Kewajiban Audit Kemunculan Spontan Mata Uang, Bank & Perusahaan (Mandatory Currency, Banking & Firm Emergence Audit)**:
+    - **WAJIB DIJAWAB DAN DIEVALUASI DI SETIAP BENCHMARK RUN**:
+      1. *Apa yang mencegah kemunculan mata uang (*currency / money*) secara spontan?* Mengapa agen hanya bertukar langsung (*direct barter*) dan belum mengadopsi pertukaran tidak langsung (*indirect exchange*) ala Carl Menger? Apakah agen telah mengevaluasi *Absatzfähigkeit* (daya jual komoditas likuid seperti garam, cangkang cowrie, atau gandum)?
+      2. *Apa yang mencegah kemunculan perbankan & kredit (*banking & credit*)?* Mengapa agen yang memiliki surplus komoditas di tempayan/lumbung tidak meminjamkannya kepada agen yang kekurangan kalori saat paceklik/musim dingin dengan perjanjian imbal hasil (*promissory credit tokens / IOUs*)?
+      3. *Apa yang mencegah kemunculan perusahaan / firma (*firms / enterprise*)?* Mengapa agen bekerja secara autarki individual murni dan belum membentuk aliansi kerja sama produksi ala Ronald Coase (*Theory of the Firm*), di mana pemilik alat modal menyediakan sarana dan pekerja menyumbang tenaga kerja dengan bagi hasil?
+      4. *Apa rekomendasi paling best practice untuk iterasi selanjutnya?* Menyajikan arsitektur mikro berbasis prinsip emergent murni tanpa hardcoding buatan.
+
 ---
 
 ## 🔬 Matriks Evaluasi Kondisi Awal vs Akhir Terhadap Realita Sejarah
@@ -168,13 +175,19 @@ Setiap laporan wajib memuat 14 bab eksekutif berikut:
       2. *Dampak Fisik Musim & Iklim*: Apakah musim dingin membekukan perairan sungai? Apakah musim kemarau memicu risiko dehidrasi dan menuntut ketersediaan air tawar (*hydrological constraint*)?
       3. *Hambatan Inovasi Eureka (*Eureka Deadlocks*)*: Mengapa pengetahuan tertentu belum muncul? Audit kebuntuan prasyarat barang tak terjangkau (*chicken-and-egg lock*) atau konkurensi bahan simultan yang terlalu ketat.
       4. *Kelengkapan Transmisi Kultural*: Apakah seluruh cetak biru pengetahuan terdaftar dalam barter magang `trade.rs` dan diajarkan dari orang tua ke anak agar tidak punah saat penemu wafat?
-12. **Daya Dukung Ekologis & Kelestarian Sumber Daya (*Carrying Capacity*)**:
+12. **Audit Kemunculan Spontan Mata Uang, Bank & Perusahaan (*Emergence of Currency, Banking & Firms*)**:
+    - **Jawaban Wajib 4 Dimensi Institusional**:
+      1. *Apa yang mencegah kemunculan mata uang (*currency / money*) secara spontan?* Apakah agen terjebak barter langsung (*direct barter*) atau sudah menerapkan pertukaran tidak langsung (*indirect exchange*) ala Carl Menger dengan menerima komoditas berkemampuan jual tinggi (*Absatzfähigkeit*) seperti garam atau kerang cowrie?
+      2. *Apa yang mencegah kemunculan perbankan & kredit (*banking & credit*)?* Apakah surplus pangan di tempayan/lumbung dapat dititipkan dan dipinjamkan dengan perjanjian kredit/utang-piutang (*credit ledger / promissory IOUs*) saat paceklik?
+      3. *Apa yang mencegah kemunculan perusahaan / firma (*firms / enterprise*)?* Apakah agen masih bekerja secara autarki atau sudah membentuk koalisi produksi bersama ala Ronald Coase (*Theory of the Firm*) dengan mengumpulkan alat modal dan membagi hasil kerja?
+      4. *Apa rekomendasi paling best practice untuk iterasi selanjutnya?*
+13. **Daya Dukung Ekologis & Kelestarian Sumber Daya (*Carrying Capacity*)**:
     - Status biomassa dan tingkat kematangan (*maturity %*) seluruh simpul alam.
-13. **Profil Performa Komputasi & Rincian Mikro-Profiler Sub-Sistem**:
+14. **Profil Performa Komputasi & Rincian Mikro-Profiler Sub-Sistem**:
     - Analisis throughput total (TPS rata-rata, instantaneous min/max, dan wall-clock duration).
     - Tabel alokasi waktu per sub-sistem (`EnvironmentSystem`, `MetabolismSystem`, `LifecycleSystem`, `ExchangeSystem`, `StatisticSystem`) dengan breakdown persentase dan latensi per tick.
     - Diagnosis modul terberat dan perbandingan terhadap target baseline.
-14. **Audit Kompleksitas Algoritmik, Parsing, dan Evaluasi Big-O (Algorithmic Complexity & Optimization Audit)**:
+15. **Audit Kompleksitas Algoritmik, Parsing, dan Evaluasi Big-O (Algorithmic Complexity & Optimization Audit)**:
     - **Jawaban Wajib 4 Pertanyaan Kunci Performa**:
       1. *Apa gap dan masalah performa yang belum teratasi?* (Identifikasi sub-sistem terberat, alokasi memori berlebih, unindexed loops).
       2. *Apakah ada potensi untuk optimasi?* (Peluang reduksi footprint komputasi, penghapusan deep cloning, zero allocation).
@@ -184,7 +197,7 @@ Setiap laporan wajib memuat 14 bab eksekutif berikut:
       - Kueri pencarian `search_web` presisi bertanggal bulan & tahun saat ini (misal: `"Rust zero allocation event ledger metadata pattern 2026"`).
       - Ringkasan pola arsitektur mutakhir (seperti bitfield encoding, embedded storage, periodic non-autonomous logistic harvesting models).
       - Rencana implementasi konkret pada kode sumber.
-15. **Rekomendasi Langkah Pengembangan & Rencana Iterasi Berikutnya**:
+16. **Rekomendasi Langkah Pengembangan & Rencana Iterasi Berikutnya**:
     - Usulan perbaikan mekanisme mikro untuk iterasi berikutnya berdasarkan evaluasi realitas, hasil profiler, dan solusi best practice dari riset internet.
 
 ---
