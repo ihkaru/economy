@@ -38,98 +38,32 @@ pub fn perform_trade_and_services(
     let a_sick = agent_store.get_human(agent_a_id).map(|a| a.is_sick()).unwrap_or(false);
     let b_sick = agent_store.get_human(agent_b_id).map(|b| b.is_sick()).unwrap_or(false);
 
-    if b_sick && !a_sick && (a_inv.contains_key(&ItemId::KNOWLEDGE_HERBAL_MEDICINE) || a_inv.contains_key(&ItemId::SERVICE_MEDICAL)) {
-        let b_food = [ItemId::GRAIN, ItemId::FISH, ItemId::BERRIES, ItemId::TIMBER]
-            .into_iter()
-            .find(|f| b_inv.get(f).copied().unwrap_or(0) >= 1);
-
-        if let Some(fee_item) = b_food {
-            if let Some(agent_a) = agent_store.get_human_mut(agent_a_id) {
-                agent_a.add_item(fee_item, 1);
-            }
-            if let Some(agent_b) = agent_store.get_human_mut(agent_b_id) {
-                let _ = agent_b.remove_item(fee_item, 1);
-                agent_b.set_sick(false);
-            }
-
-            let inst_service = ItemInstance::new(
-                ItemId::SERVICE_MEDICAL,
-                1,
-                serde_json::json!({"nature": "IntangibleHealthcareService"}),
-            ).with_instance_id(ItemInstanceId::new(*next_instance_id));
-            *next_instance_id += 1;
-
-            let inst_fee = ItemInstance::new(
-                fee_item,
-                1,
-                serde_json::json!({"nature": "RivalPhysical"}),
-            ).with_instance_id(ItemInstanceId::new(*next_instance_id));
-            *next_instance_id += 1;
-
-            let entry = LedgerEntry::new(
-                *next_trx_id,
-                run_id.clone(),
-                current_tick,
-                agent_a_id,
-                agent_b_id,
-                vec![inst_service],
-                vec![inst_fee],
-                serde_json::json!({
-                    "transaction_type": "medical_care_service",
-                    "patient_id": agent_b_id.0,
-                    "healer_id": agent_a_id.0,
-                    "service_rendered": "Herbal Treatment & Healing",
-                    "fee_paid_item_id": fee_item.0,
-                }),
-            );
-            *next_trx_id += 1;
-            let _ = ledger_store.record(entry);
-            medical_service_occurred = true;
-        }
+    let medical_pair = if b_sick && !a_sick && (a_inv.contains_key(&ItemId::KNOWLEDGE_HERBAL_MEDICINE) || a_inv.contains_key(&ItemId::SERVICE_MEDICAL)) {
+        Some((agent_a_id, agent_b_id, &b_inv))
     } else if a_sick && !b_sick && (b_inv.contains_key(&ItemId::KNOWLEDGE_HERBAL_MEDICINE) || b_inv.contains_key(&ItemId::SERVICE_MEDICAL)) {
-        let a_food = [ItemId::GRAIN, ItemId::FISH, ItemId::BERRIES, ItemId::TIMBER]
+        Some((agent_b_id, agent_a_id, &a_inv))
+    } else {
+        None
+    };
+
+    if let Some((healer_id, patient_id, patient_inv)) = medical_pair {
+        let fee_opt = [ItemId::GRAIN, ItemId::FISH, ItemId::BERRIES, ItemId::TIMBER]
             .into_iter()
-            .find(|f| a_inv.get(f).copied().unwrap_or(0) >= 1);
+            .find(|f| patient_inv.get(f).copied().unwrap_or(0) >= 1);
 
-        if let Some(fee_item) = a_food {
-            if let Some(agent_b) = agent_store.get_human_mut(agent_b_id) {
-                agent_b.add_item(fee_item, 1);
+        if let Some(fee_item) = fee_opt {
+            if let Some(h) = agent_store.get_human_mut(healer_id) { h.add_item(fee_item, 1); }
+            if let Some(p) = agent_store.get_human_mut(patient_id) {
+                let _ = p.remove_item(fee_item, 1);
+                p.set_sick(false);
             }
-            if let Some(agent_a) = agent_store.get_human_mut(agent_a_id) {
-                let _ = agent_a.remove_item(fee_item, 1);
-                agent_a.set_sick(false);
-            }
-
-            let inst_service = ItemInstance::new(
-                ItemId::SERVICE_MEDICAL,
-                1,
-                serde_json::json!({"nature": "IntangibleHealthcareService"}),
-            ).with_instance_id(ItemInstanceId::new(*next_instance_id));
+            let inst_service = ItemInstance::new(ItemId::SERVICE_MEDICAL, 1, serde_json::json!({"nature": "IntangibleHealthcareService"})).with_instance_id(ItemInstanceId::new(*next_instance_id));
             *next_instance_id += 1;
-
-            let inst_fee = ItemInstance::new(
-                fee_item,
-                1,
-                serde_json::json!({"nature": "RivalPhysical"}),
-            ).with_instance_id(ItemInstanceId::new(*next_instance_id));
+            let inst_fee = ItemInstance::new(fee_item, 1, serde_json::json!({"nature": "RivalPhysical"})).with_instance_id(ItemInstanceId::new(*next_instance_id));
             *next_instance_id += 1;
-
-            let entry = LedgerEntry::new(
-                *next_trx_id,
-                run_id.clone(),
-                current_tick,
-                agent_b_id,
-                agent_a_id,
-                vec![inst_service],
-                vec![inst_fee],
-                serde_json::json!({
-                    "transaction_type": "medical_care_service",
-                    "patient_id": agent_a_id.0,
-                    "healer_id": agent_b_id.0,
-                    "service_rendered": "Herbal Treatment & Healing",
-                    "fee_paid_item_id": fee_item.0,
-                }),
-            );
+            let entry = LedgerEntry::new(*next_trx_id, run_id.clone(), current_tick, healer_id, patient_id, vec![inst_service], vec![inst_fee], serde_json::json!({
+                "transaction_type": "medical_care_service", "patient_id": patient_id.0, "healer_id": healer_id.0, "service_rendered": "Herbal Treatment & Healing", "fee_paid_item_id": fee_item.0
+            }));
             *next_trx_id += 1;
             let _ = ledger_store.record(entry);
             medical_service_occurred = true;
@@ -140,87 +74,42 @@ pub fn perform_trade_and_services(
     let mut knowledge_trade_occurred = false;
     if !medical_service_occurred {
         let all_knowledges = [
-            ItemId::KNOWLEDGE_FIRE_MAKING,
-            ItemId::KNOWLEDGE_TOOL_CRAFTING,
-            ItemId::KNOWLEDGE_BASKET_WEAVING,
-            ItemId::KNOWLEDGE_HERBAL_MEDICINE,
-            ItemId::KNOWLEDGE_POTTERY_MAKING,
-            ItemId::KNOWLEDGE_LEATHER_WORKING,
-            ItemId::KNOWLEDGE_RAFT_BUILDING,
-            ItemId::KNOWLEDGE_FISH_CURING,
+            ItemId::KNOWLEDGE_FIRE_MAKING, ItemId::KNOWLEDGE_TOOL_CRAFTING,
+            ItemId::KNOWLEDGE_BASKET_WEAVING, ItemId::KNOWLEDGE_HERBAL_MEDICINE,
+            ItemId::KNOWLEDGE_POTTERY_MAKING, ItemId::KNOWLEDGE_LEATHER_WORKING,
+            ItemId::KNOWLEDGE_RAFT_BUILDING, ItemId::KNOWLEDGE_FISH_CURING,
         ];
         let tuition_foods = [
             ItemId::GRAIN, ItemId::FISH, ItemId::BERRIES, ItemId::RAW_MEAT,
             ItemId::CURED_MEAT, ItemId::CURED_FISH, ItemId::SMOKED_MEAT, ItemId::SMOKED_FISH,
         ];
 
-        for &k_id in &all_knowledges {
-            // Direction 1: A teaches B
-            if a_inv.contains_key(&k_id) && !b_inv.contains_key(&k_id) {
-                if let Some(payment_food) = tuition_foods.into_iter().find(|f| b_inv.get(f).copied().unwrap_or(0) >= 2) {
-                    if let Some(agent_a) = agent_store.get_human_mut(agent_a_id) {
-                        agent_a.add_item(payment_food, 2);
-                    }
-                    if let Some(agent_b) = agent_store.get_human_mut(agent_b_id) {
-                        let _ = agent_b.remove_item(payment_food, 2);
-                        agent_b.add_item(k_id, 1);
-                    }
+        let teach_directions = [
+            (agent_a_id, agent_b_id, &a_inv, &b_inv),
+            (agent_b_id, agent_a_id, &b_inv, &a_inv),
+        ];
 
-                    let inst_k = ItemInstance::new(k_id, 1, serde_json::json!({"nature": "NonRivalKnowledge"})).with_instance_id(ItemInstanceId::new(*next_instance_id));
-                    *next_instance_id += 1;
-                    let inst_food = ItemInstance::new(payment_food, 2, serde_json::json!({"nature": "RivalPhysical"})).with_instance_id(ItemInstanceId::new(*next_instance_id));
-                    *next_instance_id += 1;
-
-                    let entry = LedgerEntry::new(
-                        *next_trx_id, run_id.clone(), current_tick, agent_a_id, agent_b_id,
-                        vec![inst_k], vec![inst_food],
-                        serde_json::json!({
-                            "transaction_type": "knowledge_service_trade",
-                            "knowledge_item_id": k_id.0,
-                            "teacher_id": agent_a_id.0,
-                            "student_id": agent_b_id.0,
-                            "tuition_paid_item_id": payment_food.0,
-                            "tuition_paid_qty": 2,
-                        }),
-                    );
-                    *next_trx_id += 1;
-                    let _ = ledger_store.record(entry);
-                    knowledge_trade_occurred = true;
-                    break;
-                }
-            }
-            // Direction 2: B teaches A
-            else if b_inv.contains_key(&k_id) && !a_inv.contains_key(&k_id) {
-                if let Some(payment_food) = tuition_foods.into_iter().find(|f| a_inv.get(f).copied().unwrap_or(0) >= 2) {
-                    if let Some(agent_b) = agent_store.get_human_mut(agent_b_id) {
-                        agent_b.add_item(payment_food, 2);
+        'outer: for (teacher_id, student_id, t_inv, s_inv) in teach_directions {
+            for &k_id in &all_knowledges {
+                if t_inv.contains_key(&k_id) && !s_inv.contains_key(&k_id) {
+                    if let Some(payment_food) = tuition_foods.into_iter().find(|f| s_inv.get(f).copied().unwrap_or(0) >= 2) {
+                        if let Some(t) = agent_store.get_human_mut(teacher_id) { t.add_item(payment_food, 2); }
+                        if let Some(s) = agent_store.get_human_mut(student_id) {
+                            let _ = s.remove_item(payment_food, 2);
+                            s.add_item(k_id, 1);
+                        }
+                        let inst_k = ItemInstance::new(k_id, 1, serde_json::json!({"nature": "NonRivalKnowledge"})).with_instance_id(ItemInstanceId::new(*next_instance_id));
+                        *next_instance_id += 1;
+                        let inst_food = ItemInstance::new(payment_food, 2, serde_json::json!({"nature": "RivalPhysical"})).with_instance_id(ItemInstanceId::new(*next_instance_id));
+                        *next_instance_id += 1;
+                        let entry = LedgerEntry::new(*next_trx_id, run_id.clone(), current_tick, teacher_id, student_id, vec![inst_k], vec![inst_food], serde_json::json!({
+                            "transaction_type": "knowledge_service_trade", "knowledge_item_id": k_id.0, "teacher_id": teacher_id.0, "student_id": student_id.0, "tuition_paid_item_id": payment_food.0, "tuition_paid_qty": 2
+                        }));
+                        *next_trx_id += 1;
+                        let _ = ledger_store.record(entry);
+                        knowledge_trade_occurred = true;
+                        break 'outer;
                     }
-                    if let Some(agent_a) = agent_store.get_human_mut(agent_a_id) {
-                        let _ = agent_a.remove_item(payment_food, 2);
-                        agent_a.add_item(k_id, 1);
-                    }
-
-                    let inst_k = ItemInstance::new(k_id, 1, serde_json::json!({"nature": "NonRivalKnowledge"})).with_instance_id(ItemInstanceId::new(*next_instance_id));
-                    *next_instance_id += 1;
-                    let inst_food = ItemInstance::new(payment_food, 2, serde_json::json!({"nature": "RivalPhysical"})).with_instance_id(ItemInstanceId::new(*next_instance_id));
-                    *next_instance_id += 1;
-
-                    let entry = LedgerEntry::new(
-                        *next_trx_id, run_id.clone(), current_tick, agent_b_id, agent_a_id,
-                        vec![inst_k], vec![inst_food],
-                        serde_json::json!({
-                            "transaction_type": "knowledge_service_trade",
-                            "knowledge_item_id": k_id.0,
-                            "teacher_id": agent_b_id.0,
-                            "student_id": agent_a_id.0,
-                            "tuition_paid_item_id": payment_food.0,
-                            "tuition_paid_qty": 2,
-                        }),
-                    );
-                    *next_trx_id += 1;
-                    let _ = ledger_store.record(entry);
-                    knowledge_trade_occurred = true;
-                    break;
                 }
             }
         }
@@ -265,7 +154,9 @@ pub fn perform_trade_and_services(
 
             // Carl Menger's Saleability (Absatzfähigkeit): durable/universal goods carry a liquidity premium
             let liquidity_premium = |id: ItemId| -> f64 {
-                if id == ItemId::SHELLS || id == ItemId::SALT {
+                if id == ItemId::CLAY_TABLET {
+                    1.60 // High saleability promissory debt token / proto-paper currency
+                } else if id == ItemId::SHELLS || id == ItemId::SALT {
                     1.40 // High saleability commodity currency premium
                 } else if id == ItemId::GRAIN {
                     1.15 // Staple currency backup
@@ -303,7 +194,8 @@ pub fn perform_trade_and_services(
                 ).with_instance_id(ItemInstanceId::new(*next_instance_id));
                 *next_instance_id += 1;
 
-                let is_indirect = item_a == ItemId::SALT || item_a == ItemId::SHELLS || item_b == ItemId::SALT || item_b == ItemId::SHELLS;
+                let is_indirect = item_a == ItemId::SALT || item_a == ItemId::SHELLS || item_a == ItemId::CLAY_TABLET
+                    || item_b == ItemId::SALT || item_b == ItemId::SHELLS || item_b == ItemId::CLAY_TABLET;
 
                 let entry = LedgerEntry::new(
                     *next_trx_id,
@@ -332,7 +224,7 @@ pub fn perform_trade_and_services(
         }
     }
 
-    // Case D: Granary Storage Credit / Emergency Loan (Banking Seed)
+    // Case D: Granary Storage Credit / Emergency Loan (Banking Seed) & Promissory Debt Token Minting
     let mut credit_occurred = false;
     let loan_foods = [ItemId::FLATBREAD, ItemId::GRAIN, ItemId::CURED_MEAT, ItemId::SMOKED_MEAT, ItemId::CURED_FISH];
     if !medical_service_occurred && !knowledge_trade_occurred && !barter_occurred {
@@ -340,6 +232,7 @@ pub fn perform_trade_and_services(
             if let Some(&food_id) = loan_foods.iter().find(|&&f| b_inv.get(&f).copied().unwrap_or(0) >= 4) {
                 if let Some(agent_b) = agent_store.get_human_mut(agent_b_id) {
                     let _ = agent_b.remove_item(food_id, 2);
+                    agent_b.add_item(ItemId::CLAY_TABLET, 1); // Creditor receives promissory debt tablet
                 }
                 if let Some(agent_a) = agent_store.get_human_mut(agent_a_id) {
                     agent_a.add_item(food_id, 2);
@@ -357,6 +250,7 @@ pub fn perform_trade_and_services(
             if let Some(&food_id) = loan_foods.iter().find(|&&f| a_inv.get(&f).copied().unwrap_or(0) >= 4) {
                 if let Some(agent_a) = agent_store.get_human_mut(agent_a_id) {
                     let _ = agent_a.remove_item(food_id, 2);
+                    agent_a.add_item(ItemId::CLAY_TABLET, 1); // Creditor receives promissory debt tablet
                 }
                 if let Some(agent_b) = agent_store.get_human_mut(agent_b_id) {
                     agent_b.add_item(food_id, 2);
@@ -369,6 +263,43 @@ pub fn perform_trade_and_services(
                 *next_trx_id += 1;
                 let _ = ledger_store.record(entry);
                 credit_occurred = true;
+            }
+        }
+
+        // Redemption of Promissory Debt Tablet
+        if !credit_occurred {
+            if a_inv.contains_key(&ItemId::CLAY_TABLET) {
+                if let Some(&f) = loan_foods.iter().find(|&&f| b_inv.get(&f).copied().unwrap_or(0) >= 4) {
+                    if let Some(agent_a) = agent_store.get_human_mut(agent_a_id) {
+                        let _ = agent_a.remove_item(ItemId::CLAY_TABLET, 1);
+                        agent_a.add_item(f, 2);
+                    }
+                    if let Some(agent_b) = agent_store.get_human_mut(agent_b_id) {
+                        let _ = agent_b.remove_item(f, 2);
+                    }
+                    let entry = LedgerEntry::single(*next_trx_id, run_id.clone(), current_tick, agent_a_id, agent_b_id, None, None, serde_json::json!({
+                        "transaction_type": "promissory_tablet_redemption", "holder_id": agent_a_id.0, "redeemer_id": agent_b_id.0, "food_id": f.0
+                    }));
+                    *next_trx_id += 1;
+                    let _ = ledger_store.record(entry);
+                    credit_occurred = true;
+                }
+            } else if b_inv.contains_key(&ItemId::CLAY_TABLET) {
+                if let Some(&f) = loan_foods.iter().find(|&&f| a_inv.get(&f).copied().unwrap_or(0) >= 4) {
+                    if let Some(agent_b) = agent_store.get_human_mut(agent_b_id) {
+                        let _ = agent_b.remove_item(ItemId::CLAY_TABLET, 1);
+                        agent_b.add_item(f, 2);
+                    }
+                    if let Some(agent_a) = agent_store.get_human_mut(agent_a_id) {
+                        let _ = agent_a.remove_item(f, 2);
+                    }
+                    let entry = LedgerEntry::single(*next_trx_id, run_id.clone(), current_tick, agent_b_id, agent_a_id, None, None, serde_json::json!({
+                        "transaction_type": "promissory_tablet_redemption", "holder_id": agent_b_id.0, "redeemer_id": agent_a_id.0, "food_id": f.0
+                    }));
+                    *next_trx_id += 1;
+                    let _ = ledger_store.record(entry);
+                    credit_occurred = true;
+                }
             }
         }
     }

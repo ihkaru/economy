@@ -413,5 +413,8 @@ pub fn build_canonical_items() -> Vec<ItemDefinition> {
         ItemDefinition::new(ItemId::CHARCOAL, "Arang Kayu Piroteknologi (High-Heat Charcoal)", ItemCategory::Good,
             serde_json::json!({"historical_era": "Neolithic_Sedentary_Revolution", "unit": "kg", "utility_type": "RawMaterial", "description": "Bahan bakar pembakaran suhu tinggi"})
         ).with_weight(0.5).with_perishable(false),
+        ItemDefinition::new(ItemId::CLAY_TABLET, "Lempengan Tanah Liat Piutang (Promissory Debt Tablet)", ItemCategory::Currency,
+            serde_json::json!({"historical_era": "Proto_Historic_Currency", "unit": "keping", "utility_type": "MediumOfExchange", "liquidity": "High", "description": "Uang kredit purba bertuliskan kewajiban utang lumbung"})
+        ).with_weight(0.1).with_perishable(false),
     ]
 }

@@ -50,22 +50,24 @@ impl ExchangeSystem {
             if let Some(agent) = agent_store.get_human(*id) {
                 // Agents with leisure and metabolic energy reserves can experiment and discover ideas
                 if agent.calorie_reserve >= 4500.0 && agent.days_starving == 0 {
-                    // Raft building knowledge discovery (if holding Timber near water)
+                    // Raft building knowledge discovery (if holding Timber near river valley)
                     if agent.has_item(ItemId::TIMBER)
+                        && agent.location.y.abs_diff(25) <= 5
                         && !agent.has_item(ItemId::KNOWLEDGE_RAFT_BUILDING)
                         && rng.check_probability(0.005)
                     {
                         discoveries.push((*id, ItemId::KNOWLEDGE_RAFT_BUILDING, "Raft Construction Blueprint"));
                     }
-                    // Fish & meat curing knowledge discovery (if holding Salt or experienced in meat fire-curing)
-                    if (agent.has_item(ItemId::SALT) || (agent.has_item(ItemId::RAW_MEAT) && agent.has_item(ItemId::KNOWLEDGE_FIRE_MAKING)))
+                    // Fish & meat curing knowledge discovery (requires Salt as strictly in physical reality)
+                    if agent.has_item(ItemId::SALT)
                         && !agent.has_item(ItemId::KNOWLEDGE_FISH_CURING)
                         && rng.check_probability(0.005)
                     {
                         discoveries.push((*id, ItemId::KNOWLEDGE_FISH_CURING, "Salting & Fish Curing Preservation"));
                     }
-                    // Tool crafting knowledge discovery (if holding Timber)
-                    if agent.has_item(ItemId::TIMBER)
+                    // Tool crafting knowledge discovery (requires Stone + Timber for hafting)
+                    if agent.has_item(ItemId::STONE)
+                        && agent.has_item(ItemId::TIMBER)
                         && !agent.has_item(ItemId::KNOWLEDGE_TOOL_CRAFTING)
                         && rng.check_probability(0.005)
                     {

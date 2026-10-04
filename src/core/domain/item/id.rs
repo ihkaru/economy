@@ -31,6 +31,7 @@ impl ItemId {
     pub const GRAIN_FLOUR: ItemId = ItemId(125);
     pub const FLATBREAD: ItemId = ItemId(126);
     pub const CHARCOAL: ItemId = ItemId(127);
+    pub const CLAY_TABLET: ItemId = ItemId(128);
 
     // Non-rival Knowledge / Recipes
     pub const KNOWLEDGE_RAFT_BUILDING: ItemId = ItemId(201);
@@ -109,6 +110,7 @@ impl ItemId {
             Self::GRAIN_FLOUR => 0.5,
             Self::FLATBREAD => 0.3,
             Self::CHARCOAL => 0.5,
+            Self::CLAY_TABLET => 0.1,
             _ => 0.0,
         }
     }
