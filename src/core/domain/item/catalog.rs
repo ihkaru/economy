@@ -212,6 +212,52 @@ pub fn build_canonical_items() -> Vec<ItemDefinition> {
         .with_perishable(false),
 
         ItemDefinition::new(
+            ItemId::CLAY,
+            "Tanah Liat Halus Aluvial (Fine Alluvial Clay)",
+            ItemCategory::Good,
+            serde_json::json!({
+                "historical_era": "Neolithic_Sedentary_Revolution",
+                "unit": "kg",
+                "utility_type": "RawMaterial",
+                "description": "Lempung tanah liat aluvial untuk bahan baku tembikar gerabah"
+            }),
+        )
+        .with_weight(0.5)
+        .with_perishable(false),
+
+        ItemDefinition::new(
+            ItemId::POTTERY_JAR,
+            "Tempayan Gerabah Keramik (Ceramic Storage Pottery Jar)",
+            ItemCategory::Good,
+            serde_json::json!({
+                "historical_era": "Neolithic_Sedentary_Revolution",
+                "unit": "buah",
+                "utility_type": "CapitalTool",
+                "capacity_expansion_kg": 50.0,
+                "grain_storage_protect": true,
+                "recipe": {"clay": 4, "timber": 1},
+                "description": "Wadah keramik gerabah bakar: pelindung gandum dari hama & kelembapan (+50 kg kapasitas lumbung)"
+            }),
+        )
+        .with_weight(4.0)
+        .with_perishable(false),
+
+        ItemDefinition::new(
+            ItemId::KNOWLEDGE_POTTERY_MAKING,
+            "Gagasan Pembakaran Gerabah (Pottery Firing Blueprint)",
+            ItemCategory::Knowledge,
+            serde_json::json!({
+                "historical_era": "Neolithic_Sedentary_Revolution",
+                "unit": "idea",
+                "utility_type": "Skill",
+                "rivalry": "NonRival",
+                "description": "Gagasan teknologi pembentukan tanah liat dan pembakaran piroteknik wadah keramik"
+            }),
+        )
+        .with_weight(0.0)
+        .with_nature(ItemNature::NonRivalKnowledge),
+
+        ItemDefinition::new(
             ItemId::KNOWLEDGE_BASKET_WEAVING,
             "Gagasan Anyaman Wadah Angkut (Basket Weaving Blueprint)",
             ItemCategory::Knowledge,
@@ -272,136 +318,82 @@ pub fn build_canonical_items() -> Vec<ItemDefinition> {
         .with_nature(ItemNature::NonRivalKnowledge),
 
         ItemDefinition::new(
-            ItemId::SERVICE_TRANSPORT,
-            "Jasa Penyeberangan Air (Water Ferry Service)",
-            ItemCategory::Service,
+            ItemId::SERVICE_TRANSPORT, "Jasa Penyeberangan Air (Water Ferry Service)", ItemCategory::Service,
             serde_json::json!({
-                "historical_era": "Mesolithic_Aquatic_Revolution",
-                "unit": "trip",
-                "utility_type": "LaborTime",
-                "description": "Jasa memindahkan orang atau barang melintasi perairan menggunakan rakit"
+                "historical_era": "Mesolithic_Aquatic_Revolution", "unit": "trip",
+                "utility_type": "LaborTime", "description": "Jasa memindahkan orang atau barang melintasi perairan menggunakan rakit"
             }),
-        )
-        .with_weight(0.0)
-        .with_perishable(false),
+        ).with_weight(0.0).with_perishable(false),
 
         // Fase 4: Neolithic Preservation & Storage
         ItemDefinition::new(
-            ItemId::SALT,
-            "Garam Kristal Mineral (Rock Salt)",
-            ItemCategory::Good,
+            ItemId::SALT, "Garam Kristal Mineral (Rock Salt)", ItemCategory::Good,
             serde_json::json!({
-                "historical_era": "Neolithic_Preservation_Storage",
-                "unit": "kg",
-                "utility_type": "MediumOfExchange",
-                "liquidity": "High",
+                "historical_era": "Neolithic_Preservation_Storage", "unit": "kg",
+                "utility_type": "MediumOfExchange", "liquidity": "High",
                 "description": "Komoditas berdaya tahan tinggi, pengawet ikan, dan media perantara barter"
             }),
-        )
-        .with_weight(0.5)
-        .with_perishable(false),
+        ).with_weight(0.5).with_perishable(false),
 
         ItemDefinition::new(
-            ItemId::KNOWLEDGE_FISH_CURING,
-            "Gagasan Pengawetan & Pengasinan Ikan (Curing Blueprint)",
-            ItemCategory::Knowledge,
+            ItemId::KNOWLEDGE_FISH_CURING, "Gagasan Pengawetan & Pengasinan Ikan (Curing Blueprint)", ItemCategory::Knowledge,
             serde_json::json!({
-                "historical_era": "Neolithic_Preservation_Storage",
-                "unit": "idea",
-                "utility_type": "Skill",
-                "rivalry": "NonRival",
+                "historical_era": "Neolithic_Preservation_Storage", "unit": "idea",
+                "utility_type": "Skill", "rivalry": "NonRival",
                 "description": "Gagasan teknologi memperpanjang daya simpan protein hewani menggunakan garam"
             }),
-        )
-        .with_weight(0.0)
-        .with_nature(ItemNature::NonRivalKnowledge),
+        ).with_weight(0.0).with_nature(ItemNature::NonRivalKnowledge),
 
         // Fase 5: Neolithic Division of Labor & Services
         ItemDefinition::new(
-            ItemId::SERVICE_EDUCATION,
-            "Jasa Pendidikan & Bimbingan Magang (Apprenticeship Tutoring)",
-            ItemCategory::Service,
+            ItemId::SERVICE_EDUCATION, "Jasa Pendidikan & Bimbingan Magang (Apprenticeship Tutoring)", ItemCategory::Service,
             serde_json::json!({
-                "historical_era": "Neolithic_Division_Of_Labor",
-                "unit": "session",
-                "utility_type": "Skill",
-                "description": "Waktu kerja guru untuk mentransfer pengetahuan non-rival kepada murid"
+                "historical_era": "Neolithic_Division_Of_Labor", "unit": "session",
+                "utility_type": "Skill", "description": "Waktu kerja guru untuk mentransfer pengetahuan non-rival kepada murid"
             }),
-        )
-        .with_weight(0.0)
-        .with_perishable(false),
+        ).with_weight(0.0).with_perishable(false),
 
         ItemDefinition::new(
-            ItemId::SERVICE_MEDICAL,
-            "Jasa Perawatan & Pemulihan Sakit (Caregiving & Healing)",
-            ItemCategory::Service,
+            ItemId::SERVICE_MEDICAL, "Jasa Perawatan & Pemulihan Sakit (Caregiving & Healing)", ItemCategory::Service,
             serde_json::json!({
-                "historical_era": "Neolithic_Division_Of_Labor",
-                "unit": "treatment",
-                "utility_type": "LaborTime",
-                "description": "Jasa merawat agen lapar atau sakit untuk memulihkan kesehatan dan mencegah kematian"
+                "historical_era": "Neolithic_Division_Of_Labor", "unit": "treatment",
+                "utility_type": "LaborTime", "description": "Jasa merawat agen lapar atau sakit untuk memulihkan kesehatan"
             }),
-        )
-        .with_weight(0.0)
-        .with_perishable(false),
+        ).with_weight(0.0).with_perishable(false),
 
         ItemDefinition::new(
-            ItemId::KNOWLEDGE_HERBAL_MEDICINE,
-            "Gagasan Ramuan Obat Tradisional (Herbal Medicine Blueprint)",
-            ItemCategory::Knowledge,
+            ItemId::KNOWLEDGE_HERBAL_MEDICINE, "Gagasan Ramuan Obat Tradisional (Herbal Medicine Blueprint)", ItemCategory::Knowledge,
             serde_json::json!({
-                "historical_era": "Neolithic_Division_Of_Labor",
-                "unit": "idea",
-                "utility_type": "Skill",
-                "rivalry": "NonRival",
-                "description": "Gagasan teknologi identifikasi flora obat dan peracikan ramuan untuk menyembuhkan penyakit"
+                "historical_era": "Neolithic_Division_Of_Labor", "unit": "idea",
+                "utility_type": "Skill", "rivalry": "NonRival",
+                "description": "Gagasan teknologi identifikasi flora obat dan peracikan ramuan"
             }),
-        )
-        .with_weight(0.0)
-        .with_nature(ItemNature::NonRivalKnowledge),
+        ).with_weight(0.0).with_nature(ItemNature::NonRivalKnowledge),
 
         // Fase 6: Proto-Historic Currency & CPR Institutions
         ItemDefinition::new(
-            ItemId::SHELLS,
-            "Cangkang Kerang Cowrie (Cowrie Shells)",
-            ItemCategory::Currency,
+            ItemId::SHELLS, "Cangkang Kerang Cowrie (Cowrie Shells)", ItemCategory::Currency,
             serde_json::json!({
-                "historical_era": "Proto_Historic_Currency",
-                "unit": "biji",
-                "utility_type": "MediumOfExchange",
-                "liquidity": "High",
+                "historical_era": "Proto_Historic_Currency", "unit": "biji",
+                "utility_type": "MediumOfExchange", "liquidity": "High",
                 "description": "Uang komoditas purba: ringan, seragam, tahan lama, dan diterima luas"
             }),
-        )
-        .with_weight(0.05)
-        .with_perishable(false),
+        ).with_weight(0.05).with_perishable(false),
 
         ItemDefinition::new(
-            ItemId::PERMIT_FISHING_RIGHT,
-            "Izin Hak Akses Perikanan (Fishing Access Right)",
-            ItemCategory::Permit,
+            ItemId::PERMIT_FISHING_RIGHT, "Izin Hak Akses Perikanan (Fishing Access Right)", ItemCategory::Permit,
             serde_json::json!({
-                "historical_era": "Proto_Historic_Currency",
-                "unit": "concession",
-                "utility_type": "InstitutionalRight",
-                "description": "Hak institusional pemanfaatan sumber daya perairan bersama (CPR regime)"
+                "historical_era": "Proto_Historic_Currency", "unit": "concession",
+                "utility_type": "InstitutionalRight", "description": "Hak institusional pemanfaatan sumber daya perairan bersama"
             }),
-        )
-        .with_weight(0.0)
-        .with_nature(ItemNature::InstitutionalRight),
+        ).with_weight(0.0).with_nature(ItemNature::InstitutionalRight),
 
         ItemDefinition::new(
-            ItemId::PERMIT_FORESTRY_RIGHT,
-            "Izin Konsesi Pemanfaatan Hutan (Forestry Concession)",
-            ItemCategory::Permit,
+            ItemId::PERMIT_FORESTRY_RIGHT, "Izin Konsesi Pemanfaatan Hutan (Forestry Concession)", ItemCategory::Permit,
             serde_json::json!({
-                "historical_era": "Proto_Historic_Currency",
-                "unit": "concession",
-                "utility_type": "InstitutionalRight",
-                "description": "Hak institusional penebangan kayu pada zona hutan adat tertentu"
+                "historical_era": "Proto_Historic_Currency", "unit": "concession",
+                "utility_type": "InstitutionalRight", "description": "Hak institusional penebangan kayu pada zona hutan adat"
             }),
-        )
-        .with_weight(0.0)
-        .with_nature(ItemNature::InstitutionalRight),
+        ).with_weight(0.0).with_nature(ItemNature::InstitutionalRight),
     ]
 }

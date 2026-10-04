@@ -118,6 +118,11 @@ impl MetabolismSystem {
                 if agent.has_item(ItemId::BERRIES) && rng.check_probability(0.05) {
                     let _ = agent.remove_item(ItemId::BERRIES, 1);
                 }
+                // Stored grain damp & pest decay: Grain without sealed pottery jar rots slowly (0.1% daily decay chance)
+                let has_pottery = agent.has_item(ItemId::POTTERY_JAR);
+                if !has_pottery && agent.has_item(ItemId::GRAIN) && rng.check_probability(0.001) {
+                    let _ = agent.remove_item(ItemId::GRAIN, 1);
+                }
 
                 // Material Entropy Spectrum: Passive Organic Aging & Weathering Decay
                 // (Inorganic goods like Stone Axe, Shells, and Salt do NOT suffer passive decay and last decades/centuries)
@@ -135,6 +140,9 @@ impl MetabolismSystem {
                 }
                 if agent.has_item(ItemId::HERBAL_MEDICINE) && rng.check_probability(0.003) {
                     let _ = agent.remove_item(ItemId::HERBAL_MEDICINE, 1);
+                }
+                if agent.has_item(ItemId::POTTERY_JAR) && rng.check_probability(0.0005) {
+                    let _ = agent.remove_item(ItemId::POTTERY_JAR, 1);
                 }
             }
 

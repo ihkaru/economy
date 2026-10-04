@@ -74,6 +74,7 @@ pub fn perform_autonomous_crafting(
                 ItemId::HERBAL_MEDICINE => is_sick || current_holding < 2,
                 ItemId::CURED_FISH | ItemId::SMOKED_FISH => current_holding < 8,
                 ItemId::DRIED_BERRIES => current_holding < 6,
+                ItemId::POTTERY_JAR => current_holding < 2,
                 _ => current_holding < 3,
             };
 

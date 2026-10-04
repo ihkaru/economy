@@ -40,11 +40,14 @@ pub fn evaluate_marginal_utility(item_id: ItemId, calorie_reserve: f64, current_
         ItemId::STONE_AXE => 120.0,
         ItemId::FISHING_NET => 110.0,
         ItemId::SHELLS => 40.0,
+        ItemId::CLAY => 25.0,
+        ItemId::POTTERY_JAR => 160.0,
         // Non-rival Knowledge blueprints
         ItemId::KNOWLEDGE_RAFT_BUILDING => 200.0,
         ItemId::KNOWLEDGE_TOOL_CRAFTING => 180.0,
         ItemId::KNOWLEDGE_FISH_CURING => 120.0,
         ItemId::KNOWLEDGE_FIRE_MAKING => 100.0,
+        ItemId::KNOWLEDGE_POTTERY_MAKING => 150.0,
         // Institutional Permits
         ItemId::PERMIT_FISHING_RIGHT => 80.0,
         ItemId::PERMIT_FORESTRY_RIGHT => 80.0,

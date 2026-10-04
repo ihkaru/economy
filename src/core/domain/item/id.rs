@@ -18,6 +18,8 @@ impl ItemId {
     pub const CURED_FISH: ItemId = ItemId(112);
     pub const DRIED_BERRIES: ItemId = ItemId(113);
     pub const SMOKED_FISH: ItemId = ItemId(114);
+    pub const CLAY: ItemId = ItemId(115);
+    pub const POTTERY_JAR: ItemId = ItemId(116);
 
     // Non-rival Knowledge / Recipes
     pub const KNOWLEDGE_RAFT_BUILDING: ItemId = ItemId(201);
@@ -26,6 +28,7 @@ impl ItemId {
     pub const KNOWLEDGE_TOOL_CRAFTING: ItemId = ItemId(204);
     pub const KNOWLEDGE_HERBAL_MEDICINE: ItemId = ItemId(205);
     pub const KNOWLEDGE_BASKET_WEAVING: ItemId = ItemId(206);
+    pub const KNOWLEDGE_POTTERY_MAKING: ItemId = ItemId(207);
 
     // Institutional Permits / Concessions
     pub const PERMIT_FISHING_RIGHT: ItemId = ItemId(301);
@@ -62,7 +65,7 @@ impl ItemId {
     }
 
     pub fn is_tool(&self) -> bool {
-        matches!(*self, Self::RAFT | Self::STONE_AXE | Self::FISHING_NET | Self::WOVEN_BASKET)
+        matches!(*self, Self::RAFT | Self::STONE_AXE | Self::FISHING_NET | Self::WOVEN_BASKET | Self::POTTERY_JAR)
     }
 
     pub fn default_weight_kg(&self) -> f64 {
@@ -81,6 +84,8 @@ impl ItemId {
             Self::CURED_FISH => 0.4,
             Self::DRIED_BERRIES => 0.1,
             Self::SMOKED_FISH => 0.4,
+            Self::CLAY => 0.5,
+            Self::POTTERY_JAR => 4.0,
             _ => 0.0,
         }
     }

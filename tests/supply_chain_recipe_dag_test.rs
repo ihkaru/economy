@@ -14,7 +14,7 @@ use economy::core::systems::exchange::perform_autonomous_crafting;
 #[test]
 fn test_canonical_recipe_registry_specifications() {
     let registry = RecipeRegistry::canonical();
-    assert_eq!(registry.all().len(), 8, "Expected 8 canonical recipes");
+    assert_eq!(registry.all().len(), 9, "Expected 9 canonical recipes");
 
     let cured_fish_recipe = registry.get_recipe(6).expect("Recipe 6 (Cured Fish) should exist");
     assert_eq!(cured_fish_recipe.name, "Salt-Cured Preserved Fish");
@@ -29,6 +29,13 @@ fn test_canonical_recipe_registry_specifications() {
     assert_eq!(smoked_fish_recipe.name, "Wood-Smoked Preserved Fish");
     assert_eq!(smoked_fish_recipe.required_knowledge, Some(ItemId::KNOWLEDGE_FIRE_MAKING));
     assert_eq!(smoked_fish_recipe.outputs[0].item_id, ItemId::SMOKED_FISH);
+
+    let pottery_recipe = registry.get_recipe(9).expect("Recipe 9 (Pottery Jar) should exist");
+    assert_eq!(pottery_recipe.name, "Ceramic Storage Pottery Jar");
+    assert_eq!(pottery_recipe.category, "ceramic_storage");
+    assert_eq!(pottery_recipe.required_knowledge, Some(ItemId::KNOWLEDGE_POTTERY_MAKING));
+    assert_eq!(pottery_recipe.outputs[0].item_id, ItemId::POTTERY_JAR);
+    assert_eq!(pottery_recipe.outputs[0].quantity, 1);
 }
 
 #[test]
@@ -80,4 +87,52 @@ fn test_autonomous_crafting_execution_and_leontief_consumption() {
     assert_eq!(entries.len(), 1, "1 crafting transaction in ledger");
     assert_eq!(entries[0].metadata.get("transaction_type").unwrap(), "food_preservation");
     assert_eq!(entries[0].metadata.get("product_name").unwrap(), "Salt-Cured Preserved Fish");
+}
+
+#[test]
+fn test_pottery_jar_crafting_and_storage_expansion() {
+    let mut agent_store = MemoryAgentStore::new();
+    let mut ledger_store = MemoryLedgerStore::new();
+    let mut rng = ChaChaRngAdapter::new(42);
+
+    let agent_id = AgentId::new(102);
+    let mut agent = Human::new(agent_id, Sex::Female, Tick::ZERO)
+        .with_initial_age(20 * 365)
+        .with_calories(6000.0)
+        .with_location(GeoCoordinate::new(15, 26));
+
+    assert_eq!(agent.carrying_capacity_kg(), 25.0, "Base capacity is 25 kg");
+
+    // Give materials: 4 Clay + 1 Timber + Pottery Knowledge
+    agent.add_item(ItemId::CLAY, 4);
+    agent.add_item(ItemId::TIMBER, 1);
+    agent.add_item(ItemId::KNOWLEDGE_POTTERY_MAKING, 1);
+
+    agent_store.insert_human(agent);
+
+    let living_ids = vec![agent_id];
+    let run_id = RunId::new("test_pottery_chain");
+    let mut next_trx_id = 1;
+    let mut next_instance_id = 1;
+
+    perform_autonomous_crafting(
+        &run_id,
+        Tick(1),
+        &living_ids,
+        &mut agent_store,
+        &mut ledger_store,
+        &mut rng,
+        &mut next_trx_id,
+        &mut next_instance_id,
+    );
+
+    let agent = agent_store.get_human(agent_id).unwrap();
+    assert_eq!(agent.inventory.get(&ItemId::CLAY).copied().unwrap_or(0), 0, "Clay consumed");
+    assert_eq!(agent.inventory.get(&ItemId::TIMBER).copied().unwrap_or(0), 0, "Timber consumed");
+    assert_eq!(agent.inventory.get(&ItemId::POTTERY_JAR).copied().unwrap_or(0), 1, "Pottery jar produced");
+    assert_eq!(agent.carrying_capacity_kg(), 75.0, "Capacity expanded from 25 kg to 75 kg (+50 kg granary jar)");
+
+    let entries = ledger_store.all_entries();
+    assert_eq!(entries.len(), 1);
+    assert_eq!(entries[0].metadata.get("transaction_type").unwrap(), "ceramic_storage");
 }

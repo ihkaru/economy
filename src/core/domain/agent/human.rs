@@ -135,10 +135,12 @@ impl Human {
     }
 
     /// Physical carrying capacity limit: base 25.0 kg, expanded by woven baskets (+25 kg each, up to 75 kg)
+    /// and sedentary granary pottery jars (+50 kg each, up to 175 kg total)
     pub fn carrying_capacity_kg(&self) -> f64 {
         let base = 25.0;
         let baskets = self.inventory.get(&ItemId::WOVEN_BASKET).copied().unwrap_or(0);
-        base + (baskets as f64 * 25.0).min(50.0)
+        let jars = self.inventory.get(&ItemId::POTTERY_JAR).copied().unwrap_or(0);
+        base + (baskets as f64 * 25.0).min(50.0) + (jars as f64 * 50.0).min(100.0)
     }
 
     pub fn can_carry_additional_weight(&self, additional_kg: f64) -> bool {

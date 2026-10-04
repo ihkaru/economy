@@ -93,6 +93,15 @@ impl ExchangeSystem {
                     {
                         discoveries.push((*id, ItemId::KNOWLEDGE_FIRE_MAKING, "Fire-Making Technique"));
                     }
+                    // Ceramic pottery pyrotechnology discovery (if holding Clay + Timber and knowing Fire-Making)
+                    if agent.has_item(ItemId::CLAY)
+                        && agent.has_item(ItemId::TIMBER)
+                        && agent.has_item(ItemId::KNOWLEDGE_FIRE_MAKING)
+                        && !agent.has_item(ItemId::KNOWLEDGE_POTTERY_MAKING)
+                        && rng.check_probability(0.03)
+                    {
+                        discoveries.push((*id, ItemId::KNOWLEDGE_POTTERY_MAKING, "Ceramic Pottery Firing Technique"));
+                    }
                 }
             }
         }

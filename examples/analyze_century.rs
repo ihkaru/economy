@@ -21,12 +21,15 @@ fn item_meta(id: u64) -> (&'static str, &'static str) {
         112 => ("Salt-Cured Preserved Fish", "Good (Preserved Food)"),
         113 => ("Sun-Dried Desiccated Berries", "Good (Preserved Food)"),
         114 => ("Wood-Smoked Preserved Fish", "Good (Preserved Food)"),
+        115 => ("Fine Alluvial Clay", "Good (Raw Material)"),
+        116 => ("Ceramic Storage Pottery Jar", "Capital (Granary Storage Container)"),
         201 => ("Raft Building Blueprint", "Knowledge (Non-Rival Blueprint)"),
         202 => ("Fish Curing Preservation", "Knowledge (Non-Rival Technique)"),
         203 => ("Fire-Making Technique", "Knowledge (Non-Rival Technique)"),
         204 => ("Tool Crafting Blueprint", "Knowledge (Non-Rival Blueprint)"),
         205 => ("Herbal Medicine Blueprint", "Knowledge (Non-Rival Blueprint)"),
         206 => ("Basket Weaving Blueprint", "Knowledge (Non-Rival Blueprint)"),
+        207 => ("Pottery Making Blueprint", "Knowledge (Non-Rival Blueprint)"),
         301 => ("Fishing Right Permit", "Permit (Institutional Right)"),
         302 => ("Forestry Right Permit", "Permit (Institutional Right)"),
         401 => ("Manual Labor Service", "Service (Intangible Man-Hour)"),
@@ -232,7 +235,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     *trx_breakdown.entry(t.to_string()).or_insert(0) += 1;
 
                     match t {
-                        "capital_tool_production" | "container_crafting" | "food_preservation" => {
+                        "capital_tool_production" | "container_crafting" | "food_preservation" | "ceramic_storage" => {
                             if let Some(tool) = val.get("tool_crafted").or_else(|| val.get("product_name")).and_then(|v| v.as_str()) {
                                 *tools_crafted.entry(tool.to_string()).or_insert(0) += 1;
                                 let tid = match tool {
@@ -243,6 +246,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                                     "Salt-Cured Preserved Fish" | "Salt-Cured Fish" => 112,
                                     "Sun-Dried Desiccated Berries" | "Sun-Dried Berries" => 113,
                                     "Wood-Smoked Preserved Fish" | "Wood-Smoked Fish" => 114,
+                                    "Ceramic Storage Pottery Jar" | "Ceramic Pottery Jar" | "Pottery Jar" => 116,
                                     _ => 0,
                                 };
                                 if tid > 0 {
@@ -266,6 +270,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                                     "Tool Crafting Blueprint" => 204,
                                     "Herbal Medicine Blueprint" => 205,
                                     "Basket Weaving Blueprint" => 206,
+                                    "Ceramic Pottery Firing Technique" | "Pottery Firing Blueprint" => 207,
                                     _ => 0,
                                 };
                                 if kid > 0 {
@@ -379,8 +384,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("│ Mesolitik                  │ Jaring Ikan Anyam, Garam Pengawet,   │ Jaring(109), Garam(105),     │ Busur & Panah, Jebakan Ikan, │");
     println!("│ (10.000 - 8.000 BP)        │ Ikan Asin Kering, Wadah Anyam        │ Wadah Anyam (111), Kerang    │ Pengasapan Ikan Lanjut       │");
     println!("├────────────────────────────┼──────────────────────────────────────┼──────────────────────────────┼──────────────────────────────┤");
-    println!("│ Neolitik                   │ Gandum Tanam, Gerabah/Tembikar,      │ Gandum (103), Jasa Magang    │ Tempayan Gerabah (Pottery),  │");
-    println!("│ (8.000 - 4.000 BP)         │ Hewan Ternak Domestik, Tenun Tekstil │ Pendidikan (402)             │ Sabit Batu, Ternak Domba/Sapi│");
+    println!("│ Neolitik                   │ Gandum Tanam, Gerabah/Tembikar,      │ Gandum (103), Tempayan (116) │ Sabit Batu, Domestikasi      │");
+    println!("│ (8.000 - 4.000 BP)         │ Hewan Ternak Domestik, Tenun Tekstil │ Pendidikan (402)             │ Hewan Ternak, Tenun Tekstil  │");
     println!("├────────────────────────────┼──────────────────────────────────────┼──────────────────────────────┼──────────────────────────────┤");
     println!("│ Logam & Perunggu Awal      │ Peleburan Tembaga/Perunggu, Sabit,   │ Hak Institusi (301, 302),    │ Tungku Smelter, Biji Tembaga,│");
     println!("│ (4.000 - 1.200 BP)         │ Gerobak Roda, Farmakope, Pembukuan   │ Buku Besar Ledger Kas        │ Alat Perunggu, Gerobak Kayu  │");
@@ -412,7 +417,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let nets_held = *living_inventory_totals.get("109").unwrap_or(&0);
     let rafts_held = *living_inventory_totals.get("106").unwrap_or(&0);
     let baskets_held = *living_inventory_totals.get("111").unwrap_or(&0);
-    let total_tools_held = axes_held + nets_held + rafts_held + baskets_held;
+    let jars_held = *living_inventory_totals.get("116").unwrap_or(&0);
+    let total_tools_held = axes_held + nets_held + rafts_held + baskets_held + jars_held;
     let tools_per_capita = if alive_count > 0 { total_tools_held as f64 / alive_count as f64 } else { 0.0 };
 
     println!("\n======================================================================");

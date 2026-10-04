@@ -123,6 +123,21 @@ impl RecipeRegistry {
                 0.0,
                 80.0,
             ),
+            // 9. Neolithic Ceramic Pyrotechnology: Ceramic Storage Pottery Jar
+            ProductionRecipe::new(
+                9,
+                "Ceramic Storage Pottery Jar",
+                "ceramic_storage",
+                &[
+                    RecipeIngredient { item_id: ItemId::CLAY, quantity: 4 },
+                    RecipeIngredient { item_id: ItemId::TIMBER, quantity: 1 },
+                ],
+                &[RecipeIngredient { item_id: ItemId::POTTERY_JAR, quantity: 1 }],
+                Some(ItemId::KNOWLEDGE_POTTERY_MAKING),
+                None,
+                0.0,
+                200.0,
+            ),
         ])
     }
 }
