@@ -34,11 +34,27 @@ impl AgentStorePort for MemoryAgentStore {
         self.agents.keys().copied().collect()
     }
 
+    fn living_human_ids(&self) -> Vec<AgentId> {
+        self.agents.values().filter(|a| a.is_alive()).map(|a| a.id).collect()
+    }
+
     fn count_alive(&self) -> usize {
         self.agents.values().filter(|a| a.is_alive()).count()
     }
 
+    fn count_total(&self) -> usize {
+        self.agents.len()
+    }
+
     fn get_all_humans(&self) -> Vec<Human> {
         self.agents.values().cloned().collect()
+    }
+
+    fn iter_humans(&self) -> Box<dyn Iterator<Item = &Human> + '_> {
+        Box::new(self.agents.values())
+    }
+
+    fn iter_living_humans(&self) -> Box<dyn Iterator<Item = &Human> + '_> {
+        Box::new(self.agents.values().filter(|a| a.is_alive()))
     }
 }

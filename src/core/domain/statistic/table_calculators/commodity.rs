@@ -1,7 +1,4 @@
 use std::collections::BTreeMap;
-
-use crate::core::domain::agent::human::Human;
-use crate::core::domain::agent::traits::HasLifecycle;
 use crate::core::domain::item::id::ItemId;
 use crate::core::domain::statistic::calculator::StatisticContext;
 use crate::core::domain::statistic::table::{
@@ -33,15 +30,13 @@ impl StatisticalTableCalculator for CommodityCirculationTableCalculator {
         )
         .with_subtitle(format!("Waktu Simulasi: Tick {} (Hari)", ctx.current_tick.0));
 
-        let all_humans = ctx.agents.get_all_humans();
-        let living_humans: Vec<&Human> = all_humans.iter().filter(|h| h.is_alive()).collect();
-        let living_pop = living_humans.len();
-
-        // 1. Count circulating items and max concentration across living agents
+        // 1. Count circulating items and max concentration across living agents (Zero-Copy Iterator)
         let mut circulating_counts: BTreeMap<ItemId, u32> = BTreeMap::new();
         let mut max_single_holdings: BTreeMap<ItemId, u32> = BTreeMap::new();
+        let mut living_pop = 0;
 
-        for h in &living_humans {
+        for h in ctx.agents.iter_living_humans() {
+            living_pop += 1;
             for (id, qty) in &h.inventory {
                 *circulating_counts.entry(*id).or_insert(0) += qty;
                 let current_max = max_single_holdings.entry(*id).or_insert(0);

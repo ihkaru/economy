@@ -124,35 +124,53 @@ where
             1_000_000_000_u64.checked_div(tps).map(Duration::from_nanos)
         });
 
-        for _ in 0..self.config.total_ticks {
+        let heartbeat_interval = (self.config.total_ticks / 20).max(365).min(3650);
+        let mut last_heartbeat_time = Instant::now();
+        let mut last_heartbeat_tick = 0_u64;
+
+        let mut time_env = Duration::ZERO;
+        let mut time_metabolism = Duration::ZERO;
+        let mut time_lifecycle = Duration::ZERO;
+        let mut time_exchange = Duration::ZERO;
+        let mut time_statistic = Duration::ZERO;
+
+        for tick_idx in 0..self.config.total_ticks {
+            let tick_num = tick_idx + 1;
             let tick_start = Instant::now();
             let current_tick = self.clock.advance_tick();
 
             // 1. Environment System (Seasons, Weather, Wind, Natural Resource Regeneration/Decay)
+            let t0 = Instant::now();
             self.environment_system.step(
                 current_tick,
                 self.config.tick_duration,
                 &mut self.env_store,
                 &mut self.rng,
             );
+            time_env += t0.elapsed();
 
             // 2. Metabolism System (Daily Caloric Burn, Survival Foraging, Starvation Hazard)
+            let t1 = Instant::now();
             self.metabolism_system.step(
                 current_tick,
                 &mut self.agent_store,
                 &mut self.env_store,
                 &mut self.rng,
             );
+            time_metabolism += t1.elapsed();
 
             // 3. Lifecycle System (Aging, Marriage, Birth, Natural Mortality)
+            let t2 = Instant::now();
             self.lifecycle_system.step(
                 current_tick,
                 self.config.tick_duration,
                 &mut self.agent_store,
                 &mut self.rng,
             );
+            time_lifecycle += t2.elapsed();
 
             // 4. Exchange System (Resource Harvesting, Supply Chain Trading, Boat Crafting, Ultimate Ledger)
+            let t3 = Instant::now();
             self.exchange_system.step(
                 &self.config.run_id,
                 current_tick,
@@ -162,8 +180,10 @@ where
                 &self.stat_store,
                 &mut self.rng,
             );
+            time_exchange += t3.elapsed();
 
             // 5. Statistic System (Scheduled Indicator Calculations & Data Transparency Publications)
+            let t4 = Instant::now();
             self.statistic_system.step(
                 current_tick,
                 &self.clock,
@@ -172,6 +192,7 @@ where
                 &self.env_store,
                 &mut self.stat_store,
             );
+            time_statistic += t4.elapsed();
 
             // Rate-limiting pacing if requested
             if let Some(target_dur) = target_frame_duration {
@@ -179,6 +200,26 @@ where
                 if elapsed < target_dur {
                     thread::sleep(target_dur - elapsed);
                 }
+            }
+
+            // Periodic Live Observability Heartbeat
+            if tick_num % heartbeat_interval == 0 || tick_num == self.config.total_ticks {
+                let pct = (tick_num as f64 / self.config.total_ticks as f64) * 100.0;
+                let current_year = (current_tick.0 as f64) / 365.0;
+                let living = self.agent_store.count_alive();
+                let total_pop = self.agent_store.count_total();
+                let delta_ticks = tick_num.saturating_sub(last_heartbeat_tick);
+                let delta_secs = last_heartbeat_time.elapsed().as_secs_f64();
+                let inst_tps = if delta_secs > 0.0 { delta_ticks as f64 / delta_secs } else { 0.0 };
+                let remaining_ticks = self.config.total_ticks.saturating_sub(tick_num);
+                let eta_secs = if inst_tps > 0.0 { remaining_ticks as f64 / inst_tps } else { 0.0 };
+
+                println!(
+                    "⏱️  [Year {:>4.0} | Tick {:>6} ({:>5.1}%)] Living: {:>3} | Total: {:>4} | Speed: {:>6.0} TPS | ETA: {:>4.1}s",
+                    current_year, current_tick.0, pct, living, total_pop, inst_tps, eta_secs
+                );
+                last_heartbeat_tick = tick_num;
+                last_heartbeat_time = Instant::now();
             }
         }
 
@@ -189,6 +230,27 @@ where
         } else {
             0.0
         };
+
+        // Engine Micro-Profiling Performance Breakdown
+        let total_sys_time = (time_env + time_metabolism + time_lifecycle + time_exchange + time_statistic).as_secs_f64();
+        let pct_of = |d: Duration| if total_sys_time > 0.0 { (d.as_secs_f64() / total_sys_time) * 100.0 } else { 0.0 };
+        let avg_us = |d: Duration| (d.as_secs_f64() * 1_000_000.0) / self.config.total_ticks.max(1) as f64;
+
+        println!("\n======================================================================");
+        println!("⏱️  ENGINE SUBSYSTEM PROFILING & OBSERVABILITY BREAKDOWN");
+        println!("======================================================================");
+        println!("┌────────────────────────────┬──────────────┬────────────┬───────────────────┐");
+        println!("│ Subsystem Component        │ Total Time   │ Share (%)  │ Avg Latency/Tick  │");
+        println!("├────────────────────────────┼──────────────┼────────────┼───────────────────┤");
+        println!("│ ExchangeSystem             │ {:>10.2} s │ {:>9.1}% │ {:>13.3} µs │", time_exchange.as_secs_f64(), pct_of(time_exchange), avg_us(time_exchange));
+        println!("│ MetabolismSystem           │ {:>10.2} s │ {:>9.1}% │ {:>13.3} µs │", time_metabolism.as_secs_f64(), pct_of(time_metabolism), avg_us(time_metabolism));
+        println!("│ StatisticSystem            │ {:>10.2} s │ {:>9.1}% │ {:>13.3} µs │", time_statistic.as_secs_f64(), pct_of(time_statistic), avg_us(time_statistic));
+        println!("│ LifecycleSystem            │ {:>10.2} s │ {:>9.1}% │ {:>13.3} µs │", time_lifecycle.as_secs_f64(), pct_of(time_lifecycle), avg_us(time_lifecycle));
+        println!("│ EnvironmentSystem          │ {:>10.2} s │ {:>9.1}% │ {:>13.3} µs │", time_env.as_secs_f64(), pct_of(time_env), avg_us(time_env));
+        println!("├────────────────────────────┼──────────────┼────────────┼───────────────────┤");
+        println!("│ Pure Subsystem Computation │ {:>10.2} s │    100.0%  │ {:>13.3} µs │", total_sys_time, (total_sys_time * 1_000_000.0) / self.config.total_ticks.max(1) as f64);
+        println!("│ Total Wall-Clock Execution │ {:>10.2} s │         -  │ {:>13.3} µs │", wall_duration_secs, (wall_duration_secs * 1_000_000.0) / self.config.total_ticks.max(1) as f64);
+        println!("└────────────────────────────┴──────────────┴────────────┴───────────────────┘");
 
         // Export in-memory state, ledger, and statistical publications to Apache Parquet
         let all_humans = self.agent_store.get_all_humans();

@@ -1,5 +1,4 @@
-use crate::core::domain::agent::human::{Human, Sex};
-use crate::core::domain::agent::traits::HasLifecycle;
+use crate::core::domain::agent::human::Sex;
 use crate::core::domain::statistic::calculator::StatisticContext;
 use crate::core::domain::statistic::table::{
     ColumnAlignment, StatisticalTable, TableCell, TableColumn, TableRow, TableSummaryRow,
@@ -29,10 +28,8 @@ impl StatisticalTableCalculator for DemographicCohortTableCalculator {
         )
         .with_subtitle(format!("Waktu Simulasi: Tick {} (Hari)", ctx.current_tick.0));
 
-        let all_humans = ctx.agents.get_all_humans();
-        let total_historical = all_humans.len();
-        let living_humans: Vec<&Human> = all_humans.iter().filter(|h| h.is_alive()).collect();
-        let living_total = living_humans.len();
+        let living_total = ctx.agents.count_alive();
+        let total_historical = ctx.agents.count_total();
         let deceased_count = total_historical.saturating_sub(living_total);
 
         // Cohort definition buckets:
@@ -90,7 +87,7 @@ impl StatisticalTableCalculator for DemographicCohortTableCalculator {
         let mut total_living_calories = 0.0;
         let mut total_married = 0;
 
-        for h in &living_humans {
+        for h in ctx.agents.iter_living_humans() {
             let age_years = (h.age_ticks as f64) / 365.0;
             total_age_years += age_years;
             total_living_calories += h.calorie_reserve;

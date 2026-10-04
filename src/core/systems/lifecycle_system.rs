@@ -24,18 +24,20 @@ impl LifecycleSystem {
         agent_store: &mut dyn AgentStorePort,
         rng: &mut dyn RngPort,
     ) {
-        let all_ids = agent_store.all_human_ids();
+        let living_ids = agent_store.living_human_ids();
         let fractional_years = tick_duration.fractional_years();
 
         // 1. Advance age for all living agents
-        for id in &all_ids {
-            if let Some(agent) = agent_store.get_human_mut(*id).filter(|a| a.is_alive()) {
-                agent.step_age(1);
+        for id in &living_ids {
+            if let Some(agent) = agent_store.get_human_mut(*id) {
+                if agent.is_alive() {
+                    agent.step_age(1);
+                }
             }
         }
 
         // 2. Mortality Check (Gompertz-Makeham hazard model)
-        for id in &all_ids {
+        for id in &living_ids {
             if let Some(agent) = agent_store.get_human_mut(*id) {
                 if !agent.is_alive() {
                     continue;
@@ -59,7 +61,7 @@ impl LifecycleSystem {
 
         // 3. Estate Settlement & Widow Remarriage Clearance
         // Settle inventory inheritance and free surviving spouses for remarriage (only for agents deceased on current_tick)
-        for id in &all_ids {
+        for id in &living_ids {
             let (is_deceased, spouse_opt, children, inventory_items) = match agent_store.get_human(*id) {
                 Some(agent) if !agent.is_alive() && agent.death_tick() == Some(current_tick) => (
                     true,
@@ -120,13 +122,13 @@ impl LifecycleSystem {
         let mut eligible_males = Vec::new();
         let mut eligible_females = Vec::new();
 
-        for id in agent_store.all_human_ids() {
-            if let Some(agent) = agent_store.get_human(id) {
+        for id in &living_ids {
+            if let Some(agent) = agent_store.get_human(*id) {
                 let age_years = (agent.age_ticks as f64) * fractional_years;
                 if agent.is_alive() && agent.spouse_id.is_none() && (18.0..=65.0).contains(&age_years) {
                     match agent.sex {
-                        Sex::Male => eligible_males.push(id),
-                        Sex::Female => eligible_females.push(id),
+                        Sex::Male => eligible_males.push(*id),
+                        Sex::Female => eligible_females.push(*id),
                     }
                 }
             }
@@ -156,8 +158,8 @@ impl LifecycleSystem {
         // Check married couples where female is between 18 and 45 years and has sufficient nutritional energy reserve
         let mut births_to_create = Vec::new();
 
-        for id in agent_store.all_human_ids() {
-            if let Some(female) = agent_store.get_human(id) {
+        for id in &living_ids {
+            if let Some(female) = agent_store.get_human(*id) {
                 let age_years = (female.age_ticks as f64) * fractional_years;
                 if female.is_alive()
                     && female.sex == Sex::Female

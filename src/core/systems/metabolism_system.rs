@@ -24,27 +24,17 @@ impl MetabolismSystem {
         env_store: &mut dyn EnvironmentStorePort,
         rng: &mut dyn RngPort,
     ) {
-        let all_ids = agent_store.all_human_ids();
+        let living_ids = agent_store.living_human_ids();
         let climate = env_store.climate().clone();
 
-        for id in all_ids {
-            let mut agent_location = None;
-            let mut is_alive = false;
-            let mut calorie_balance = 0.0;
-            let mut days_starving = 0;
-
-            if let Some(agent) = agent_store.get_human(id).filter(|a| a.is_alive()) {
-                is_alive = true;
-                agent_location = Some(agent.location);
-                calorie_balance = agent.calorie_reserve;
-                days_starving = agent.days_starving;
-            }
-
-            if !is_alive {
-                continue;
-            }
-
-            let loc = agent_location.unwrap();
+        for id in living_ids {
+            let (loc, calorie_balance, mut days_starving) = {
+                if let Some(agent) = agent_store.get_human(id).filter(|a| a.is_alive()) {
+                    (agent.location, agent.calorie_reserve, agent.days_starving)
+                } else {
+                    continue;
+                }
+            };
 
             // Calculate realistic spatial micro-climate with Environmental Lapse Rate (-6.5°C/1000m)
             let elevation = env_store
