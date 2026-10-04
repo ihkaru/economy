@@ -416,5 +416,8 @@ pub fn build_canonical_items() -> Vec<ItemDefinition> {
         ItemDefinition::new(ItemId::CLAY_TABLET, "Lempengan Tanah Liat Piutang (Promissory Debt Tablet)", ItemCategory::Currency,
             serde_json::json!({"historical_era": "Proto_Historic_Currency", "unit": "keping", "utility_type": "MediumOfExchange", "liquidity": "High", "description": "Uang kredit purba bertuliskan kewajiban utang lumbung"})
         ).with_weight(0.1).with_perishable(false),
+        ItemDefinition::new(ItemId::WAREHOUSE_RECEIPT, "Sertifikat Deposito Lumbung (Warehouse Receipt)", ItemCategory::Currency,
+            serde_json::json!({"historical_era": "Proto_Historic_Currency", "unit": "lembar", "utility_type": "MediumOfExchange", "liquidity": "VeryHigh", "description": "Kuitansi klaim simpanan gandum pada lumbung tembikar"})
+        ).with_weight(0.01).with_perishable(false),
     ]
 }
