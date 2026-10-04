@@ -399,5 +399,19 @@ pub fn build_canonical_items() -> Vec<ItemDefinition> {
                 "utility_type": "InstitutionalRight", "description": "Hak institusional penebangan kayu pada zona hutan adat"
             }),
         ).with_weight(0.0).with_nature(ItemNature::InstitutionalRight),
+
+        // Fase 7: Neolithic Value Chain Expansion (Grain Milling, Baking & Charcoal)
+        ItemDefinition::new(ItemId::SADDLE_QUERN, "Batu Gilang Penggiling (Saddle Quern Stone)", ItemCategory::Good,
+            serde_json::json!({"historical_era": "Neolithic_Sedentary_Revolution", "unit": "buah", "utility_type": "CapitalTool", "description": "Batu penggiling gandum menjadi tepung"})
+        ).with_weight(3.0).with_perishable(false),
+        ItemDefinition::new(ItemId::GRAIN_FLOUR, "Tepung Gandum Halus (Milled Grain Flour)", ItemCategory::Good,
+            serde_json::json!({"historical_era": "Neolithic_Sedentary_Revolution", "unit": "kg", "utility_type": "Nutrition", "description": "Tepung gandum olahan siap panggang"})
+        ).with_weight(0.5).with_perishable(false),
+        ItemDefinition::new(ItemId::FLATBREAD, "Roti Pipih Panggang (Baked Flatbread)", ItemCategory::Good,
+            serde_json::json!({"historical_era": "Neolithic_Sedentary_Revolution", "unit": "porsi", "utility_type": "Nutrition", "description": "Pangan pokok berkalori tinggi 1200 kcal"})
+        ).with_weight(0.3).with_perishable(false),
+        ItemDefinition::new(ItemId::CHARCOAL, "Arang Kayu Piroteknologi (High-Heat Charcoal)", ItemCategory::Good,
+            serde_json::json!({"historical_era": "Neolithic_Sedentary_Revolution", "unit": "kg", "utility_type": "RawMaterial", "description": "Bahan bakar pembakaran suhu tinggi"})
+        ).with_weight(0.5).with_perishable(false),
     ]
 }

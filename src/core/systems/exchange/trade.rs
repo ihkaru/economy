@@ -227,6 +227,7 @@ pub fn perform_trade_and_services(
     }
 
     // Case C: Bilateral Physical Goods Barter (if no service occurred)
+    let mut barter_occurred = false;
     if !medical_service_occurred && !knowledge_trade_occurred {
         let a_informed = agent_has_market_access(agent_a_id, agent_store);
         let b_informed = agent_has_market_access(agent_b_id, agent_store);
@@ -326,7 +327,88 @@ pub fn perform_trade_and_services(
                 );
                 *next_trx_id += 1;
                 let _ = ledger_store.record(entry);
+                barter_occurred = true;
             }
+        }
+    }
+
+    // Case D: Granary Storage Credit / Emergency Loan (Banking Seed)
+    let mut credit_occurred = false;
+    let loan_foods = [ItemId::FLATBREAD, ItemId::GRAIN, ItemId::CURED_MEAT, ItemId::SMOKED_MEAT, ItemId::CURED_FISH];
+    if !medical_service_occurred && !knowledge_trade_occurred && !barter_occurred {
+        if a_cal < 3500.0 {
+            if let Some(&food_id) = loan_foods.iter().find(|&&f| b_inv.get(&f).copied().unwrap_or(0) >= 4) {
+                if let Some(agent_b) = agent_store.get_human_mut(agent_b_id) {
+                    let _ = agent_b.remove_item(food_id, 2);
+                }
+                if let Some(agent_a) = agent_store.get_human_mut(agent_a_id) {
+                    agent_a.add_item(food_id, 2);
+                }
+                let inst = ItemInstance::new(food_id, 2, serde_json::json!({"nature": "CreditLoan"})).with_instance_id(ItemInstanceId::new(*next_instance_id));
+                *next_instance_id += 1;
+                let entry = LedgerEntry::single(*next_trx_id, run_id.clone(), current_tick, agent_b_id, agent_a_id, Some(inst), None, serde_json::json!({
+                    "transaction_type": "granary_credit_loan", "creditor_id": agent_b_id.0, "debtor_id": agent_a_id.0, "food_id": food_id.0, "principal": 2
+                }));
+                *next_trx_id += 1;
+                let _ = ledger_store.record(entry);
+                credit_occurred = true;
+            }
+        } else if b_cal < 3500.0 {
+            if let Some(&food_id) = loan_foods.iter().find(|&&f| a_inv.get(&f).copied().unwrap_or(0) >= 4) {
+                if let Some(agent_a) = agent_store.get_human_mut(agent_a_id) {
+                    let _ = agent_a.remove_item(food_id, 2);
+                }
+                if let Some(agent_b) = agent_store.get_human_mut(agent_b_id) {
+                    agent_b.add_item(food_id, 2);
+                }
+                let inst = ItemInstance::new(food_id, 2, serde_json::json!({"nature": "CreditLoan"})).with_instance_id(ItemInstanceId::new(*next_instance_id));
+                *next_instance_id += 1;
+                let entry = LedgerEntry::single(*next_trx_id, run_id.clone(), current_tick, agent_a_id, agent_b_id, Some(inst), None, serde_json::json!({
+                    "transaction_type": "granary_credit_loan", "creditor_id": agent_a_id.0, "debtor_id": agent_b_id.0, "food_id": food_id.0, "principal": 2
+                }));
+                *next_trx_id += 1;
+                let _ = ledger_store.record(entry);
+                credit_occurred = true;
+            }
+        }
+    }
+
+    // Case E: Emergent Coasean Firm Coalition / Production Partnership
+    if !medical_service_occurred && !knowledge_trade_occurred && !barter_occurred && !credit_occurred {
+        if a_inv.contains_key(&ItemId::SADDLE_QUERN) && b_inv.get(&ItemId::GRAIN).copied().unwrap_or(0) >= 2 {
+            if let Some(agent_b) = agent_store.get_human_mut(agent_b_id) {
+                let _ = agent_b.remove_item(ItemId::GRAIN, 2);
+                agent_b.add_item(ItemId::GRAIN_FLOUR, 1);
+            }
+            if let Some(agent_a) = agent_store.get_human_mut(agent_a_id) {
+                agent_a.add_item(ItemId::GRAIN_FLOUR, 1);
+            }
+            let inst_a = ItemInstance::new(ItemId::GRAIN_FLOUR, 1, serde_json::json!({"firm_role": "CapitalOwnerShare"})).with_instance_id(ItemInstanceId::new(*next_instance_id));
+            *next_instance_id += 1;
+            let inst_b = ItemInstance::new(ItemId::GRAIN_FLOUR, 1, serde_json::json!({"firm_role": "LaborerShare"})).with_instance_id(ItemInstanceId::new(*next_instance_id));
+            *next_instance_id += 1;
+            let entry = LedgerEntry::new(*next_trx_id, run_id.clone(), current_tick, agent_a_id, agent_b_id, vec![inst_a], vec![inst_b], serde_json::json!({
+                "transaction_type": "firm_production_partnership", "enterprise": "Saddle Quern Grain Milling Joint Venture", "capitalist_id": agent_a_id.0, "laborer_id": agent_b_id.0
+            }));
+            *next_trx_id += 1;
+            let _ = ledger_store.record(entry);
+        } else if b_inv.contains_key(&ItemId::SADDLE_QUERN) && a_inv.get(&ItemId::GRAIN).copied().unwrap_or(0) >= 2 {
+            if let Some(agent_a) = agent_store.get_human_mut(agent_a_id) {
+                let _ = agent_a.remove_item(ItemId::GRAIN, 2);
+                agent_a.add_item(ItemId::GRAIN_FLOUR, 1);
+            }
+            if let Some(agent_b) = agent_store.get_human_mut(agent_b_id) {
+                agent_b.add_item(ItemId::GRAIN_FLOUR, 1);
+            }
+            let inst_b = ItemInstance::new(ItemId::GRAIN_FLOUR, 1, serde_json::json!({"firm_role": "CapitalOwnerShare"})).with_instance_id(ItemInstanceId::new(*next_instance_id));
+            *next_instance_id += 1;
+            let inst_a = ItemInstance::new(ItemId::GRAIN_FLOUR, 1, serde_json::json!({"firm_role": "LaborerShare"})).with_instance_id(ItemInstanceId::new(*next_instance_id));
+            *next_instance_id += 1;
+            let entry = LedgerEntry::new(*next_trx_id, run_id.clone(), current_tick, agent_b_id, agent_a_id, vec![inst_b], vec![inst_a], serde_json::json!({
+                "transaction_type": "firm_production_partnership", "enterprise": "Saddle Quern Grain Milling Joint Venture", "capitalist_id": agent_b_id.0, "laborer_id": agent_a_id.0
+            }));
+            *next_trx_id += 1;
+            let _ = ledger_store.record(entry);
         }
     }
 }

@@ -14,7 +14,7 @@ use economy::core::systems::exchange::perform_autonomous_crafting;
 #[test]
 fn test_canonical_recipe_registry_specifications() {
     let registry = RecipeRegistry::canonical();
-    assert_eq!(registry.all().len(), 13, "Expected 13 canonical recipes");
+    assert_eq!(registry.all().len(), 17, "Expected 17 canonical recipes");
 
     let stone_axe_recipe = registry.get_recipe(2).expect("Recipe 2 (Stone Axe) should exist");
     assert_eq!(stone_axe_recipe.name, "Polished Stone Axe");
@@ -63,6 +63,18 @@ fn test_canonical_recipe_registry_specifications() {
     let cured_meat_recipe = registry.get_recipe(13).expect("Recipe 13 (Cured Meat) should exist");
     assert_eq!(cured_meat_recipe.name, "Salt-Cured Preserved Meat");
     assert_eq!(cured_meat_recipe.category, "food_preservation");
+
+    let quern_recipe = registry.get_recipe(14).expect("Recipe 14 (Saddle Quern) should exist");
+    assert_eq!(quern_recipe.outputs[0].item_id, ItemId::SADDLE_QUERN);
+
+    let flour_recipe = registry.get_recipe(15).expect("Recipe 15 (Grain Flour) should exist");
+    assert_eq!(flour_recipe.outputs[0].item_id, ItemId::GRAIN_FLOUR);
+
+    let flatbread_recipe = registry.get_recipe(16).expect("Recipe 16 (Flatbread) should exist");
+    assert_eq!(flatbread_recipe.outputs[0].item_id, ItemId::FLATBREAD);
+
+    let charcoal_recipe = registry.get_recipe(17).expect("Recipe 17 (Charcoal) should exist");
+    assert_eq!(charcoal_recipe.outputs[0].item_id, ItemId::CHARCOAL);
     assert_eq!(cured_meat_recipe.outputs[0].item_id, ItemId::CURED_MEAT);
 }
 

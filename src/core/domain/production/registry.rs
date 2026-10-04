@@ -201,6 +201,57 @@ impl RecipeRegistry {
                 0.0,
                 60.0,
             ),
+            // 14. Neolithic Milling Tool: Saddle Quern Stone
+            ProductionRecipe::new(
+                14,
+                "Saddle Quern Stone",
+                "capital_tool_production",
+                &[RecipeIngredient { item_id: ItemId::STONE, quantity: 2 }],
+                &[RecipeIngredient { item_id: ItemId::SADDLE_QUERN, quantity: 1 }],
+                Some(ItemId::KNOWLEDGE_TOOL_CRAFTING),
+                None,
+                0.0,
+                160.0,
+            ),
+            // 15. Sedentary Cereal Processing: Grain Flour Milling
+            ProductionRecipe::new(
+                15,
+                "Grain Flour Milling",
+                "food_processing",
+                &[RecipeIngredient { item_id: ItemId::GRAIN, quantity: 2 }],
+                &[RecipeIngredient { item_id: ItemId::GRAIN_FLOUR, quantity: 2 }],
+                None,
+                Some(ItemId::SADDLE_QUERN),
+                0.0,
+                80.0,
+            ),
+            // 16. Pyrotechnology Baking: Baked Flatbread
+            ProductionRecipe::new(
+                16,
+                "Baked Flatbread",
+                "food_processing",
+                &[
+                    RecipeIngredient { item_id: ItemId::GRAIN_FLOUR, quantity: 2 },
+                    RecipeIngredient { item_id: ItemId::TIMBER, quantity: 1 },
+                ],
+                &[RecipeIngredient { item_id: ItemId::FLATBREAD, quantity: 2 }],
+                Some(ItemId::KNOWLEDGE_FIRE_MAKING),
+                None,
+                0.0,
+                60.0,
+            ),
+            // 17. High-Heat Pyrotechnology: Charcoal Smoldering
+            ProductionRecipe::new(
+                17,
+                "High-Heat Charcoal Smoldering",
+                "pyrotechnology_crafting",
+                &[RecipeIngredient { item_id: ItemId::TIMBER, quantity: 3 }],
+                &[RecipeIngredient { item_id: ItemId::CHARCOAL, quantity: 2 }],
+                Some(ItemId::KNOWLEDGE_FIRE_MAKING),
+                None,
+                0.0,
+                70.0,
+            ),
         ])
     }
 }

@@ -27,6 +27,10 @@ impl ItemId {
     pub const SMOKED_MEAT: ItemId = ItemId(121);
     pub const HUNTING_SPEAR: ItemId = ItemId(122);
     pub const CURED_MEAT: ItemId = ItemId(123);
+    pub const SADDLE_QUERN: ItemId = ItemId(124);
+    pub const GRAIN_FLOUR: ItemId = ItemId(125);
+    pub const FLATBREAD: ItemId = ItemId(126);
+    pub const CHARCOAL: ItemId = ItemId(127);
 
     // Non-rival Knowledge / Recipes
     pub const KNOWLEDGE_RAFT_BUILDING: ItemId = ItemId(201);
@@ -73,7 +77,7 @@ impl ItemId {
     }
 
     pub fn is_tool(&self) -> bool {
-        matches!(*self, Self::RAFT | Self::STONE_AXE | Self::FISHING_NET | Self::WOVEN_BASKET | Self::POTTERY_JAR | Self::LEATHER_CLOTHING | Self::HUNTING_SPEAR)
+        matches!(*self, Self::RAFT | Self::STONE_AXE | Self::FISHING_NET | Self::WOVEN_BASKET | Self::POTTERY_JAR | Self::LEATHER_CLOTHING | Self::HUNTING_SPEAR | Self::SADDLE_QUERN)
     }
 
     pub fn default_weight_kg(&self) -> f64 {
@@ -101,6 +105,10 @@ impl ItemId {
             Self::SMOKED_MEAT => 0.4,
             Self::HUNTING_SPEAR => 1.5,
             Self::CURED_MEAT => 0.4,
+            Self::SADDLE_QUERN => 3.0,
+            Self::GRAIN_FLOUR => 0.5,
+            Self::FLATBREAD => 0.3,
+            Self::CHARCOAL => 0.5,
             _ => 0.0,
         }
     }

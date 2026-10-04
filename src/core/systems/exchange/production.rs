@@ -70,12 +70,15 @@ pub fn perform_autonomous_crafting(
 
             let should_craft = match primary_output_id {
                 ItemId::WOVEN_BASKET => current_holding < 2,
-                ItemId::STONE_AXE | ItemId::FISHING_NET | ItemId::RAFT | ItemId::HUNTING_SPEAR => current_holding == 0,
+                ItemId::STONE_AXE | ItemId::FISHING_NET | ItemId::RAFT | ItemId::HUNTING_SPEAR | ItemId::SADDLE_QUERN => current_holding == 0,
                 ItemId::HERBAL_MEDICINE => is_sick || current_holding < 2,
                 ItemId::CURED_FISH | ItemId::CURED_MEAT | ItemId::SMOKED_FISH | ItemId::SMOKED_MEAT => current_holding < 8,
                 ItemId::DRIED_BERRIES => current_holding < 6,
                 ItemId::POTTERY_JAR => current_holding < 2,
                 ItemId::LEATHER_CLOTHING => current_holding < 2,
+                ItemId::GRAIN_FLOUR => current_holding < 6,
+                ItemId::FLATBREAD => current_holding < 8,
+                ItemId::CHARCOAL => current_holding < 4,
                 _ => current_holding < 3,
             };
 

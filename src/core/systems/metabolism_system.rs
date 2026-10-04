@@ -91,7 +91,9 @@ impl MetabolismSystem {
             let mut calories_gained = 0.0;
             if let Some(agent) = agent_store.get_human_mut(id) {
                 let edible_cal = [
-                    (ItemId::GRAIN, 800.0),         // Grain
+                    (ItemId::FLATBREAD, 1200.0),    // Baked Flatbread (highest energy density & digestibility)
+                    (ItemId::GRAIN_FLOUR, 500.0),   // Milled Flour
+                    (ItemId::GRAIN, 400.0),         // Raw Grain (lower bio-availability uncooked)
                     (ItemId::FISH, 500.0),          // Fresh Fish (eat perishable first)
                     (ItemId::RAW_MEAT, 650.0),      // Fresh Terrestrial Game Meat
                     (ItemId::BERRIES, 300.0),       // Fresh Berries
