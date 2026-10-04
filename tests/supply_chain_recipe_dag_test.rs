@@ -14,7 +14,15 @@ use economy::core::systems::exchange::perform_autonomous_crafting;
 #[test]
 fn test_canonical_recipe_registry_specifications() {
     let registry = RecipeRegistry::canonical();
-    assert_eq!(registry.all().len(), 9, "Expected 9 canonical recipes");
+    assert_eq!(registry.all().len(), 11, "Expected 11 canonical recipes");
+
+    let stone_axe_recipe = registry.get_recipe(2).expect("Recipe 2 (Stone Axe) should exist");
+    assert_eq!(stone_axe_recipe.name, "Polished Stone Axe");
+    assert_eq!(stone_axe_recipe.inputs.len(), 2, "Stone Axe requires 2 inputs: Stone + Timber");
+    assert_eq!(stone_axe_recipe.inputs[0].item_id, ItemId::STONE);
+    assert_eq!(stone_axe_recipe.inputs[0].quantity, 1);
+    assert_eq!(stone_axe_recipe.inputs[1].item_id, ItemId::TIMBER);
+    assert_eq!(stone_axe_recipe.inputs[1].quantity, 1);
 
     let cured_fish_recipe = registry.get_recipe(6).expect("Recipe 6 (Cured Fish) should exist");
     assert_eq!(cured_fish_recipe.name, "Salt-Cured Preserved Fish");
@@ -36,6 +44,16 @@ fn test_canonical_recipe_registry_specifications() {
     assert_eq!(pottery_recipe.required_knowledge, Some(ItemId::KNOWLEDGE_POTTERY_MAKING));
     assert_eq!(pottery_recipe.outputs[0].item_id, ItemId::POTTERY_JAR);
     assert_eq!(pottery_recipe.outputs[0].quantity, 1);
+
+    let smoked_meat_recipe = registry.get_recipe(10).expect("Recipe 10 (Smoked Meat) should exist");
+    assert_eq!(smoked_meat_recipe.name, "Wood-Smoked Preserved Meat");
+    assert_eq!(smoked_meat_recipe.outputs[0].item_id, ItemId::SMOKED_MEAT);
+
+    let leather_recipe = registry.get_recipe(11).expect("Recipe 11 (Leather Clothing) should exist");
+    assert_eq!(leather_recipe.name, "Warm Leather Garment");
+    assert_eq!(leather_recipe.category, "clothing_tailoring");
+    assert_eq!(leather_recipe.required_knowledge, Some(ItemId::KNOWLEDGE_LEATHER_WORKING));
+    assert_eq!(leather_recipe.outputs[0].item_id, ItemId::LEATHER_CLOTHING);
 }
 
 #[test]
@@ -136,3 +154,51 @@ fn test_pottery_jar_crafting_and_storage_expansion() {
     assert_eq!(entries.len(), 1);
     assert_eq!(entries[0].metadata.get("transaction_type").unwrap(), "ceramic_storage");
 }
+
+#[test]
+fn test_warm_leather_garment_tailoring() {
+    let mut agent_store = MemoryAgentStore::new();
+    let mut ledger_store = MemoryLedgerStore::new();
+    let mut rng = ChaChaRngAdapter::new(42);
+
+    let agent_id = AgentId::new(103);
+    let mut agent = Human::new(agent_id, Sex::Male, Tick::ZERO)
+        .with_initial_age(22 * 365)
+        .with_calories(6000.0)
+        .with_location(GeoCoordinate::new(16, 27));
+
+    // Give materials: 2 Raw Hide + 1 Timber + Leather Working Knowledge
+    agent.add_item(ItemId::RAW_HIDE, 2);
+    agent.add_item(ItemId::TIMBER, 1);
+    agent.add_item(ItemId::KNOWLEDGE_LEATHER_WORKING, 1);
+
+    agent_store.insert_human(agent);
+
+    let living_ids = vec![agent_id];
+    let run_id = RunId::new("test_clothing_chain");
+    let mut next_trx_id = 1;
+    let mut next_instance_id = 1;
+
+    perform_autonomous_crafting(
+        &run_id,
+        Tick(1),
+        &living_ids,
+        &mut agent_store,
+        &mut ledger_store,
+        &mut rng,
+        &mut next_trx_id,
+        &mut next_instance_id,
+    );
+
+    let agent = agent_store.get_human(agent_id).unwrap();
+    assert_eq!(agent.inventory.get(&ItemId::RAW_HIDE).copied().unwrap_or(0), 0, "Raw hide consumed");
+    assert_eq!(agent.inventory.get(&ItemId::TIMBER).copied().unwrap_or(0), 0, "Timber consumed");
+    assert_eq!(agent.inventory.get(&ItemId::LEATHER_CLOTHING).copied().unwrap_or(0), 1, "Leather clothing produced");
+    assert!(agent.has_item(ItemId::LEATHER_CLOTHING));
+
+    let entries = ledger_store.all_entries();
+    assert_eq!(entries.len(), 1);
+    assert_eq!(entries[0].metadata.get("transaction_type").unwrap(), "clothing_tailoring");
+    assert_eq!(entries[0].metadata.get("product_name").unwrap(), "Warm Leather Garment");
+}
+

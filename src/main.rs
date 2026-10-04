@@ -257,6 +257,32 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             serde_json::json!({"resource": "Clay", "biome": "Riverbank"}),
         )
         .with_pace(RegenerationPace::Medium),
+        ResourceNode::new(
+            8,
+            "Highland Game Hunting Grounds",
+            ItemId::RAW_MEAT,
+            economy::core::domain::spatial::GeoCoordinate::new(16, 27),
+            1500,
+            6000,
+            50.0,
+            2.0,
+            650.0, // Terrestrial wild game meat & hides
+            serde_json::json!({"resource": "RawMeat", "biome": "HighlandForest"}),
+        )
+        .with_pace(RegenerationPace::Medium),
+        ResourceNode::new(
+            9,
+            "Rocky Riverbed Stone Quarry",
+            ItemId::STONE,
+            economy::core::domain::spatial::GeoCoordinate::new(14, 27),
+            2000,
+            5000,
+            10.0,
+            2.0,
+            0.0, // Lithic raw material for axes
+            serde_json::json!({"resource": "Stone", "biome": "RiverbedQuarry"}),
+        )
+        .with_pace(RegenerationPace::Geological),
     ];
     let world_map = economy::core::domain::spatial::WorldMap::generate_continent_and_archipelago(50, 50);
     let env_store = MemoryEnvironmentStore::new(climate, resource_nodes).with_world_map(world_map);

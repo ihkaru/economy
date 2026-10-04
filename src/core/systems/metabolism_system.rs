@@ -61,12 +61,18 @@ impl MetabolismSystem {
                 0.0
             };
 
-            // Firewood thermoregulation: holding Timber provides heating and halves cold penalty
-            let has_firewood = agent_store
+            // Thermoregulation: holding Timber (firewood) or wearing Leather Clothing protects against cold
+            let (has_firewood, has_clothing) = agent_store
                 .get_human(id)
-                .map(|a| a.has_item(ItemId::TIMBER))
-                .unwrap_or(false);
-            let cold_penalty = if has_firewood { raw_cold_penalty * 0.5 } else { raw_cold_penalty };
+                .map(|a| (a.has_item(ItemId::TIMBER), a.has_item(ItemId::LEATHER_CLOTHING)))
+                .unwrap_or((false, false));
+            let cold_penalty = if has_clothing {
+                0.0 // Full thermal insulation against cold weather
+            } else if has_firewood {
+                raw_cold_penalty * 0.5
+            } else {
+                raw_cold_penalty
+            };
 
             // Heat & Water Hydration: In high temperatures, agents need proximity to fresh water sources (River/ShallowWater)
             let is_near_water = if let Some(map) = env_store.world_map() {
@@ -87,8 +93,10 @@ impl MetabolismSystem {
                 let edible_cal = [
                     (ItemId::GRAIN, 800.0),         // Grain
                     (ItemId::FISH, 500.0),          // Fresh Fish (eat perishable first)
+                    (ItemId::RAW_MEAT, 650.0),      // Fresh Terrestrial Game Meat
                     (ItemId::BERRIES, 300.0),       // Fresh Berries
                     (ItemId::SMOKED_FISH, 600.0),   // Wood-Smoked Preserved Fish
+                    (ItemId::SMOKED_MEAT, 700.0),   // Wood-Smoked Preserved Meat
                     (ItemId::CURED_FISH, 650.0),    // Salt-Cured Preserved Fish
                     (ItemId::DRIED_BERRIES, 400.0), // Sun-Dried Desiccated Berries
                 ];
@@ -110,9 +118,12 @@ impl MetabolismSystem {
 
                 // Perishable food spoilage decay
                 let has_salt = agent.has_item(ItemId::SALT);
-                // Fresh fish rots quickly without salt preservation (10% daily decay chance per unit)
+                // Fresh fish & raw meat rot quickly without salt preservation (10% daily decay chance per unit)
                 if !has_salt && agent.has_item(ItemId::FISH) && rng.check_probability(0.10) {
                     let _ = agent.remove_item(ItemId::FISH, 1);
+                }
+                if !has_salt && agent.has_item(ItemId::RAW_MEAT) && rng.check_probability(0.10) {
+                    let _ = agent.remove_item(ItemId::RAW_MEAT, 1);
                 }
                 // Fresh berries rot if kept unconsumed (5% daily decay chance per unit)
                 if agent.has_item(ItemId::BERRIES) && rng.check_probability(0.05) {
@@ -144,6 +155,9 @@ impl MetabolismSystem {
                 if agent.has_item(ItemId::POTTERY_JAR) && rng.check_probability(0.0005) {
                     let _ = agent.remove_item(ItemId::POTTERY_JAR, 1);
                 }
+                if agent.has_item(ItemId::LEATHER_CLOTHING) && rng.check_probability(0.0005) {
+                    let _ = agent.remove_item(ItemId::LEATHER_CLOTHING, 1);
+                }
             }
 
             // Liebig's Law of the Minimum: Electrolyte preservation via Salt
@@ -166,7 +180,7 @@ impl MetabolismSystem {
 
             // Pathogen infection hazard from severe cold exposure or malnutrition
             if !is_sick {
-                let infection_risk = if raw_cold_penalty > 0.0 && !has_firewood {
+                let infection_risk = if raw_cold_penalty > 0.0 && !has_clothing && !has_firewood {
                     0.02 // Chills & respiratory fever
                 } else if days_starving > 0 {
                     0.03 // Opportunistic infection under starvation

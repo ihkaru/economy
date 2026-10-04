@@ -22,7 +22,7 @@ pub fn perform_agent_centric_foraging(
     next_instance_id: &mut u64,
 ) {
     for &agent_id in living_agent_ids {
-        let (loc, calorie_reserve, is_sick, inventory_weight, capacity, timber_count, herb_count, clay_count) = {
+        let (loc, calorie_reserve, is_sick, inventory_weight, capacity, timber_count, herb_count, clay_count, stone_count, has_axe) = {
             if let Some(agent) = agent_store.get_human(agent_id) {
                 (
                     agent.location,
@@ -33,6 +33,8 @@ pub fn perform_agent_centric_foraging(
                     agent.inventory.get(&ItemId::TIMBER).copied().unwrap_or(0),
                     agent.inventory.get(&ItemId::HERBAL_MEDICINE).copied().unwrap_or(0),
                     agent.inventory.get(&ItemId::CLAY).copied().unwrap_or(0),
+                    agent.inventory.get(&ItemId::STONE).copied().unwrap_or(0),
+                    agent.has_item(ItemId::STONE_AXE),
                 )
             } else {
                 continue;
@@ -92,6 +94,8 @@ pub fn perform_agent_centric_foraging(
                 2.5 // Food preservation medium
             } else if node.item_id == ItemId::HERBAL_MEDICINE && herb_count < 3 {
                 2.0 // Small preventive medical stock
+            } else if node.item_id == ItemId::STONE && (!has_axe || stone_count < 2) {
+                3.2 // Raw material for Stone Axe crafting
             } else if node.item_id == ItemId::CLAY && clay_count < 6 {
                 2.2 // Raw material for ceramic pottery crafting
             } else {
@@ -125,6 +129,11 @@ pub fn perform_agent_centric_foraging(
                         if actual_harvested > 0 {
                             if let Some(agent) = agent_store.get_human_mut(agent_id) {
                                 agent.add_item(node.item_id, actual_harvested);
+
+                                // Hunting by-product: animal raw hide from terrestrial game hunting
+                                if node.item_id == ItemId::RAW_MEAT && rng.check_probability(0.50) {
+                                    agent.add_item(ItemId::RAW_HIDE, 1);
+                                }
 
                                 // Tool wear-and-tear degradation
                                 if best_tool_multiplier > 1.0 {

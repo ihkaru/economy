@@ -78,6 +78,20 @@ Dalam sains simulasi, kegagalan realitas terjadi ketika modeler memberlakukan at
   - Mengintegrasikan model matematika dan literatur ilmiah mutakhir (seperti persamaan logistik pemanenan periodik non-otonom dengan jendela pemijahan, kurva peluruhan pangan empiris forager, atau formula carrying capacity multi-spesies).
   - Menghindari asumsi spekulatif tanpa rujukan ilmiah terindeks.
 
+### Dimensi 8: Kepatuhan Realitas Rantai Pasok Resep & Keragaman Hasil Buruan (Hunting Diversity & Manufacturing Supply Chain Reality)
+- [ ] **Audit Asal Usul Item (Alam vs Transformasi Resep Manufaktur)**:
+  - Setiap komoditas di dalam simulasi wajib diaudit secara ontologis: *apakah masuk akal item ini dipetik langsung dari alam, ataukah wajib berasal dari transformasi kerja (resep)?*
+  - **Larangan Bahan Tidak Logis**:
+    - *Alat Batu Tanpa Batu*: Dilarang memodelkan kapak batu (`STONE_AXE`) atau sabit batu murni dari kayu tanpa komponen batu (`STONE` / `FLINT`).
+    - *Pangan Mentah yang Tidak Dapat Dicerna*: Dilarang membiarkan biji serealia mentah (`GRAIN`) dikonsumsi langsung tanpa proses penggilingan (*milling*) menjadi tepung atau pemanggangan menjadi roti/bubur.
+    - *Anomali Asal Ganda*: Dilarang merancukan tanaman liar mentah dengan ramuan obat jadi siap pakai (`HERBAL_MEDICINE`).
+  - **Keragaman Fauna & Hasil Perburuan (*Wild Game Hunting Diversity*)**:
+    - Alam tidak boleh hanya menyediakan satu jenis fauna air tawar (`FISH`).
+    - Habitat darat (hutan, perbukitan, padang rumput) wajib memiliki simpul perburuan fauna darat (*cervids, wild boar, ungulates*) yang menghasilkan trias produk perburuan arkeologis:
+      1. **Daging Mentah Segar (`RAW_MEAT`)**: Rentan busuk (2–3 hari), membutuhkan rantai pasok pengasapan/pengeringan (*Smoked/Dried Meat*).
+      2. **Kulit Binatang Mentah (`RAW_HIDE`)**: Bahan baku vital pembuatan pakaian pelindung dingin.
+      3. **Barang Modal Pelindung Tubuh (`LEATHER_CLOTHING`)**: Wajib dibuat melalui resep penyamakan dan penjahitan kulit untuk memitigasi bahaya mortalitas hipotermia cuaca dingin.
+
 ---
 
 ## 🛠️ Checklist Praktis Saat Mengaudit Kode Spasial & Lingkungan di `src/`
@@ -92,7 +106,10 @@ Gunakan checklist ini saat meninjau modul geografi dan iklim:
 | **Regenerasi Hutan** | Hutan pulih instan dalam hitungan tick. | Hutan purba butuh puluhan tahun untuk mencapai biomassa kayu penuh (*Slow pace*). |
 | **Transportasi Air** | Berjalan kaki menembus danau/laut. | Membutuhkan perkakas modal transportasi air fisik (`RAFT`) dengan biaya energi. |
 | **Kematian** | Probabilitas mati acak merata semua usia. | Mortalitas mengikuti kurva Gompertz-Makeham (tinggi di bayi & usia lanjut). |
+| **Bahan Baku Alat** | Kapak batu dibuat 100% dari kayu balok. | Kapak batu membutuhkan komponen batuan mineral keras (`STONE`) + gagang kayu. |
+| **Fauna & Buruan** | Protein hewani hanya ikan sungai. | Keragaman fauna darat perbukitan/hutan menghasilkan daging mentah dan kulit binatang. |
+| **Ketahanan Dingin** | Menahan dingin hanya dengan kayu bakar. | Pakaian kulit jahitan (`LEATHER_CLOTHING`) sebagai perisai termal tubuh. |
 
 ---
 
-*Dengan menerapkan audit realitas biofisik ini, simulator ekonomi tidak akan terjebak dalam ilusi simulasi eurosentris atau kartun buatan, melainkan mencerminkan kendala geografis dan ekologis nyata bumi.*
+*Dengan menerapkan audit realitas biofisik ini, simulator ekonomi tidak akan terjebak dalam ilusi simulasi eurosentris atau kartun buatan, melainkan mencerminkan kendala geografis, faunal, dan ekologis nyata bumi.*

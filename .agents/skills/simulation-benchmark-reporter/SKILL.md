@@ -58,17 +58,23 @@ Skill ini menetapkan **Standar Operasional Prosedur (SOP) Baku** untuk menjamin 
      Setiap kueri pencarian **wajib menyematkan Bulan dan Tahun saat ini** (misal: "October 2026", "2026") untuk memperoleh literatur terkini, pola arsitektur mutakhir (*modern software architecture patterns*), dan *best practices* industri terdepan.
      - *Contoh Kueri Performa*: `"Rust zero allocation event ledger metadata pattern 2026"`, `"Rust fast event sourcing arena bitfield October 2026"`.
      - *Contoh Kueri Realitas*: `"sustainable fishery harvest model seasonal spawning logistic equation October 2026"`, `"empirical perishability organic decay rate hunter gatherer 2026"`.
-   - **Kewajiban Dokumentasi Sitasi**:
-     Setiap laporan benchmark wajib menyertakan ringkasan hasil riset internet ini pada Bab 13 dan 14, mencakup:
-     1. Kueri pencarian yang digunakan dengan timestamp bulan & tahun.
-     2. Temuan pola/best practice mutakhir dari komunitas ilmiah & engineering global.
-     3. Rencana adopsi konkret pada iterasi implementasi berikutnya.
+    - **Kewajiban Dokumentasi Sitasi**:
+      Setiap laporan benchmark wajib menyertakan ringkasan hasil riset internet ini pada Bab 13 dan 14, mencakup:
+      1. Kueri pencarian yang digunakan dengan timestamp bulan & tahun.
+      2. Temuan pola/best practice mutakhir dari komunitas ilmiah & engineering global.
+      3. Rencana adopsi konkret pada iterasi implementasi berikutnya.
+
+9. **Kewajiban Evaluasi Item Resep & Keragaman Hasil Buruan (Mandatory Recipe Origin & Hunting Game Diversity Audit)**:
+   - Setiap laporan resmi dan audit benchmark wajib mengevaluasi rantai nilai barang secara komprehensif:
+     1. *Audit Asal Resep vs Alam*: Mengidentifikasi item yang secara realitas sejarah/fisik seharusnya merupakan hasil olahan resep (seperti tepung, pakaian, daging olahan, tembikar), bukan dipetik langsung secara instan dari alam.
+     2. *Integritas Bahan Baku Resep*: Memastikan resep tidak menggunakan bahan fiktif/tidak logis (seperti kapak batu yang dibuat murni dari kayu tanpa batuan keras, atau jaring anyam dari batang kayu gelondongan).
+     3. *Keragaman Fauna & Hasil Buruan*: Menghindari monokultur fauna air (hanya ikan sungai). Alam wajib menyediakan simpul fauna darat buruan (*terrestrial wild game*) yang menghasilkan trias produk: daging segar (`RAW_MEAT`), kulit mentah (`RAW_HIDE`), dan pakaian kulit hangat pelindung dingin (`LEATHER_CLOTHING`).
 
 ---
 
 ## 🔬 Matriks Evaluasi Kondisi Awal vs Akhir Terhadap Realita Sejarah
 
-Setiap analisis wajib mengisi dan memeriksa 6 dimensi komparasi realitas sejarah berikut:
+Setiap analisis wajib mengisi dan memeriksa 8 dimensi komparasi realitas sejarah berikut:
 
 | Dimensi Evaluasi | Kondisi Awal ($T_0$) | Kondisi Akhir ($T_f$) | Tolok Ukur Realitas Sejarah Manusia | Detektor Anomali & Diagnosa Mekanisme |
 | :--- | :--- | :--- | :--- | :--- |
@@ -79,6 +85,7 @@ Setiap analisis wajib mengisi dan memeriksa 6 dimensi komparasi realitas sejarah
 | **5. Kedalaman Generasi & Suksesi Warisan** | Generasi 1 (Pioneer Settlers). | Generasi $G_{max}$ (Gen 4-5 pada 100 thn; Gen 35-45 pada 1,000 thn). | Suksesi biologis berlangsung mulus. Kematian orang tua mewariskan alat dan aset ke anak/pasangan, bukan hilang musnah ke ruang hampa. | ⚠️ **Anomali Suksesi Terputus (*Generational Stagnation*)**: Jika generasi berhenti di Gen 1 atau 2 setelah ratusan tahun. *Diagnosa*: Kematian dini anak atau kegagalan ikatan pernikahan generasi baru. |
 | **6. Pengetahuan & Pembagian Kerja (*Division of Labor*)** | 0 cetak biru teknologi (hanya naluri foraging dasar). | Gagasan beredar, transaksi magang (*apprenticeship*), spesialisasi. | Pengetahuan menyebar melalui pengajaran antargenerasi (magang). Spesialisasi muncul di mana pengrajin alat menukar alat dengan bahan pangan peternak/nelayan (*Adam Smith*). | ⚠️ **Anomali Amnesia Kolektif / Autarki Total**: Jika tidak ada pertukaran pengetahuan atau warga hidup 100% autarki tanpa pernah barter. *Diagnosa*: Kurangnya insentif diferensiasi utilitas marginal Hayekian. |
 | **7. Spektrum Umur Simpan & Entropi Material (*Material Longevity Spectrum*)** | Seluruh item baru diproduksi/dipanen. | Usia dan daya tahan stok barang beredar (anorganik vs organik). | **Apakah masuk akal barang bertahan puluhan tahun?**<br>• *Masuk Akal (Anorganik Tahan Lama)*: Batu (`Stone Axe`), Cangkang (`Cowrie Shells`), Garam (`Rock Salt`), dan Tembikar Keramik (`Pottery Jar`) tahan puluhan s/d ratusan tahun sebagai pusaka (*heirloom*) lintas generasi.<br>• *Tidak Masuk Akal (Organik Rentan Entropi)*: Kayu bakar mentah (`Timber`), keranjang serat (`Woven Basket`), jaring serat (`Fishing Net`), herbal kering (`Herbal Medicine`), dan biji gandum lepas (`Wild Grain`) lapuk/hancur oleh rayap, jamur, oksidasi, dan serangga dalam 6 bulan s/d 2–3 tahun tanpa wadah kedap khusus. | ⚠️ **Anomali Bahan Organik Abadi (*Immortal Organic Matter*)**: Jika komoditas organik seperti kayu gelondongan, keranjang serat, atau obat herbal tersimpan selama puluhan tahun di tas warga tanpa pernah melapuk atau kadaluarsa. *Diagnosa*: Belum adanya pemodelan entropi pasif (*passive weathering & organic decay*) berbasis waktu kalender. |
+| **8. Rantai Pasok Resep & Keragaman Buruan (*Recipe Chains & Game Diversity*)** | 0 resep / hanya satu jenis fauna air (ikan). | Multi-tier recipe DAG, keragaman fauna mamalia darat, rantai olahan daging & kulit. | Bahan mentah diolah menjadi barang sekunder. Pangan segar diawetkan, kulit mentah disamak dan dijahit menjadi pakaian pelindung dingin. | ⚠️ **Anomali Resep Tidak Logis / Monokultur Fauna**: Jika alat batu diproduksi murni dari kayu tanpa batu, biji gandum mentah dimakan tanpa digiling/dimasak, atau fauna hanya ada ikan air tawar tanpa satwa darat. *Diagnosa*: Simpul fauna darat belum dimodelkan atau resep input belum menuntut bahan baku esensial. |
 
 ---
 

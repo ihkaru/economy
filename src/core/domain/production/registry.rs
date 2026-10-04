@@ -38,12 +38,15 @@ impl RecipeRegistry {
                 2,
                 "Polished Stone Axe",
                 "capital_tool_production",
-                &[RecipeIngredient { item_id: ItemId::TIMBER, quantity: 5 }],
+                &[
+                    RecipeIngredient { item_id: ItemId::STONE, quantity: 1 },
+                    RecipeIngredient { item_id: ItemId::TIMBER, quantity: 1 },
+                ],
                 &[RecipeIngredient { item_id: ItemId::STONE_AXE, quantity: 1 }],
                 Some(ItemId::KNOWLEDGE_TOOL_CRAFTING),
                 None,
                 0.0,
-                250.0,
+                180.0,
             ),
             // 3. Aquatic Harvesting Capital Tool: Woven Fishing Net
             ProductionRecipe::new(
@@ -137,6 +140,36 @@ impl RecipeRegistry {
                 None,
                 0.0,
                 200.0,
+            ),
+            // 10. Pyrotechnic Meat Smoking: Wood-Smoked Preserved Meat
+            ProductionRecipe::new(
+                10,
+                "Wood-Smoked Preserved Meat",
+                "food_preservation",
+                &[
+                    RecipeIngredient { item_id: ItemId::RAW_MEAT, quantity: 2 },
+                    RecipeIngredient { item_id: ItemId::TIMBER, quantity: 1 },
+                ],
+                &[RecipeIngredient { item_id: ItemId::SMOKED_MEAT, quantity: 2 }],
+                Some(ItemId::KNOWLEDGE_FIRE_MAKING),
+                None,
+                0.0,
+                80.0,
+            ),
+            // 11. Tailored Warm Leather Garment: Cold Weather Thermal Protection
+            ProductionRecipe::new(
+                11,
+                "Warm Leather Garment",
+                "clothing_tailoring",
+                &[
+                    RecipeIngredient { item_id: ItemId::RAW_HIDE, quantity: 2 },
+                    RecipeIngredient { item_id: ItemId::TIMBER, quantity: 1 },
+                ],
+                &[RecipeIngredient { item_id: ItemId::LEATHER_CLOTHING, quantity: 1 }],
+                Some(ItemId::KNOWLEDGE_LEATHER_WORKING),
+                None,
+                0.0,
+                180.0,
             ),
         ])
     }

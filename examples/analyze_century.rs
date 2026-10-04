@@ -23,6 +23,11 @@ fn item_meta(id: u64) -> (&'static str, &'static str) {
         114 => ("Wood-Smoked Preserved Fish", "Good (Preserved Food)"),
         115 => ("Fine Alluvial Clay", "Good (Raw Material)"),
         116 => ("Ceramic Storage Pottery Jar", "Capital (Granary Storage Container)"),
+        117 => ("Quarried Lithic Stone", "Good (Raw Material)"),
+        118 => ("Terrestrial Raw Meat", "Good (Perishable Food)"),
+        119 => ("Wild Raw Hide", "Good (Raw Material)"),
+        120 => ("Warm Leather Clothing", "Capital (Thermoregulation Apparel)"),
+        121 => ("Wood-Smoked Preserved Meat", "Good (Preserved Food)"),
         201 => ("Raft Building Blueprint", "Knowledge (Non-Rival Blueprint)"),
         202 => ("Fish Curing Preservation", "Knowledge (Non-Rival Technique)"),
         203 => ("Fire-Making Technique", "Knowledge (Non-Rival Technique)"),
@@ -30,6 +35,7 @@ fn item_meta(id: u64) -> (&'static str, &'static str) {
         205 => ("Herbal Medicine Blueprint", "Knowledge (Non-Rival Blueprint)"),
         206 => ("Basket Weaving Blueprint", "Knowledge (Non-Rival Blueprint)"),
         207 => ("Pottery Making Blueprint", "Knowledge (Non-Rival Blueprint)"),
+        208 => ("Leather Working & Tailoring", "Knowledge (Non-Rival Blueprint)"),
         301 => ("Fishing Right Permit", "Permit (Institutional Right)"),
         302 => ("Forestry Right Permit", "Permit (Institutional Right)"),
         401 => ("Manual Labor Service", "Service (Intangible Man-Hour)"),
@@ -150,8 +156,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 if let Ok(inv_map) = serde_json::from_str::<BTreeMap<String, u64>>(inv_str) {
                     for (item_id, qty) in inv_map {
                         *living_inventory_totals.entry(item_id.clone()).or_insert(0) += qty;
-                        // Item 102 (Fish) and 104 (Berries) are perishable
-                        if item_id == "102" || item_id == "104" {
+                        // Item 102 (Fish), 104 (Berries), and 118 (Raw Meat) are perishable
+                        if item_id == "102" || item_id == "104" || item_id == "118" {
                             perishable_items_held += qty;
                         }
                     }
@@ -235,7 +241,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     *trx_breakdown.entry(t.to_string()).or_insert(0) += 1;
 
                     match t {
-                        "capital_tool_production" | "container_crafting" | "food_preservation" | "ceramic_storage" => {
+                        "capital_tool_production" | "container_crafting" | "food_preservation" | "ceramic_storage" | "clothing_tailoring" => {
                             if let Some(tool) = val.get("tool_crafted").or_else(|| val.get("product_name")).and_then(|v| v.as_str()) {
                                 *tools_crafted.entry(tool.to_string()).or_insert(0) += 1;
                                 let tid = match tool {
@@ -246,6 +252,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                                     "Salt-Cured Preserved Fish" | "Salt-Cured Fish" => 112,
                                     "Sun-Dried Desiccated Berries" | "Sun-Dried Berries" => 113,
                                     "Wood-Smoked Preserved Fish" | "Wood-Smoked Fish" => 114,
+                                    "Wood-Smoked Preserved Meat" | "Wood-Smoked Meat" => 121,
+                                    "Warm Leather Garment" | "Warm Leather Clothing" | "Leather Clothing" => 120,
                                     "Ceramic Storage Pottery Jar" | "Ceramic Pottery Jar" | "Pottery Jar" => 116,
                                     _ => 0,
                                 };
@@ -271,6 +279,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                                     "Herbal Medicine Blueprint" => 205,
                                     "Basket Weaving Blueprint" => 206,
                                     "Ceramic Pottery Firing Technique" | "Pottery Firing Blueprint" => 207,
+                                    "Leather Working & Tailoring Blueprint" | "Leather Working Blueprint" => 208,
                                     _ => 0,
                                 };
                                 if kid > 0 {
@@ -375,17 +384,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("┌────────────────────────────┬──────────────────────────────────────┬──────────────────────────────┬──────────────────────────────┐");
     println!("│ Era / Periode Sejarah      │ Item Arkeologis Seharusnya Ada       │ Item Telah Ada di Model      │ Kesenjangan (Item Gaps)      │");
     println!("├────────────────────────────┼──────────────────────────────────────┼──────────────────────────────┼──────────────────────────────┤");
-    println!("│ Paleolitik Bawah / Tengah  │ Kayu, Daging, Beri, Api Unggun,      │ Kayu (101), Beri (104),      │ Bilah Batu Kasar (Chopper),  │");
-    println!("│ (300.000 - 50.000 BP)      │ Kapak Genggam Kasar, Herba Kunyah    │ Daging Liar, Herba (110)     │ Pemantik Api (Fire Drill)    │");
+    println!("│ Paleolitik Bawah / Tengah  │ Kayu, Daging Liar, Kulit Hewan,      │ Kayu (101), Daging (118),    │ Bilah Batu Kasar (Chopper),  │");
+    println!("│ (300.000 - 50.000 BP)      │ Batu Kuari, Api Unggun, Herba        │ Kulit (119), Batu Kuari(117) │ Pemantik Api Gesek           │");
     println!("├────────────────────────────┼──────────────────────────────────────┼──────────────────────────────┼──────────────────────────────┤");
-    println!("│ Paleolitik Atas            │ Kapak Batu Halus, Rakit Perairan,    │ Kapak Batu (108), Rakit(106),│ Jarum Tulang, Pakaian Kulit, │");
-    println!("│ (50.000 - 10.000 BP)       │ Harpun, Pakaian Kulit, Jarum Jahit   │ Jasa Medis (404)             │ Pigmen/Oker Merah Purba      │");
+    println!("│ Paleolitik Atas            │ Kapak Batu (Batu+Kayu), Rakit,       │ Kapak Batu (108), Rakit(106),│ Jarum Tulang Halus,          │");
+    println!("│ (50.000 - 10.000 BP)       │ Pakaian Kulit Jahit, Daging Asap     │ Baju Kulit(120), Daging Asap │ Pigmen/Oker Merah Purba      │");
     println!("├────────────────────────────┼──────────────────────────────────────┼──────────────────────────────┼──────────────────────────────┤");
-    println!("│ Mesolitik                  │ Jaring Ikan Anyam, Garam Pengawet,   │ Jaring(109), Garam(105),     │ Busur & Panah, Jebakan Ikan, │");
-    println!("│ (10.000 - 8.000 BP)        │ Ikan Asin Kering, Wadah Anyam        │ Wadah Anyam (111), Kerang    │ Pengasapan Ikan Lanjut       │");
+    println!("│ Mesolitik                  │ Jaring Ikan Anyam, Garam Pengawet,   │ Jaring(109), Garam(105),     │ Busur & Panah Pemburu,       │");
+    println!("│ (10.000 - 8.000 BP)        │ Ikan Asin, Wadah Anyaman             │ Wadah Anyam (111), Kerang    │ Jebakan Ikan Rotan           │");
     println!("├────────────────────────────┼──────────────────────────────────────┼──────────────────────────────┼──────────────────────────────┤");
-    println!("│ Neolitik                   │ Gandum Tanam, Gerabah/Tembikar,      │ Gandum (103), Tempayan (116) │ Sabit Batu, Domestikasi      │");
-    println!("│ (8.000 - 4.000 BP)         │ Hewan Ternak Domestik, Tenun Tekstil │ Pendidikan (402)             │ Hewan Ternak, Tenun Tekstil  │");
+    println!("│ Neolitik                   │ Gandum Tanam, Gerabah/Tempayan Liat, │ Gandum (103), Tempayan (116) │ Sabit Batu Panen,            │");
+    println!("│ (8.000 - 4.000 BP)         │ Hewan Ternak Domestik, Tenun Tekstil │ Pendidikan (402)             │ Hewan Ternak Domestik        │");
     println!("├────────────────────────────┼──────────────────────────────────────┼──────────────────────────────┼──────────────────────────────┤");
     println!("│ Logam & Perunggu Awal      │ Peleburan Tembaga/Perunggu, Sabit,   │ Hak Institusi (301, 302),    │ Tungku Smelter, Biji Tembaga,│");
     println!("│ (4.000 - 1.200 BP)         │ Gerobak Roda, Farmakope, Pembukuan   │ Buku Besar Ledger Kas        │ Alat Perunggu, Gerobak Kayu  │");
@@ -418,7 +427,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let rafts_held = *living_inventory_totals.get("106").unwrap_or(&0);
     let baskets_held = *living_inventory_totals.get("111").unwrap_or(&0);
     let jars_held = *living_inventory_totals.get("116").unwrap_or(&0);
-    let total_tools_held = axes_held + nets_held + rafts_held + baskets_held + jars_held;
+    let clothing_held = *living_inventory_totals.get("120").unwrap_or(&0);
+    let total_tools_held = axes_held + nets_held + rafts_held + baskets_held + jars_held + clothing_held;
     let tools_per_capita = if alive_count > 0 { total_tools_held as f64 / alive_count as f64 } else { 0.0 };
 
     println!("\n======================================================================");
@@ -434,6 +444,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("│ Total Alat Diproduksi      │ 0 unit             │ {:<18} │ Fabrikasi Modal Kumulatif                        │", format!("{} unit", total_tools_fabricated));
     println!("│ Makanan Perishable Beredar │ 0 unit             │ {:<18} │ Risiko Pembusukan Pangan Segar                    │", format!("{} unit", perishable_items_held));
     println!("│ Transaksi Ekonomi          │ 0 transaksi        │ {:<18} │ Aktivitas Ledger dan Pembagian Kerja             │", format!("{} transaksi", total_transactions));
+    println!("│ Rantai Resep & Buruan Liar │ 0 resep / 1 fauna  │ {:<18} │ 11 Resep multi-input, fauna darat & air realistis │", format!("{} resep / 2 fauna", tools_crafted.len()));
     println!("└────────────────────────────┴────────────────────┴────────────────────┴──────────────────────────────────────────────────┘");
 
     // 9. Reality Anomaly Detection & Diagnostics
@@ -479,7 +490,26 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("\n  💡 Rekomendasi: Sempurnakan mekanisme mikro di atas untuk mencapai realitas sejarah penuh.");
     }
 
-    // 10. Render Final Tables
+    // 10. Recipe Origin & Hunting Diversity Audit
+    let meat_held = *living_inventory_totals.get("118").unwrap_or(&0);
+    let hide_held = *living_inventory_totals.get("119").unwrap_or(&0);
+    let stone_held = *living_inventory_totals.get("117").unwrap_or(&0);
+    let smoked_meat_crafted = *tools_crafted.get("Wood-Smoked Preserved Meat").unwrap_or(&0);
+    let clothing_crafted = *tools_crafted.get("Warm Leather Garment").unwrap_or(&0);
+    let leather_eureka = *discoveries.get("Leather Working & Tailoring Blueprint").unwrap_or(&0);
+
+    println!("\n======================================================================");
+    println!("🏹 EVALUASI RANTAI PASOK RESEP & KERAGAMAN BURUAN (HUNTING & RECIPE AUDIT)");
+    println!("======================================================================");
+    println!("  - Stok Kuari Batu (Stone) di Warga : {} unit", stone_held);
+    println!("  - Stok Daging Buruan Segar (Meat)  : {} unit", meat_held);
+    println!("  - Stok Kulit Hewan Liar (Raw Hide) : {} unit", hide_held);
+    println!("  - Daging Asap Diproduksi (Preserved): {} unit", smoked_meat_crafted);
+    println!("  - Pakaian Kulit Dibuat (Clothing)  : {} helai", clothing_crafted);
+    println!("  - Pakaian Kulit Beredar Saat Ini   : {} helai", clothing_held);
+    println!("  - Eureka Penyamakan Kulit & Jahit  : {} penemu", leather_eureka);
+
+    // 11. Render Final Tables
     if tables_path.exists() {
         let tables_file = File::open(tables_path)?;
         let builder = ParquetRecordBatchReaderBuilder::try_new(tables_file)?;

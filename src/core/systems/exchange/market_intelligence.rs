@@ -18,6 +18,10 @@ pub fn evaluate_marginal_utility(item_id: ItemId, calorie_reserve: f64, current_
             let urgency = (8000.0 / (calorie_reserve + 500.0)).clamp(0.5, 8.0);
             50.0 * urgency
         }
+        ItemId::RAW_MEAT => {
+            let urgency = (8500.0 / (calorie_reserve + 500.0)).clamp(0.5, 8.5);
+            55.0 * urgency
+        }
         ItemId::BERRIES => {
             let urgency = (6000.0 / (calorie_reserve + 500.0)).clamp(0.5, 6.0);
             30.0 * urgency
@@ -30,11 +34,18 @@ pub fn evaluate_marginal_utility(item_id: ItemId, calorie_reserve: f64, current_
             let urgency = (8500.0 / (calorie_reserve + 500.0)).clamp(0.5, 8.5);
             60.0 * urgency
         }
+        ItemId::SMOKED_MEAT => {
+            let urgency = (9000.0 / (calorie_reserve + 500.0)).clamp(0.5, 9.0);
+            65.0 * urgency
+        }
         ItemId::DRIED_BERRIES => {
             let urgency = (7000.0 / (calorie_reserve + 500.0)).clamp(0.5, 7.0);
             45.0 * urgency
         }
         ItemId::TIMBER => 35.0,
+        ItemId::STONE => 30.0,
+        ItemId::RAW_HIDE => 45.0,
+        ItemId::LEATHER_CLOTHING => 180.0,
         ItemId::SALT => 55.0, // High durability, good preservative, natural medium of exchange
         ItemId::RAFT => 150.0,
         ItemId::STONE_AXE => 120.0,
@@ -48,6 +59,7 @@ pub fn evaluate_marginal_utility(item_id: ItemId, calorie_reserve: f64, current_
         ItemId::KNOWLEDGE_FISH_CURING => 120.0,
         ItemId::KNOWLEDGE_FIRE_MAKING => 100.0,
         ItemId::KNOWLEDGE_POTTERY_MAKING => 150.0,
+        ItemId::KNOWLEDGE_LEATHER_WORKING => 160.0,
         // Institutional Permits
         ItemId::PERMIT_FISHING_RIGHT => 80.0,
         ItemId::PERMIT_FORESTRY_RIGHT => 80.0,

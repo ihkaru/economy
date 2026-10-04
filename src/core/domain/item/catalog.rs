@@ -212,50 +212,74 @@ pub fn build_canonical_items() -> Vec<ItemDefinition> {
         .with_perishable(false),
 
         ItemDefinition::new(
-            ItemId::CLAY,
-            "Tanah Liat Halus Aluvial (Fine Alluvial Clay)",
-            ItemCategory::Good,
+            ItemId::CLAY, "Tanah Liat Halus Aluvial (Fine Alluvial Clay)", ItemCategory::Good,
             serde_json::json!({
-                "historical_era": "Neolithic_Sedentary_Revolution",
-                "unit": "kg",
-                "utility_type": "RawMaterial",
-                "description": "Lempung tanah liat aluvial untuk bahan baku tembikar gerabah"
+                "historical_era": "Neolithic_Sedentary_Revolution", "unit": "kg",
+                "utility_type": "RawMaterial", "description": "Lempung tanah liat aluvial untuk bahan baku tembikar gerabah"
             }),
-        )
-        .with_weight(0.5)
-        .with_perishable(false),
+        ).with_weight(0.5).with_perishable(false),
 
         ItemDefinition::new(
-            ItemId::POTTERY_JAR,
-            "Tempayan Gerabah Keramik (Ceramic Storage Pottery Jar)",
-            ItemCategory::Good,
+            ItemId::POTTERY_JAR, "Tempayan Gerabah Keramik (Ceramic Storage Pottery Jar)", ItemCategory::Good,
             serde_json::json!({
-                "historical_era": "Neolithic_Sedentary_Revolution",
-                "unit": "buah",
-                "utility_type": "CapitalTool",
-                "capacity_expansion_kg": 50.0,
-                "grain_storage_protect": true,
+                "historical_era": "Neolithic_Sedentary_Revolution", "unit": "buah",
+                "utility_type": "CapitalTool", "capacity_expansion_kg": 50.0, "grain_storage_protect": true,
                 "recipe": {"clay": 4, "timber": 1},
                 "description": "Wadah keramik gerabah bakar: pelindung gandum dari hama & kelembapan (+50 kg kapasitas lumbung)"
             }),
-        )
-        .with_weight(4.0)
-        .with_perishable(false),
+        ).with_weight(4.0).with_perishable(false),
 
         ItemDefinition::new(
-            ItemId::KNOWLEDGE_POTTERY_MAKING,
-            "Gagasan Pembakaran Gerabah (Pottery Firing Blueprint)",
-            ItemCategory::Knowledge,
+            ItemId::STONE, "Batu Kali Keras (Hard River Stone)", ItemCategory::Good,
             serde_json::json!({
-                "historical_era": "Neolithic_Sedentary_Revolution",
-                "unit": "idea",
-                "utility_type": "Skill",
-                "rivalry": "NonRival",
-                "description": "Gagasan teknologi pembentukan tanah liat dan pembakaran piroteknik wadah keramik"
+                "historical_era": "Paleolithic_Pyrotechnology", "unit": "kg",
+                "utility_type": "RawMaterial", "description": "Batu rijang/basalt keras untuk bahan perkakas modal"
             }),
-        )
-        .with_weight(0.0)
-        .with_nature(ItemNature::NonRivalKnowledge),
+        ).with_weight(1.0).with_perishable(false),
+
+        ItemDefinition::new(
+            ItemId::RAW_MEAT, "Daging Satwa Buruan (Fresh Wild Meat)", ItemCategory::Good,
+            serde_json::json!({
+                "historical_era": "Paleolithic_Foraging", "unit": "kg",
+                "utility_type": "Nutrition", "calories_per_unit": 650.0, "shelf_life_days": 3,
+                "description": "Protein hewani segar hasil perburuan fauna darat, rentan membusuk"
+            }),
+        ).with_weight(0.5).with_perishable(true),
+
+        ItemDefinition::new(
+            ItemId::RAW_HIDE, "Kulit Binatang Mentah (Animal Raw Hide)", ItemCategory::Good,
+            serde_json::json!({
+                "historical_era": "Paleolithic_Pyrotechnology", "unit": "lembar",
+                "utility_type": "RawMaterial", "description": "Kulit satwa buruan untuk bahan pakaian hangat pelindung dingin"
+            }),
+        ).with_weight(1.0).with_perishable(false),
+
+        ItemDefinition::new(
+            ItemId::LEATHER_CLOTHING, "Pakaian Kulit Hangat (Warm Leather Garment)", ItemCategory::Good,
+            serde_json::json!({
+                "historical_era": "Paleolithic_Pyrotechnology", "unit": "set",
+                "utility_type": "CapitalTool", "thermal_protection": true,
+                "description": "Pakaian pelindung tubuh dari kulit samak: melindungi dari hipotermia dan penyakit cuaca dingin"
+            }),
+        ).with_weight(1.5).with_perishable(false),
+
+        ItemDefinition::new(
+            ItemId::SMOKED_MEAT, "Dendeng Daging Asap (Wood-Smoked Preserved Meat)", ItemCategory::Good,
+            serde_json::json!({
+                "historical_era": "Paleolithic_Pyrotechnology", "unit": "kg",
+                "utility_type": "Nutrition", "calories_per_unit": 700.0, "shelf_life_days": 1095,
+                "description": "Daging awetan hasil pengasapan kayu: tahan bertahun-tahun tanpa garam"
+            }),
+        ).with_weight(0.4).with_perishable(false),
+
+        ItemDefinition::new(
+            ItemId::KNOWLEDGE_LEATHER_WORKING, "Gagasan Pengolahan Kulit (Leather Working Blueprint)", ItemCategory::Knowledge,
+            serde_json::json!({
+                "historical_era": "Paleolithic_Pyrotechnology", "unit": "idea",
+                "utility_type": "Skill", "rivalry": "NonRival",
+                "description": "Gagasan teknologi penyamakan dan penjahitan pakaian kulit binatang"
+            }),
+        ).with_weight(0.0).with_nature(ItemNature::NonRivalKnowledge),
 
         ItemDefinition::new(
             ItemId::KNOWLEDGE_BASKET_WEAVING,

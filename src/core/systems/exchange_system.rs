@@ -102,6 +102,14 @@ impl ExchangeSystem {
                     {
                         discoveries.push((*id, ItemId::KNOWLEDGE_POTTERY_MAKING, "Ceramic Pottery Firing Technique"));
                     }
+                    // Leather working & clothing tailoring discovery (if holding Raw Hide and knowing Tool Crafting)
+                    if agent.has_item(ItemId::RAW_HIDE)
+                        && agent.has_item(ItemId::KNOWLEDGE_TOOL_CRAFTING)
+                        && !agent.has_item(ItemId::KNOWLEDGE_LEATHER_WORKING)
+                        && rng.check_probability(0.03)
+                    {
+                        discoveries.push((*id, ItemId::KNOWLEDGE_LEATHER_WORKING, "Leather Working & Tailoring Blueprint"));
+                    }
                 }
             }
         }
