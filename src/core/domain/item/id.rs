@@ -15,6 +15,7 @@ impl ItemId {
     pub const FISHING_NET: ItemId = ItemId(109);
     pub const HERBAL_MEDICINE: ItemId = ItemId(110);
     pub const WOVEN_BASKET: ItemId = ItemId(111);
+    pub const CURED_FISH: ItemId = ItemId(112);
 
     // Non-rival Knowledge / Recipes
     pub const KNOWLEDGE_RAFT_BUILDING: ItemId = ItemId(201);
@@ -75,6 +76,7 @@ impl ItemId {
             Self::FISHING_NET => 1.5,
             Self::HERBAL_MEDICINE => 0.1,
             Self::WOVEN_BASKET => 0.5,
+            Self::CURED_FISH => 0.4,
             _ => 0.0,
         }
     }

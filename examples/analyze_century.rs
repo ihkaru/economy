@@ -18,6 +18,7 @@ fn item_meta(id: u64) -> (&'static str, &'static str) {
         109 => ("Woven Fishing Net", "Capital (Marine Harvesting Tool)"),
         110 => ("Herbal Medicine", "Good (Therapeutic Pharmacopoeia)"),
         111 => ("Woven Carrying Basket", "Capital (Logistics Container)"),
+        112 => ("Salt-Cured Preserved Fish", "Good (Preserved Food)"),
         201 => ("Raft Building Blueprint", "Knowledge (Non-Rival Blueprint)"),
         202 => ("Fish Curing Preservation", "Knowledge (Non-Rival Technique)"),
         203 => ("Fire-Making Technique", "Knowledge (Non-Rival Technique)"),
@@ -229,22 +230,26 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     *trx_breakdown.entry(t.to_string()).or_insert(0) += 1;
 
                     match t {
-                        "capital_tool_production" | "container_crafting" => {
-                            if let Some(tool) = val.get("tool_crafted").and_then(|v| v.as_str()) {
+                        "capital_tool_production" | "container_crafting" | "food_preservation" => {
+                            if let Some(tool) = val.get("tool_crafted").or_else(|| val.get("product_name")).and_then(|v| v.as_str()) {
                                 *tools_crafted.entry(tool.to_string()).or_insert(0) += 1;
                                 let tid = match tool {
-                                    "Stone Axe" => 108,
-                                    "Fishing Net" => 109,
-                                    "Maritime Raft" => 106,
-                                    "Woven Basket" => 111,
+                                    "Stone Axe" | "Polished Stone Axe" => 108,
+                                    "Fishing Net" | "Woven Fishing Net" => 109,
+                                    "Maritime Raft" | "Maritime Timber Raft" => 106,
+                                    "Woven Basket" | "Woven Carrying Basket" => 111,
+                                    "Salt-Cured Preserved Fish" | "Salt-Cured Fish" => 112,
                                     _ => 0,
                                 };
                                 if tid > 0 {
-                                    record_item(&mut item_chronology, tid, tick, "Autonomous Tool Crafting");
+                                    record_item(&mut item_chronology, tid, tick, "Autonomous Production / Crafting");
                                 }
                             }
                         }
                         "pharmacopoeia_preparation" => {
+                            if let Some(prod) = val.get("product_name").or_else(|| val.get("tool_crafted")).and_then(|v| v.as_str()) {
+                                *tools_crafted.entry(prod.to_string()).or_insert(0) += 1;
+                            }
                             record_item(&mut item_chronology, 110, tick, "Herbal Pharmacopoeia Preparation");
                         }
                         "scientific_discovery" => {
@@ -402,7 +407,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let axes_held = *living_inventory_totals.get("108").unwrap_or(&0);
     let nets_held = *living_inventory_totals.get("109").unwrap_or(&0);
     let rafts_held = *living_inventory_totals.get("106").unwrap_or(&0);
-    let total_tools_held = axes_held + nets_held + rafts_held;
+    let baskets_held = *living_inventory_totals.get("111").unwrap_or(&0);
+    let total_tools_held = axes_held + nets_held + rafts_held + baskets_held;
     let tools_per_capita = if alive_count > 0 { total_tools_held as f64 / alive_count as f64 } else { 0.0 };
 
     println!("\n======================================================================");

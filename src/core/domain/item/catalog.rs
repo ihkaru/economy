@@ -164,6 +164,22 @@ pub fn build_canonical_items() -> Vec<ItemDefinition> {
         .with_perishable(false),
 
         ItemDefinition::new(
+            ItemId::CURED_FISH,
+            "Ikan Kering Asin (Salt-Cured Preserved Fish)",
+            ItemCategory::Good,
+            serde_json::json!({
+                "historical_era": "Neolithic_Preservation_Storage",
+                "unit": "ekor",
+                "utility_type": "Nutrition",
+                "calories_per_unit": 650.0,
+                "shelf_life_days": 1825,
+                "description": "Protein awetan hasil pengasinan garam kristal: tahan bertahun-tahun tanpa busuk"
+            }),
+        )
+        .with_weight(0.4)
+        .with_perishable(false),
+
+        ItemDefinition::new(
             ItemId::KNOWLEDGE_BASKET_WEAVING,
             "Gagasan Anyaman Wadah Angkut (Basket Weaving Blueprint)",
             ItemCategory::Knowledge,

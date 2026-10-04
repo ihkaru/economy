@@ -9,7 +9,9 @@ use crate::core::ports::environment_store::EnvironmentStorePort;
 use crate::core::ports::ledger_store::LedgerStorePort;
 use crate::core::ports::rng_port::RngPort;
 use crate::core::ports::statistic_store::StatisticStorePort;
-use crate::core::systems::exchange::{perform_agent_centric_foraging, perform_trade_and_services};
+use crate::core::systems::exchange::{
+    perform_agent_centric_foraging, perform_autonomous_crafting, perform_trade_and_services,
+};
 
 pub struct ExchangeSystem {
     next_trx_id: u64,
@@ -122,7 +124,7 @@ impl ExchangeSystem {
             let _ = ledger_store.record(entry);
         }
 
-        // 2. Agent Interaction with Environment: Agent-Centric Optimal Foraging & Crafting
+        // 2. Agent Interaction with Environment: Agent-Centric Optimal Foraging
         perform_agent_centric_foraging(
             run_id,
             current_tick,
@@ -135,7 +137,19 @@ impl ExchangeSystem {
             &mut self.next_instance_id,
         );
 
-        // 3. Inter-Agent Trade (Emergent Bilateral Barter, Medical Services & Apprenticeship)
+        // 3. Autonomous Value-Added Manufacturing & Multi-Tier Crafting (Leontief Recipe DAG)
+        perform_autonomous_crafting(
+            run_id,
+            current_tick,
+            &living_agent_ids,
+            agent_store,
+            ledger_store,
+            rng,
+            &mut self.next_trx_id,
+            &mut self.next_instance_id,
+        );
+
+        // 4. Inter-Agent Trade (Emergent Bilateral Barter, Medical Services & Apprenticeship)
         if living_agent_ids.len() >= 2 {
             let idx_a = rng.gen_range_u64(0, living_agent_ids.len() as u64) as usize;
             let mut idx_b = rng.gen_range_u64(0, (living_agent_ids.len() - 1) as u64) as usize;

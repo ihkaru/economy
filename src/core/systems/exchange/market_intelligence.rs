@@ -22,6 +22,10 @@ pub fn evaluate_marginal_utility(item_id: ItemId, calorie_reserve: f64, current_
             let urgency = (6000.0 / (calorie_reserve + 500.0)).clamp(0.5, 6.0);
             30.0 * urgency
         }
+        ItemId::CURED_FISH => {
+            let urgency = (9000.0 / (calorie_reserve + 500.0)).clamp(0.5, 9.0);
+            65.0 * urgency
+        }
         ItemId::TIMBER => 35.0,
         ItemId::SALT => 55.0, // High durability, good preservative, natural medium of exchange
         ItemId::RAFT => 150.0,
