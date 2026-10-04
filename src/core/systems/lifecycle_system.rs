@@ -57,7 +57,65 @@ impl LifecycleSystem {
             }
         }
 
-        // 3. Marriage Matching
+        // 3. Estate Settlement & Widow Remarriage Clearance
+        // Settle inventory inheritance and free surviving spouses for remarriage
+        for id in &all_ids {
+            let (is_deceased, spouse_opt, children, inventory_items) = match agent_store.get_human(*id) {
+                Some(agent) if !agent.is_alive() => (
+                    true,
+                    agent.spouse_id,
+                    agent.children_ids.clone(),
+                    agent.inventory.clone(),
+                ),
+                _ => (false, None, Vec::new(), std::collections::BTreeMap::new()),
+            };
+
+            if is_deceased {
+                // Find living heir: 1) living spouse, 2) living children
+                let mut heir_id = None;
+                if let Some(spouse) = spouse_opt {
+                    if agent_store.get_human(spouse).map(|s| s.is_alive()).unwrap_or(false) {
+                        heir_id = Some(spouse);
+                    }
+                }
+                if heir_id.is_none() {
+                    for child in &children {
+                        if agent_store.get_human(*child).map(|c| c.is_alive()).unwrap_or(false) {
+                            heir_id = Some(*child);
+                            break;
+                        }
+                    }
+                }
+
+                // Transfer physical capital / inventory to heir (Zero Ex-Nihilo Conservation)
+                if let Some(heir) = heir_id {
+                    if !inventory_items.is_empty() {
+                        if let Some(heir_agent) = agent_store.get_human_mut(heir) {
+                            for (item_id, qty) in inventory_items {
+                                *heir_agent.inventory.entry(item_id).or_insert(0) += qty;
+                            }
+                        }
+                    }
+                }
+
+                // Clear inventory and spouse link on deceased agent
+                if let Some(agent) = agent_store.get_human_mut(*id) {
+                    agent.inventory.clear();
+                    agent.spouse_id = None;
+                }
+
+                // If spouse is still alive, clear their spouse link so they can remarry
+                if let Some(spouse) = spouse_opt {
+                    if let Some(surviving_spouse) = agent_store.get_human_mut(spouse) {
+                        if surviving_spouse.spouse_id == Some(*id) {
+                            surviving_spouse.spouse_id = None;
+                        }
+                    }
+                }
+            }
+        }
+
+        // 4. Marriage Matching
         // Collect eligible living unmarried males and females of legal age (>= 18 years)
         let mut eligible_males = Vec::new();
         let mut eligible_females = Vec::new();
@@ -94,7 +152,7 @@ impl LifecycleSystem {
             }
         }
 
-        // 4. Childbirth (Reproduction)
+        // 5. Childbirth (Reproduction)
         // Check married couples where female is between 18 and 45 years and has sufficient nutritional energy reserve
         let mut births_to_create = Vec::new();
 
@@ -104,10 +162,17 @@ impl LifecycleSystem {
                 if female.is_alive()
                     && female.sex == Sex::Female
                     && (18.0..=45.0).contains(&age_years)
-                    && female.calorie_reserve >= 15000.0 // Malnutrition amenorrhea prevention
+                    && female.days_starving == 0
+                    && female.calorie_reserve >= 1800.0 // Malnutrition amenorrhea prevention
                     && let Some(spouse_id) = female.spouse_id
                 {
-                    let annual_birth_rate: f64 = 0.30;
+                    // Ensure spouse is also alive
+                    let spouse_alive = agent_store.get_human(spouse_id).map(|s| s.is_alive()).unwrap_or(false);
+                    if !spouse_alive {
+                        continue;
+                    }
+
+                    let annual_birth_rate: f64 = 0.35;
                     let tick_birth_prob = 1.0_f64 - (1.0_f64 - annual_birth_rate).powf(fractional_years);
 
                     if rng.check_probability(tick_birth_prob) {
@@ -129,13 +194,15 @@ impl LifecycleSystem {
             self.next_agent_id += 1;
 
             // Zero Ex-Nihilo energy conservation: mother transfers maternal caloric investment
+            let mut mother_gen = 1;
             let maternal_investment = if let Some(mother) = agent_store.get_human_mut(mother_id) {
-                let transfer = 10000.0_f64.min(mother.calorie_reserve * 0.5);
+                mother_gen = mother.attributes.get("generation").and_then(|g| g.as_u64()).unwrap_or(1);
+                let transfer = 800.0_f64.min(mother.calorie_reserve * 0.3);
                 mother.calorie_reserve -= transfer;
                 mother.add_child(child_id);
                 transfer
             } else {
-                10000.0
+                800.0
             };
 
             let mut newborn = Human::new(child_id, sex, current_tick)
@@ -143,10 +210,10 @@ impl LifecycleSystem {
                 .with_calories(maternal_investment)
                 .with_parents(Some(father_id), Some(mother_id));
             
-            // Give baby starting attributes
+            // Give baby starting attributes with inherited generation
             newborn.attributes = serde_json::json!({
                 "lineage": format!("Child of {} and {}", father_id, mother_id),
-                "generation": 2
+                "generation": mother_gen + 1
             });
 
             // Update father

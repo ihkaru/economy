@@ -135,29 +135,31 @@ impl MetabolismSystem {
                     for p_id in parent_ids.into_iter().flatten() {
                         if let Some(parent) = agent_store.get_human_mut(p_id)
                             && parent.is_alive()
-                            && parent.calorie_reserve > 5000.0
+                            && parent.calorie_reserve > 1800.0
                         {
-                            let share = 2000.0;
-                            parent.calorie_reserve -= share;
-                            calories_gained += share;
-                            break;
+                            let share = 800.0_f64.min(parent.calorie_reserve - 1200.0);
+                            if share > 0.0 {
+                                parent.calorie_reserve -= share;
+                                calories_gained += share;
+                                break;
+                            }
                         }
                     }
                 }
             }
 
             // 3. Emergency Foraging from Nearby Resource Nodes if Still Hungry
-            if calorie_balance + calories_gained < 4000.0 {
+            if calorie_balance + calories_gained < 6000.0 {
                 for node in env_store.nodes_mut() {
                     if node.is_edible
                         && node.current_stock > 0
                         && loc.euclidean_distance(&node.location) <= 5.0
                     {
-                        let needed = ((4000.0 - (calorie_balance + calories_gained)) / node.calories_per_unit).ceil() as u32;
+                        let needed = ((6000.0 - (calorie_balance + calories_gained)) / node.calories_per_unit).ceil() as u32;
                         let harvest_qty = needed.min(node.current_stock).min(4);
                         let harvested = node.harvest(harvest_qty, 1.0);
                         calories_gained += harvested as f64 * node.calories_per_unit;
-                        if calorie_balance + calories_gained >= 4000.0 {
+                        if calorie_balance + calories_gained >= 6000.0 {
                             break;
                         }
                     }

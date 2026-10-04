@@ -148,13 +148,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let initial_age_years = 20.0 + ((i % 11) as f64);
         let initial_age_ticks = (initial_age_years * ticks_per_year).round() as u64;
 
-        // Place initial pioneer settlement near the central river valley (15, 25)
-        let human = Human::new(agent_id, sex, Tick::ZERO)
+        let mut human = Human::new(agent_id, sex, Tick::ZERO)
             .with_initial_age(initial_age_ticks)
             .with_item(ItemId::GRAIN, 5) // Initial 5 units of grain food stock
             .with_item(ItemId::TIMBER, 2) // Basic crafting/firewood stock
             .with_location(economy::core::domain::spatial::GeoCoordinate::new(15, 25))
             .with_calories(25000.0); // 12-day initial caloric buffer
+
+        human.attributes = serde_json::json!({
+            "lineage": "Pioneer Settler",
+            "generation": 1
+        });
 
         agent_store.insert_human(human);
     }
