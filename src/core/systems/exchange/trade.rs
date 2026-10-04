@@ -116,7 +116,6 @@ pub fn perform_trade_and_services(
     }
 
     // Case C: Bilateral Physical Goods Barter (if no service occurred)
-    let mut barter_occurred = false;
     if !medical_service_occurred && !knowledge_trade_occurred {
         let a_informed = agent_has_market_access(agent_a_id, agent_store);
         let b_informed = agent_has_market_access(agent_b_id, agent_store);
@@ -172,26 +171,35 @@ pub fn perform_trade_and_services(
             let u_b_gives = evaluate_marginal_utility(item_b, b_cal, b_stock_b) * mult_b(item_b);
             let u_b_receives = evaluate_marginal_utility(item_a, b_cal, b_stock_a) * mult_b(item_a) * liquidity_premium(item_a);
 
-            if u_a_receives > u_a_gives && u_b_receives > u_b_gives {
+            let price_ratio = mult_a(item_a) / mult_a(item_b).max(0.1);
+            let (qty_a, qty_b) = if price_ratio >= 1.75 && b_stock_b >= 2 {
+                (1, 2)
+            } else if price_ratio <= 0.55 && a_stock_a >= 2 {
+                (2, 1)
+            } else {
+                (1, 1)
+            };
+
+            if u_a_receives * (qty_b as f64) > u_a_gives * (qty_a as f64) && u_b_receives * (qty_a as f64) > u_b_gives * (qty_b as f64) {
                 if let Some(agent_a) = agent_store.get_human_mut(agent_a_id) {
-                    let _ = agent_a.remove_item(item_a, 1);
-                    agent_a.add_item(item_b, 1);
+                    let _ = agent_a.remove_item(item_a, qty_a);
+                    agent_a.add_item(item_b, qty_b);
                 }
                 if let Some(agent_b) = agent_store.get_human_mut(agent_b_id) {
-                    let _ = agent_b.remove_item(item_b, 1);
-                    agent_b.add_item(item_a, 1);
+                    let _ = agent_b.remove_item(item_b, qty_b);
+                    agent_b.add_item(item_a, qty_a);
                 }
 
                 let instance_a = ItemInstance::new(
                     item_a,
-                    1,
+                    qty_a,
                     serde_json::json!({"source_agent": agent_a_id.0}),
                 ).with_instance_id(ItemInstanceId::new(*next_instance_id));
                 *next_instance_id += 1;
 
                 let instance_b = ItemInstance::new(
                     item_b,
-                    1,
+                    qty_b,
                     serde_json::json!({"source_agent": agent_b_id.0}),
                 ).with_instance_id(ItemInstanceId::new(*next_instance_id));
                 *next_instance_id += 1;
@@ -221,7 +229,6 @@ pub fn perform_trade_and_services(
                 );
                 *next_trx_id += 1;
                 let _ = ledger_store.record(entry);
-                barter_occurred = true;
             }
         }
     }
@@ -359,14 +366,16 @@ pub fn perform_trade_and_services(
         // E.2 Coasean Firm Wage Contract (Capitalist advances wage food, employs laborer with tools)
         if !firm_occurred {
             for (cap_id, lab_id, cap_inv, lab_cal) in [(agent_a_id, agent_b_id, &a_inv, b_cal), (agent_b_id, agent_a_id, &b_inv, a_cal)] {
-                if lab_cal < 3500.0 && (cap_inv.contains_key(&ItemId::STONE_AXE) || cap_inv.contains_key(&ItemId::HUNTING_SPEAR)) {
-                    let wage_food = [ItemId::FLATBREAD, ItemId::GRAIN_FLOUR, ItemId::CURED_FISH, ItemId::SMOKED_MEAT, ItemId::GRAIN]
-                        .into_iter().find(|&f| cap_inv.get(&f).copied().unwrap_or(0) >= 2);
+                if lab_cal < 4000.0 && (cap_inv.contains_key(&ItemId::STONE_AXE) || cap_inv.contains_key(&ItemId::HUNTING_SPEAR) || cap_inv.contains_key(&ItemId::FISHING_NET)) {
+                    let wage_food = [ItemId::DRIED_BERRIES, ItemId::FLATBREAD, ItemId::GRAIN_FLOUR, ItemId::CURED_FISH, ItemId::SMOKED_MEAT, ItemId::GRAIN]
+                        .into_iter().find(|&f| cap_inv.get(&f).copied().unwrap_or(0) >= 1);
                     if let Some(wage_item) = wage_food {
                         let (produced_item, qty) = if cap_inv.contains_key(&ItemId::STONE_AXE) {
                             (ItemId::TIMBER, 2)
-                        } else {
+                        } else if cap_inv.contains_key(&ItemId::HUNTING_SPEAR) {
                             (ItemId::RAW_MEAT, 1)
+                        } else {
+                            (ItemId::FISH, 2)
                         };
                         if let Some(cap) = agent_store.get_human_mut(cap_id) {
                             let _ = cap.remove_item(wage_item, 1);
