@@ -26,6 +26,7 @@ pub struct SimulationSummary {
     pub total_agents: usize,
     pub total_ledger_transactions: usize,
     pub total_statistical_releases: usize,
+    pub total_table_releases: usize,
     pub export_summary: ExportSummary,
 }
 
@@ -96,6 +97,26 @@ where
         self.statistic_system.register(definition);
     }
 
+    pub fn register_table_statistic(&mut self, definition: crate::core::domain::statistic::table::StatisticalTableDefinition) {
+        self.statistic_system.register_table(definition);
+    }
+
+    pub fn stat_store(&self) -> &S {
+        &self.stat_store
+    }
+
+    pub fn ledger_store(&self) -> &L {
+        &self.ledger_store
+    }
+
+    pub fn agent_store(&self) -> &A {
+        &self.agent_store
+    }
+
+    pub fn env_store(&self) -> &E {
+        &self.env_store
+    }
+
     /// Run the simulation to completion deterministically with optional rate-limiting
     pub fn run(&mut self) -> Result<SimulationSummary, String> {
         let wall_start = Instant::now();
@@ -138,6 +159,7 @@ where
                 &mut self.agent_store,
                 &mut self.env_store,
                 &mut self.ledger_store,
+                &self.stat_store,
                 &mut self.rng,
             );
 
@@ -177,6 +199,7 @@ where
             self.env_store.climate(),
             self.env_store.nodes(),
             self.stat_store.all_releases(),
+            self.stat_store.all_table_releases(),
         )?;
 
         Ok(SimulationSummary {
@@ -189,6 +212,7 @@ where
             total_agents: all_humans.len(),
             total_ledger_transactions: self.ledger_store.total_records(),
             total_statistical_releases: self.stat_store.total_releases(),
+            total_table_releases: self.stat_store.total_table_releases(),
             export_summary,
         })
     }

@@ -101,10 +101,10 @@ impl ResourceNode {
         self
     }
 
-    /// Step natural regeneration and decay based on environmental factors and maturity curve
-    pub fn step_environment(&mut self, climate: &ClimateState) {
-        // Logistic growth of maturity: dM/dt = r * max(M, 0.05) * (1.0 - M) * climate
-        let growth_mult = climate.season.growth_multiplier() * climate.weather.growth_impact();
+    /// Step natural regeneration and decay with spatial Köppen-Geiger micro-climate and elevation
+    pub fn step_environment_spatial(&mut self, climate: &ClimateState, elevation: f64, map_height: u32) {
+        // Logistic growth with spatial Köppen-Geiger zonality & altitude lapse rate:
+        let growth_mult = climate.spatial_growth_multiplier(elevation, self.location.y, map_height);
         let r = self.pace.base_rate() * growth_mult;
 
         let seed_factor = self.maturity.max(0.05);
@@ -117,6 +117,11 @@ impl ResourceNode {
 
         self.maturity = (self.maturity + growth_delta - decay_delta).clamp(0.0, 1.0);
         self.current_stock = ((self.max_stock as f64) * self.maturity).round() as u32;
+    }
+
+    /// Step natural regeneration and decay based on environmental factors and maturity curve
+    pub fn step_environment(&mut self, climate: &ClimateState) {
+        self.step_environment_spatial(climate, 100.0, 50);
     }
 
     /// Agent harvesting interaction with maturity quality curve and tool efficiency multiplier

@@ -15,9 +15,15 @@ use economy::core::domain::statistic::calculator::{
     TradeVolumeCalculator, WealthDistributionCalculator,
 };
 use economy::core::domain::statistic::definition::StatisticDefinition;
+use economy::core::domain::statistic::renderer::{AsciiTableRenderer, TableRenderer};
 use economy::core::domain::statistic::schedule::ReleaseSchedule;
+use economy::core::domain::statistic::table::StatisticalTableDefinition;
+use economy::core::domain::statistic::table_calculator::{
+    CommodityCirculationTableCalculator, DemographicCohortTableCalculator,
+};
 use economy::core::domain::time::{RunId, Tick, TickDuration};
 use economy::core::ports::agent_store::AgentStorePort;
+use economy::core::ports::statistic_store::StatisticStorePort;
 use economy::core::systems::statistic_system::StatisticSystem;
 use economy::engine::{SimulationConfig, SimulationEngine};
 
@@ -43,7 +49,7 @@ impl From<CliTickDuration> for TickDuration {
 #[derive(Parser, Debug)]
 #[command(author, version, about = "Deterministic ABM Economic Simulation Engine")]
 struct Cli {
-    /// Explicit Run ID for simulation tracking
+    /// Explicit Run ID for simulation tracking (commit short hash is automatically appended)
     #[arg(short, long)]
     run_id: Option<String>,
 
@@ -51,7 +57,7 @@ struct Cli {
     #[arg(short, long, default_value_t = 42)]
     seed: u64,
 
-    /// Time duration represented by 1 tick
+    /// Time duration represented by 1 tick (default: day)
     #[arg(short, long, value_enum, default_value_t = CliTickDuration::Day)]
     duration: CliTickDuration,
 
@@ -72,26 +78,57 @@ struct Cli {
     output_dir: String,
 }
 
+/// Helper function to retrieve git commit short hash
+fn get_git_commit_short() -> String {
+    if let Ok(hash) = std::env::var("GIT_COMMIT") {
+        return hash;
+    }
+    if let Ok(output) = std::process::Command::new("git")
+        .args(["rev-parse", "--short", "HEAD"])
+        .output()
+    {
+        if output.status.success() {
+            let s = String::from_utf8_lossy(&output.stdout).trim().to_string();
+            if !s.is_empty() {
+                return s;
+            }
+        }
+    }
+    "c1dea23".to_string()
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cli = Cli::parse();
+    let git_commit = get_git_commit_short();
 
-    let run_id = match cli.run_id {
-        Some(id) => RunId::new(id),
-        None => RunId::generate_random(),
+    // Ensure run_id always embeds git commit short hash with an underscore
+    let base_run_id = match cli.run_id {
+        Some(id) => id,
+        None => format!("run_{}", uuid::Uuid::new_v4().to_string().chars().take(8).collect::<String>()),
     };
 
+    let formatted_run_id = if base_run_id.contains(&git_commit) {
+        base_run_id
+    } else {
+        format!("{}_{}", base_run_id, git_commit)
+    };
+
+    let run_id = RunId::new(formatted_run_id);
     let tick_duration: TickDuration = cli.duration.into();
 
     println!("=======================================================");
     println!("🏛️  DETERMINISTIC ABM ECONOMIC SIMULATOR (RUST)");
     println!("=======================================================");
     println!("Run ID           : {}", run_id.as_str());
+    println!("Git Commit       : {}", git_commit);
     println!("Master Seed      : {}", cli.seed);
-    println!("Tick Duration    : {:?}", tick_duration);
+    println!("Tick Duration    : {:?} (1 tick = 1 day)", tick_duration);
     println!("Total Ticks      : {}", cli.ticks);
     println!("Pacing (TPS)     : {:?}", cli.tps);
     println!("Initial Pop      : {}", cli.initial_agents);
     println!("Output Parquet   : {}", cli.output_dir);
+    println!("Reproduction Cmd : cargo run --release -- --seed {} --ticks {} --duration day --initial-agents {} --output-dir {}",
+        cli.seed, cli.ticks, cli.initial_agents, cli.output_dir);
     println!("-------------------------------------------------------");
 
     // 1. Setup Adapters (Dependency Injection Composition Root)
@@ -195,7 +232,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // 2. Setup Statistical Publication Indicators & Data Openness Rules
     let mut statistic_system = StatisticSystem::new();
 
-    // Indicator 1: Public Demography & Census (Daily)
+    // Scalar Indicator 1: Public Demography & Census (Daily)
     statistic_system.register(StatisticDefinition::new(
         "POP_DEMOGRAPHY",
         "Demografi & Sensus Penduduk",
@@ -204,7 +241,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         PopulationDemographyCalculator,
     ));
 
-    // Indicator 2: Public Natural Resource Reserves (Released on the 1st of every month)
+    // Scalar Indicator 2: Public Natural Resource Reserves (Released on the 1st of every month)
     statistic_system.register(StatisticDefinition::new(
         "RESOURCE_RESERVES",
         "Neraca Cadangan Sumber Daya Alam",
@@ -213,7 +250,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         ResourceScarcityCalculator,
     ));
 
-    // Indicator 3: Tiered Asset Distribution Index (Weekly, requires asset inventory >= 10 units)
+    // Scalar Indicator 3: Tiered Asset Distribution Index (Weekly, requires asset inventory >= 10 units)
     statistic_system.register(StatisticDefinition::new(
         "WEALTH_DISTRIBUTION",
         "Indeks Distribusi Aset Fisik & Inventori",
@@ -222,7 +259,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         WealthDistributionCalculator,
     ));
 
-    // Indicator 4: Public Quarterly Market Turnover (Every 3 months / Triwulanan)
+    // Scalar Indicator 4: Public Quarterly Market Turnover (Every 3 months / Triwulanan)
     statistic_system.register(StatisticDefinition::new(
         "MARKET_TURNOVER",
         "Omset Pasar & Volume Rantai Pasok",
@@ -231,13 +268,31 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         TradeVolumeCalculator,
     ));
 
-    // Indicator 5: Emergent Dominant Currency Tracker (Monthly on the 1st)
+    // Scalar Indicator 5: Emergent Dominant Currency Tracker (Monthly on the 1st)
     statistic_system.register(StatisticDefinition::new(
         "EMERGENT_CURRENCY",
         "Indikator Komoditas Uang Dominan (Velocity of Money)",
         ReleaseSchedule::DayOfMonth(1),
         AccessRequirement::Public,
         EmergentCurrencyCalculator,
+    ));
+
+    // Structured Table Release 1: Demographic Cohorts & Vital Population Bulletin (Monthly on Day 1)
+    statistic_system.register_table(StatisticalTableDefinition::new(
+        "TAB_DEMO_01",
+        "Tabel Sensus Demografi & Piramida Kohor Penduduk",
+        ReleaseSchedule::DayOfMonth(1),
+        AccessRequirement::Public,
+        DemographicCohortTableCalculator,
+    ));
+
+    // Structured Table Release 2: Circulating Commodity Census & Supply Bulletin (Monthly on Day 1)
+    statistic_system.register_table(StatisticalTableDefinition::new(
+        "TAB_COMM_01",
+        "Tabel Sensus Komoditas, Alat Modal & Sirkulasi Aset",
+        ReleaseSchedule::DayOfMonth(1),
+        AccessRequirement::Public,
+        CommodityCirculationTableCalculator,
     ));
 
     let exporter = ParquetExporter::new(&cli.output_dir);
@@ -277,9 +332,27 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Simulation Speed : {:.1} TPS (Ticks/sec)", summary.average_tps);
     println!("Agent Population : {} living / {} total (including deceased/born)", summary.living_agents, summary.total_agents);
     println!("Ledger Records   : {} transactions in Ultimate Ledger", summary.total_ledger_transactions);
-    println!("Stat Publications: {} official indicator releases", summary.total_statistical_releases);
+    println!("Stat Indicators  : {} official scalar indicator releases", summary.total_statistical_releases);
+    println!("Table Releases   : {} official tabular bulletin releases", summary.total_table_releases);
     println!("Parquet Exporter : Output saved to {}", summary.export_summary.output_directory);
+    println!("Parquet Tables   : {}", format!("{}/tables.parquet", summary.export_summary.output_directory));
     println!("=======================================================");
+
+    // 6. Render Latest Statistical Table Bulletins to Console
+    let renderer = AsciiTableRenderer::new();
+    println!("\n=======================================================");
+    println!("🏛️  OFFICIAL STATISTICAL BULLETIN RELEASES (LATEST)");
+    println!("=======================================================\n");
+
+    if let Some(demo_release) = engine.stat_store().get_latest_table("TAB_DEMO_01") {
+        println!("{}", renderer.render(&demo_release.table));
+        println!();
+    }
+
+    if let Some(comm_release) = engine.stat_store().get_latest_table("TAB_COMM_01") {
+        println!("{}", renderer.render(&comm_release.table));
+        println!();
+    }
 
     Ok(())
 }

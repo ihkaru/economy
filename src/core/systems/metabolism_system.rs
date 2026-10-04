@@ -1,4 +1,5 @@
-use crate::core::domain::agent::traits::HasLifecycle;
+use crate::core::domain::agent::traits::{EconomicActor, HasLifecycle};
+use crate::core::domain::item::id::ItemId;
 use crate::core::domain::time::Tick;
 use crate::core::ports::agent_store::AgentStorePort;
 use crate::core::ports::environment_store::EnvironmentStorePort;
@@ -26,13 +27,6 @@ impl MetabolismSystem {
         let all_ids = agent_store.all_human_ids();
         let climate = env_store.climate().clone();
 
-        // Extra calorie burn in cold winter weather (unless heated by firewood)
-        let cold_weather_penalty = if climate.temperature_celsius < 10.0 {
-            (10.0 - climate.temperature_celsius) * 40.0 // up to ~600 extra kcal in freeze
-        } else {
-            0.0
-        };
-
         for id in all_ids {
             let mut agent_location = None;
             let mut is_alive = false;
@@ -52,13 +46,39 @@ impl MetabolismSystem {
 
             let loc = agent_location.unwrap();
 
+            // Calculate realistic spatial micro-climate with Environmental Lapse Rate (-6.5°C/1000m)
+            let elevation = if loc.x >= 40 && loc.y == 25 {
+                950.0 // Volcanic Peak Island
+            } else if loc.y < 10 {
+                1800.0 // Northern Mountain Ridge
+            } else if loc.y > 35 {
+                200.0 // Southern Dense Forest
+            } else {
+                100.0 // Central Plains & River Valley
+            };
+            let local_temp = climate.local_temperature(elevation, loc.y, 50);
+
+            // Cold weather penalty adjusted for local lapse rate
+            let raw_cold_penalty = if local_temp < 10.0 {
+                (10.0 - local_temp) * 40.0 // Extra kcal burned for homeothermy in the cold
+            } else {
+                0.0
+            };
+
+            // Firewood thermoregulation: holding Timber provides heating and halves cold penalty
+            let has_firewood = agent_store
+                .get_human(id)
+                .map(|a| a.has_item(ItemId::TIMBER))
+                .unwrap_or(false);
+            let cold_penalty = if has_firewood { raw_cold_penalty * 0.5 } else { raw_cold_penalty };
+
             // 1. Food Consumption from Personal Inventory
             let mut calories_gained = 0.0;
             if let Some(agent) = agent_store.get_human_mut(id) {
                 let edible_cal = [
-                    (crate::core::domain::item::id::ItemId::GRAIN, 800.0), // Grain
-                    (crate::core::domain::item::id::ItemId::FISH, 500.0),  // Fish
-                    (crate::core::domain::item::id::ItemId::BERRIES, 300.0), // Berries
+                    (ItemId::GRAIN, 800.0),   // Grain
+                    (ItemId::FISH, 500.0),    // Fish
+                    (ItemId::BERRIES, 300.0), // Berries
                 ];
 
                 for (item_id, cal_per_unit) in edible_cal {
@@ -75,6 +95,16 @@ impl MetabolismSystem {
                     }
                 }
                 agent.inventory.retain(|_, v| *v > 0);
+            }
+
+            // Liebig's Law of the Minimum: Electrolyte preservation via Salt
+            // Holding Salt improves digestion assimilation efficiency (+10% caloric extraction)
+            let has_salt = agent_store
+                .get_human(id)
+                .map(|a| a.has_item(ItemId::SALT))
+                .unwrap_or(false);
+            if has_salt {
+                calories_gained *= 1.10;
             }
 
             // 2. Parental Care: Young dependent children receive food from living parents
@@ -115,7 +145,7 @@ impl MetabolismSystem {
                 }
             }
 
-            // 4. Caloric Expenditure Calculation (scaled for children)
+            // 4. Caloric Expenditure Calculation (scaled for children) + local cold penalty
             let child_factor = if age_years < 5.0 {
                 0.4
             } else if age_years < 12.0 {
@@ -123,7 +153,7 @@ impl MetabolismSystem {
             } else {
                 1.0
             };
-            let total_expenditure = (self.base_daily_calories * child_factor) + cold_weather_penalty;
+            let total_expenditure = (self.base_daily_calories * child_factor) + cold_penalty;
 
             // 5. Update agent state
             if let Some(agent) = agent_store.get_human_mut(id) {
@@ -138,9 +168,8 @@ impl MetabolismSystem {
                     days_starving = agent.days_starving;
                 }
 
-                // 4. Starvation mortality hazard
+                // 6. Starvation mortality hazard
                 if days_starving > 3 {
-                    // Escalating hazard probability for severe starvation
                     let hazard = (0.08 * (days_starving - 3) as f64).min(0.85);
                     if rng.check_probability(hazard) {
                         agent.mark_deceased(

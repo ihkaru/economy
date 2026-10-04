@@ -17,6 +17,7 @@ use crate::core::domain::environment::climate::ClimateState;
 use crate::core::domain::environment::resource::ResourceNode;
 use crate::core::domain::ledger::entry::LedgerEntry;
 use crate::core::domain::statistic::record::StatisticReleaseRecord;
+use crate::core::domain::statistic::table::StatisticalTableRelease;
 use crate::core::domain::time::RunId;
 use crate::core::ports::export_port::{ExportPort, ExportSummary};
 
@@ -404,6 +405,62 @@ impl ParquetExporter {
         )
         .map_err(|e| format!("Failed to create Statistics RecordBatch: {}", e))
     }
+
+    fn create_tables_batch(
+        tables: &[StatisticalTableRelease],
+    ) -> Result<RecordBatch, String> {
+        let release_id_arr = Arc::new(UInt64Array::from_iter_values(
+            tables.iter().map(|s| s.release_id),
+        )) as ArrayRef;
+
+        let table_id_arr = Arc::new(StringArray::from_iter_values(
+            tables.iter().map(|s| s.table_id.as_str()),
+        )) as ArrayRef;
+
+        let title_arr = Arc::new(StringArray::from_iter_values(
+            tables.iter().map(|s| s.title.as_str()),
+        )) as ArrayRef;
+
+        let tick_arr = Arc::new(UInt64Array::from_iter_values(
+            tables.iter().map(|s| s.release_tick.0),
+        )) as ArrayRef;
+
+        let schedule_desc_arr = Arc::new(StringArray::from_iter_values(
+            tables.iter().map(|s| s.schedule_desc.as_str()),
+        )) as ArrayRef;
+
+        let table_json_arr = Arc::new(StringArray::from_iter_values(
+            tables.iter().map(|s| serde_json::to_string(&s.table).unwrap_or_default()),
+        )) as ArrayRef;
+
+        let access_req_arr = Arc::new(StringArray::from_iter_values(
+            tables.iter().map(|s| s.access_requirement.to_string()),
+        )) as ArrayRef;
+
+        let schema = Arc::new(Schema::new(vec![
+            Field::new("release_id", DataType::UInt64, false),
+            Field::new("table_id", DataType::Utf8, false),
+            Field::new("title", DataType::Utf8, false),
+            Field::new("release_tick", DataType::UInt64, false),
+            Field::new("schedule_desc", DataType::Utf8, false),
+            Field::new("table_json", DataType::Utf8, false),
+            Field::new("access_requirement", DataType::Utf8, false),
+        ]));
+
+        RecordBatch::try_new(
+            schema,
+            vec![
+                release_id_arr,
+                table_id_arr,
+                title_arr,
+                tick_arr,
+                schedule_desc_arr,
+                table_json_arr,
+                access_req_arr,
+            ],
+        )
+        .map_err(|e| format!("Failed to create Tables RecordBatch: {}", e))
+    }
 }
 
 impl ExportPort for ParquetExporter {
@@ -415,6 +472,7 @@ impl ExportPort for ParquetExporter {
         _climate: &ClimateState,
         nodes: &[ResourceNode],
         statistics: &[StatisticReleaseRecord],
+        tables: &[StatisticalTableRelease],
     ) -> Result<ExportSummary, String> {
         let target_dir = Path::new(&self.base_output_dir).join(format!("run_id={}", run_id.as_str()));
         fs::create_dir_all(&target_dir)
@@ -440,11 +498,19 @@ impl ExportPort for ParquetExporter {
         let stats_file = target_dir.join("statistics.parquet");
         Self::write_record_batch_to_parquet(stats_batch, &stats_file)?;
 
+        // 5. Export Tabular Statistical Releases (if any)
+        if !tables.is_empty() {
+            let tables_batch = Self::create_tables_batch(tables)?;
+            let tables_file = target_dir.join("tables.parquet");
+            Self::write_record_batch_to_parquet(tables_batch, &tables_file)?;
+        }
+
         Ok(ExportSummary {
             ledger_records_written: ledger_entries.len(),
             agents_recorded: agents.len(),
             resource_nodes_recorded: nodes.len(),
             statistics_recorded: statistics.len(),
+            tables_recorded: tables.len(),
             output_directory: target_dir.display().to_string(),
         })
     }
