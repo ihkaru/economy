@@ -72,16 +72,23 @@ impl EnvironmentSystem {
 
         // 5. Update resource nodes with spatial Köppen-Geiger zonality & elevation lapse rate
         let climate_snapshot = env_store.climate().clone();
+        let world_map = env_store.world_map().cloned();
         for node in env_store.nodes_mut() {
-            let elevation = if node.location.x >= 40 && node.location.y == 25 {
-                950.0 // Volcanic Peak Island Salt Mine
-            } else if node.location.y < 10 {
-                1800.0 // Northern Mountain Ridge
-            } else if node.location.y > 35 {
-                200.0 // Southern Dense Forest
-            } else {
-                100.0 // Central Arable Plains & River Valley
-            };
+            let elevation = world_map
+                .as_ref()
+                .and_then(|m| m.get_cell(node.location))
+                .map(|c| c.elevation_meters as f64)
+                .unwrap_or_else(|| {
+                    if node.location.x >= 40 && node.location.y == 25 {
+                        950.0 // Volcanic Peak Island Salt Mine
+                    } else if node.location.y < 10 {
+                        1800.0 // Northern Mountain Ridge
+                    } else if node.location.y > 35 {
+                        200.0 // Southern Dense Forest
+                    } else {
+                        100.0 // Central Arable Plains & River Valley
+                    }
+                });
             node.step_environment_spatial(&climate_snapshot, elevation, 50);
         }
     }

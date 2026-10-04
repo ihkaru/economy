@@ -33,6 +33,16 @@ impl TerrainType {
         matches!(self, Self::DeepOcean)
     }
 
+    /// Whether this terrain is a water body
+    pub fn is_water(&self) -> bool {
+        matches!(self, Self::River | Self::ShallowWater | Self::DeepOcean)
+    }
+
+    /// Whether this terrain provides fresh water for drinking/hydration
+    pub fn is_fresh_water(&self) -> bool {
+        matches!(self, Self::River | Self::ShallowWater)
+    }
+
     /// Agricultural / Foraging fertility multiplier
     pub fn soil_fertility(&self) -> f64 {
         match self {

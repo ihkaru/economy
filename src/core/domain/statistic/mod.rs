@@ -23,6 +23,7 @@ pub use table::{
 };
 pub use table_calculator::{
     StatisticalTableCalculator, DemographicCohortTableCalculator, CommodityCirculationTableCalculator,
+    MasterItemCatalogueTableCalculator,
 };
 pub use renderer::{
     TableRenderer, AsciiTableRenderer, MarkdownTableRenderer,

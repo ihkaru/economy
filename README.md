@@ -378,6 +378,36 @@ cargo clippy --all-targets -- -D warnings
 
 - **`determinism_test.rs`**: Memverifikasi bahwa dua simulasi dengan seed identik menghasilkan state, demografi, dan transaksi ledger yang persis hingga ke byte terakhir.
 - **`maturity_capital_test.rs`**: Memverifikasi kurva kematangan logistik, penalti over-harvesting, dan siklus perakitan perkakas modal.
+- **`statistical_table_test.rs`**: Memverifikasi kalkulasi tabel demografi, sensus komoditas, katalog item master, dan pembacaan Parquet `tables.parquet`.
+
+---
+
+## 11. Rilis Tabel Statistik Resmi & Master Item Repertoire
+
+Simulator menerbitkan 3 buletin statistik terstruktur dalam format ANSI/Markdown dan tabel Apache Parquet (`tables.parquet`):
+
+1. **`TAB_DEMO_01` (Sensus Demografi & Piramida Kohor Penduduk)**:
+   - Pengelompokan 4 kohor usia: 0-14 (Balita/Anak), 15-44 (Usia Produktif Awal/Reproduktif), 45-64 (Produktif Lanjut), 65+ (Lansia).
+   - Rasio jenis kelamin biologis (~105 laki-laki per 100 perempuan), *dependency ratio*, dan rata-rata asupan kalori.
+2. **`TAB_COMM_01` (Sensus Komoditas, Alat Modal & Sirkulasi Aset)**:
+   - Neraca stok beredar di tangan warga vs cadangan alam.
+   - Rasio kepemilikan alat modal (*Capital Tool Ratio*) dan komoditas dengan perputaran transaksi tertinggi (*liquidity velocity*).
+3. **`TAB_ITEM_01` (Master Katalog Item, Jasa & Skema Ontologi Ekonomi)**:
+   - Repertoar lengkap 19 item, barang fisik, jasa/waktu kerja, gagasan non-rival, dan izin institusional lintas 6 era sejarah (Paleolithic hingga Proto-Historic).
+   - Skema JSON Draft-07 standar via `ItemDefinition::json_schema()`.
+
+Setiap hasil eksekusi secara otomatis mencantumkan short commit git pada penamaan folder (contoh: `output/run_id=baseline_seed42_9750636/`), dan seluruh artefak Parquet dilacak di git untuk reproduktibilitas mutlak.
+
+---
+
+## 12. Sistem Audit Arsitektur & Agent Skills
+
+Repositori ini dilengkapi dengan 3 Agent Skills mandiri di folder `.agents/skills/`:
+
+1. [**`abm-reality-auditor`**](.agents/skills/abm-reality-auditor/SKILL.md): Mengaudit kepatuhan terhadap realitas biofisik bumi (heterogenitas iklim Köppen-Geiger, Environmental Lapse Rate $-6.5^\circ\text{C}/1000\text{m}$, hukum minimum Liebig, dan hidrasi sumber air).
+2. [**`emergence-auditor`**](.agents/skills/emergence-auditor/SKILL.md): Menjamin *pure emergence*, eliminasi pemicu teleologis buatan, konservasi energi/materi zero ex-nihilo, dan determinisme 100%.
+3. [**`solid-scale-auditor`**](.agents/skills/solid-scale-auditor/SKILL.md): Mengaudit ukuran berkas terhadap prinsip SOLID (terutama SRP dan ISP), mendiagnosis God-objects, serta memproyeksikan titik jenuh skalabilitas.
+   - Eksekusi instan: `bash scripts/audit_solid_scale.sh`
 
 ---
 

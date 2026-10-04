@@ -47,15 +47,21 @@ impl MetabolismSystem {
             let loc = agent_location.unwrap();
 
             // Calculate realistic spatial micro-climate with Environmental Lapse Rate (-6.5°C/1000m)
-            let elevation = if loc.x >= 40 && loc.y == 25 {
-                950.0 // Volcanic Peak Island
-            } else if loc.y < 10 {
-                1800.0 // Northern Mountain Ridge
-            } else if loc.y > 35 {
-                200.0 // Southern Dense Forest
-            } else {
-                100.0 // Central Plains & River Valley
-            };
+            let elevation = env_store
+                .world_map()
+                .and_then(|m| m.get_cell(loc))
+                .map(|c| c.elevation_meters as f64)
+                .unwrap_or_else(|| {
+                    if loc.x >= 40 && loc.y == 25 {
+                        950.0 // Volcanic Peak Island
+                    } else if loc.y < 10 {
+                        1800.0 // Northern Mountain Ridge
+                    } else if loc.y > 35 {
+                        200.0 // Southern Dense Forest
+                    } else {
+                        100.0 // Central Plains & River Valley
+                    }
+                });
             let local_temp = climate.local_temperature(elevation, loc.y, 50);
 
             // Cold weather penalty adjusted for local lapse rate
@@ -71,6 +77,19 @@ impl MetabolismSystem {
                 .map(|a| a.has_item(ItemId::TIMBER))
                 .unwrap_or(false);
             let cold_penalty = if has_firewood { raw_cold_penalty * 0.5 } else { raw_cold_penalty };
+
+            // Heat & Water Hydration: In high temperatures, agents need proximity to fresh water sources (River/ShallowWater)
+            let is_near_water = if let Some(map) = env_store.world_map() {
+                map.get_cell(loc).map(|c| c.terrain.is_water()).unwrap_or(false)
+                    || loc.y.abs_diff(25) <= 5 // Proximity to central river valley
+            } else {
+                loc.y.abs_diff(25) <= 5
+            };
+            let heat_penalty = if local_temp > 30.0 && !is_near_water {
+                (local_temp - 30.0) * 35.0 // Thermoregulatory dehydration stress
+            } else {
+                0.0
+            };
 
             // 1. Food Consumption from Personal Inventory
             let mut calories_gained = 0.0;
@@ -153,7 +172,7 @@ impl MetabolismSystem {
             } else {
                 1.0
             };
-            let total_expenditure = (self.base_daily_calories * child_factor) + cold_penalty;
+            let total_expenditure = (self.base_daily_calories * child_factor) + cold_penalty + heat_penalty;
 
             // 5. Update agent state
             if let Some(agent) = agent_store.get_human_mut(id) {

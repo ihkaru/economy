@@ -44,8 +44,9 @@ impl LifecycleSystem {
                 let age_in_years = (agent.age_ticks as f64) * fractional_years;
                 
                 // Annual mortality probability using Gompertz-Makeham curve
-                // Baseline hazard + exponential increase with age
-                let annual_mortality = (0.001 + 0.00008 * (1.095_f64).powf(age_in_years)).min(0.999);
+                // Baseline hazard + pre-industrial infant vulnerability (bathtub curve) + exponential senescence
+                let infant_hazard = if age_in_years < 1.0 { 0.02 } else { 0.0 };
+                let annual_mortality = (0.001 + infant_hazard + 0.00008 * (1.095_f64).powf(age_in_years)).min(0.999);
                 
                 // Convert annual probability to per-tick probability: 1 - (1 - P_annual)^fractional_years
                 let tick_mortality = 1.0 - (1.0 - annual_mortality).powf(fractional_years);
@@ -94,7 +95,7 @@ impl LifecycleSystem {
         }
 
         // 4. Childbirth (Reproduction)
-        // Check married couples where female is between 18 and 45 years
+        // Check married couples where female is between 18 and 45 years and has sufficient nutritional energy reserve
         let mut births_to_create = Vec::new();
 
         for id in agent_store.all_human_ids() {
@@ -103,13 +104,15 @@ impl LifecycleSystem {
                 if female.is_alive()
                     && female.sex == Sex::Female
                     && (18.0..=45.0).contains(&age_years)
+                    && female.calorie_reserve >= 15000.0 // Malnutrition amenorrhea prevention
                     && let Some(spouse_id) = female.spouse_id
                 {
                     let annual_birth_rate: f64 = 0.30;
                     let tick_birth_prob = 1.0_f64 - (1.0_f64 - annual_birth_rate).powf(fractional_years);
 
                     if rng.check_probability(tick_birth_prob) {
-                        let newborn_sex = if rng.check_probability(0.5) {
+                        // Natural biological sex ratio: ~105 males per 100 females (approx 51.2% male)
+                        let newborn_sex = if rng.check_probability(105.0 / 205.0) {
                             Sex::Male
                         } else {
                             Sex::Female
@@ -125,9 +128,19 @@ impl LifecycleSystem {
             let child_id = AgentId::new(self.next_agent_id);
             self.next_agent_id += 1;
 
+            // Zero Ex-Nihilo energy conservation: mother transfers maternal caloric investment
+            let maternal_investment = if let Some(mother) = agent_store.get_human_mut(mother_id) {
+                let transfer = 10000.0_f64.min(mother.calorie_reserve * 0.5);
+                mother.calorie_reserve -= transfer;
+                mother.add_child(child_id);
+                transfer
+            } else {
+                10000.0
+            };
+
             let mut newborn = Human::new(child_id, sex, current_tick)
                 .with_location(mother_loc)
-                .with_calories(15000.0)
+                .with_calories(maternal_investment)
                 .with_parents(Some(father_id), Some(mother_id));
             
             // Give baby starting attributes
@@ -136,12 +149,9 @@ impl LifecycleSystem {
                 "generation": 2
             });
 
-            // Update parents
+            // Update father
             if let Some(father) = agent_store.get_human_mut(father_id) {
                 father.add_child(child_id);
-            }
-            if let Some(mother) = agent_store.get_human_mut(mother_id) {
-                mother.add_child(child_id);
             }
 
             agent_store.insert_human(newborn);

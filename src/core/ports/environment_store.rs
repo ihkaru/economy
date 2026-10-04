@@ -8,4 +8,8 @@ pub trait EnvironmentStorePort: Send + Sync {
     fn nodes_mut(&mut self) -> &mut [ResourceNode];
     fn add_node(&mut self, node: ResourceNode);
     fn get_node_mut(&mut self, id: u64) -> Option<&mut ResourceNode>;
+    fn world_map(&self) -> Option<&crate::core::domain::spatial::WorldMap> {
+        None
+    }
 }
+

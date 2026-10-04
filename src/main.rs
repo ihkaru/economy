@@ -20,6 +20,7 @@ use economy::core::domain::statistic::schedule::ReleaseSchedule;
 use economy::core::domain::statistic::table::StatisticalTableDefinition;
 use economy::core::domain::statistic::table_calculator::{
     CommodityCirculationTableCalculator, DemographicCohortTableCalculator,
+    MasterItemCatalogueTableCalculator,
 };
 use economy::core::domain::time::{RunId, Tick, TickDuration};
 use economy::core::ports::agent_store::AgentStorePort;
@@ -227,7 +228,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         )
         .with_pace(RegenerationPace::Geological),
     ];
-    let env_store = MemoryEnvironmentStore::new(climate, resource_nodes);
+    let world_map = economy::core::domain::spatial::WorldMap::generate_continent_and_archipelago(50, 50);
+    let env_store = MemoryEnvironmentStore::new(climate, resource_nodes).with_world_map(world_map);
 
     // 2. Setup Statistical Publication Indicators & Data Openness Rules
     let mut statistic_system = StatisticSystem::new();
@@ -295,6 +297,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         CommodityCirculationTableCalculator,
     ));
 
+    // Structured Table Release 3: Master Item, Service & Knowledge Taxonomy Bulletin (Monthly on Day 1)
+    statistic_system.register_table(StatisticalTableDefinition::new(
+        "TAB_ITEM_01",
+        "Tabel Master Katalog Item, Jasa & Skema Ontologi Ekonomi",
+        ReleaseSchedule::DayOfMonth(1),
+        AccessRequirement::Public,
+        MasterItemCatalogueTableCalculator,
+    ));
+
     let exporter = ParquetExporter::new(&cli.output_dir);
 
     // 3. Configure Simulation
@@ -351,6 +362,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     if let Some(comm_release) = engine.stat_store().get_latest_table("TAB_COMM_01") {
         println!("{}", renderer.render(&comm_release.table));
+        println!();
+    }
+
+    if let Some(item_release) = engine.stat_store().get_latest_table("TAB_ITEM_01") {
+        println!("{}", renderer.render(&item_release.table));
         println!();
     }
 

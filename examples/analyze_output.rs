@@ -122,9 +122,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             let tick_col = batch.column(3).as_any().downcast_ref::<UInt64Array>().unwrap();
             let table_json_col = batch.column(5).as_any().downcast_ref::<StringArray>().unwrap();
 
-            // Print the last 2 tables in batch (latest releases)
+            // Print the last 3 tables in batch (latest releases: DEMO, COMM, ITEM)
             let total_rows = batch.num_rows();
-            let start_idx = total_rows.saturating_sub(2);
+            let start_idx = total_rows.saturating_sub(3);
 
             for i in start_idx..total_rows {
                 let json_str = table_json_col.value(i);

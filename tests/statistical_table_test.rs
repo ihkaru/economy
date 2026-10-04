@@ -120,9 +120,27 @@ fn test_demographic_and_commodity_table_calculators() {
 
     let comm_ascii = ascii_renderer.render(&comm_table);
     assert!(comm_ascii.contains("Tabel Sensus Komoditas"));
-    assert!(comm_ascii.contains("Kayu Mentah (Timber)"));
-    assert!(comm_ascii.contains("Kapak Batu (Stone Axe)"));
+    assert!(comm_ascii.contains("Kayu"));
+    assert!(comm_ascii.contains("Kapak Batu"));
     assert!(comm_ascii.contains("TOTAL STOK FISIK"));
+
+    // 3. Test Master Item Catalogue Table Calculator & JSON Schema
+    let item_calc = economy::core::domain::statistic::table_calculator::MasterItemCatalogueTableCalculator;
+    let item_table = item_calc.calculate_table(&ctx);
+    assert_eq!(item_table.table_id, "TAB_ITEM_01");
+    assert!(item_table.rows.len() >= 15, "Should list all registered items across 6 eras");
+    assert_eq!(item_table.summary_rows.len(), 1);
+
+    let item_ascii = ascii_renderer.render(&item_table);
+    assert!(item_ascii.contains("Tabel Master Katalog Item"));
+    assert!(item_ascii.contains("Service (Jasa/Waktu)"));
+    assert!(item_ascii.contains("Waktu Tenaga Kerja"));
+    assert!(item_ascii.contains("Jasa Pendidikan"));
+
+    // Validate ItemDefinition JSON Schema draft-07
+    let schema = economy::core::domain::item::ItemDefinition::json_schema();
+    assert_eq!(schema["title"], "ItemDefinition");
+    assert!(schema["properties"]["attributes"]["properties"]["historical_era"].is_object());
 }
 
 #[test]

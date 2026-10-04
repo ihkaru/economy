@@ -24,6 +24,12 @@ impl ItemId {
     pub const PERMIT_FISHING_RIGHT: ItemId = ItemId(301);
     pub const PERMIT_FORESTRY_RIGHT: ItemId = ItemId(302);
 
+    // Services & Labor Time (Intangible Services / Man-Hours)
+    pub const SERVICE_LABOR: ItemId = ItemId(401);
+    pub const SERVICE_EDUCATION: ItemId = ItemId(402);
+    pub const SERVICE_TRANSPORT: ItemId = ItemId(403);
+    pub const SERVICE_MEDICAL: ItemId = ItemId(404);
+
     pub const fn new(id: u64) -> Self {
         Self(id)
     }
@@ -32,12 +38,20 @@ impl ItemId {
         self.0
     }
 
+    pub fn is_good(&self) -> bool {
+        (100..=199).contains(&self.0)
+    }
+
     pub fn is_knowledge(&self) -> bool {
         (200..=299).contains(&self.0)
     }
 
     pub fn is_permit(&self) -> bool {
         (300..=399).contains(&self.0)
+    }
+
+    pub fn is_service(&self) -> bool {
+        (400..=499).contains(&self.0)
     }
 
     pub fn is_tool(&self) -> bool {
