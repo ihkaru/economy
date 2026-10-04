@@ -26,23 +26,23 @@ Skill ini menetapkan **Standar Operasional Prosedur (SOP) Baku** untuk menjamin 
 
 3. **Pemantauan Kecepatan & Efisiensi Eksekusi (TPS Performance Guardrail)**:
    - Kecepatan simulasi diukur dalam **TPS (Ticks Per Second)** dan **Wall-Clock Duration**.
-   - Simulator ditargetkan berjalan pada mode *uncapped speed* dengan batas minimum performa:
-     - Target Baseline: **>= 4,000 TPS** pada mode `--release`.
-     - 100 Tahun (36,500 ticks) diselesaikan dalam **< 10 detik**.
-     - 1,000 Tahun (365,000 ticks) diselesaikan dalam **< 90 detik** (1.5 menit).
-     - Jika sebuah perubahan kode menurunkan TPS >15%, investigasi alokasi memori (heap allocation/cloning) dan struktur loop wajib dilakukan.
+   - **Standar Utama Benchmark**: **100 Tahun (Century Simulation / 36.500 ticks)** ditetapkan sebagai horizon baku utama pengujian reguler per-commit. Dengan penambahan mikro-mekanisme yang terus bertambah (patologi, deplesi modal, peluruhan pangan, kalkulasi pasar), horizon 100 tahun (~36.500 ticks) memberikan siklus feedback kilat (ideal <10–30 detik), menguji 3–5 generasi, serta memvalidasi 2.400 rilis tabel bulanan.
+   - Target Baseline:
+     - 100 Tahun (36.500 ticks): diselesaikan dalam **< 15 detik** (>= 2.500–4.000 TPS).
+     - Run 1.000 tahun (365.000 ticks) diselesaikan dalam **< 90 detik** (hanya digunakan untuk milestone khusus skala milenium).
+   - Jika sebuah perubahan kode menurunkan TPS >15%, investigasi alokasi memori (heap allocation/cloning) dan struktur loop wajib dilakukan melalui tabel mikro-profiler.
 
 4. **Keterlacakan Parquet & Parameter Reproduksi**:
    - Seluruh output disimpan dalam folder berformat `output/run_id=<run_name>_<commit_hash>/`.
-   - Parameter CLI wajib dicantumkan lengkap: `--seed <S> --ticks <T> --duration <D> --initial-agents <N> --run-id <R> --output-dir <O>`.
+   - Parameter CLI baku untuk Century Run: `--seed 42 --ticks 36500 --duration day --initial-agents 50 --run-id century_seed42 --output-dir output`.
 
 5. **Evaluasi Realitas Sejarah: Kondisi Awal vs Kondisi Akhir (Historical Reality Audit)**:
    - Setiap laporan wajib mengevaluasi transisi dari **Kondisi Awal ($T_0$)** menuju **Kondisi Akhir ($T_f$)** dan membandingkannya secara kritis terhadap **Realita Sejarah Peradaban Manusia**.
    - Jika hasil simulasi menunjukkan sesuatu yang **tidak seharusnya terjadi dalam sejarah manusia di realita** (anomali sejarah), agen **WAJIB mendiagnosis state atau mekanisme mikro apa yang belum sesuai realita** dan merekomendasikan perbaikannya.
 
-6. **Eskalasi Horizon Skala Milenium (1,000 Tahun / 365,000 Ticks)**:
-   - Jika performa simulasi terbukti sangat cepat (TPS $\ge 4,000$, run 100 tahun < 10 detik), pertimbangkan untuk mengeksekusi run **1,000 tahun** (`365,000 ticks`).
-   - Horizon 1,000 tahun adalah pengujian sejati (*acid test*) bagi suksesi peradaban: menguji stabilitas multi-generasi (35–45 generasi), akumulasi modal jangka panjang, serta resistensi terhadap kepunahan demografis atau akumulasi aset abnormal.
+6. **Mekanisme Observabilitas Langsung & Profiling Sub-Sistem (Live Heartbeat & Profiler)**:
+   - Simulator wajib memancarkan **live progress heartbeat** secara berkala (misal tiap 5 tahun / 1.825 ticks pada run 100 tahun) yang menampilkan `[Year X | Tick Y (Z%)] Living: N | Total: M | Speed: T TPS | ETA: S s` agar jalannya simulasi transparan, tidak 'buta', dan kemacetan/stuck dapat terdeteksi dini.
+   - Setiap akhir eksekusi wajib mencetak **Per-System Micro-Profiler Breakdown** (alokasi waktu nanodetik untuk `EnvironmentSystem`, `MetabolismSystem`, `LifecycleSystem`, `ExchangeSystem`, dan `StatisticSystem`) untuk mengidentifikasi bottleneck komputasi secara presisi.
 
 ---
 
@@ -121,15 +121,18 @@ Setiap laporan wajib memuat 11 bab eksekutif berikut:
    - Evaluasi komparatif: apa yang telah ada di model vs apa yang berstatus kesenjangan (*item gaps*) yang perlu dikembangkan berikutnya.
 10. **Daya Dukung Ekologis & Kelestarian Sumber Daya (*Carrying Capacity*)**:
     - Status biomassa dan tingkat kematangan (*maturity %*) seluruh simpul alam.
-11. **Profil Performa Komputasi & Rekomendasi Langkah Berikutnya**:
-    - Analisis throughput TPS dan wall-clock duration.
-    - Usulan perbaikan mekanisme mikro untuk iterasi berikutnya.
+11. **Profil Performa Komputasi & Rincian Mikro-Profiler Sub-Sistem**:
+    - Analisis throughput total (TPS rata-rata, instantaneous min/max, dan wall-clock duration).
+    - Tabel alokasi waktu per sub-sistem (`EnvironmentSystem`, `MetabolismSystem`, `LifecycleSystem`, `ExchangeSystem`, `StatisticSystem`) dengan breakdown persentase dan latensi per tick.
+    - Diagnosis modul terberat dan target optimasi memory/loop.
+12. **Rekomendasi Langkah Pengembangan & Rencana Iterasi Berikutnya**:
+    - Usulan perbaikan mekanisme mikro untuk iterasi berikutnya berdasarkan evaluasi realitas dan hasil profiler.
 
 ---
 
-## 🛠️ CLI Runner 100 Tahun vs 1,000 Tahun
+## 🛠️ CLI Runner 100 Tahun Baku (Century Simulation)
 
-### Opsi A: Century Run (100 Tahun / 36,500 Ticks — ~8.4 Detik)
+### Perintah Benchmark Standar (100 Tahun / 36.500 Ticks — ~10-25 Detik):
 ```bash
 COMMIT_HASH=$(git rev-parse --short HEAD)
 cargo run --release -- \
@@ -137,11 +140,16 @@ cargo run --release -- \
   --ticks 36500 \
   --duration day \
   --initial-agents 50 \
-  --run-id century_seed42 \
+  --run-id century_seed42_${COMMIT_HASH} \
   --output-dir output
 ```
 
-### Opsi B: Millennial Run (1,000 Tahun / 365,000 Ticks — ~84 Detik)
+### Analisis Ekstraksi Otomatis:
+```bash
+cargo run --example analyze_century output/run_id=century_seed42_${COMMIT_HASH}
+```
+
+### Opsi Khusus Milestone: Millennial Run (1.000 Tahun / 365.000 Ticks):
 ```bash
 COMMIT_HASH=$(git rev-parse --short HEAD)
 cargo run --release -- \
@@ -149,11 +157,6 @@ cargo run --release -- \
   --ticks 365000 \
   --duration day \
   --initial-agents 50 \
-  --run-id millennium_seed42 \
+  --run-id millennium_seed42_${COMMIT_HASH} \
   --output-dir output
-```
-
-### Analisis Ekstraksi Otomatis:
-```bash
-cargo run --example analyze_century output/run_id=millennium_seed42_${COMMIT_HASH}
 ```
