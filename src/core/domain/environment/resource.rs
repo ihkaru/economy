@@ -7,8 +7,10 @@ use crate::core::domain::spatial::coordinate::GeoCoordinate;
 pub enum RegenerationPace {
     /// Fast: Berries/herbs - rapid turnover, daily/weekly replenishment
     Fast,
-    /// Medium: River fishery & wild grain - seasonal replenishment cycle
+    /// Medium: Wild grain - seasonal crop replenishment cycle
     Medium,
+    /// SeasonalAquatic: River fishery - spring spawning surges & density-dependent replenishment
+    SeasonalAquatic,
     /// Slow: Ancient forest (timber) - long maturation timescale
     Slow,
     /// Geological: Salt & mineral deposits - tide / evaporation cycle
@@ -20,6 +22,7 @@ impl RegenerationPace {
         match self {
             Self::Fast => 0.08,
             Self::Medium => 0.03,
+            Self::SeasonalAquatic => 0.05,
             Self::Slow => 0.005,
             Self::Geological => 0.01,
         }
@@ -68,6 +71,7 @@ impl ResourceNode {
 
         let pace = match item_id {
             ItemId::BERRIES => RegenerationPace::Fast,
+            ItemId::FISH => RegenerationPace::SeasonalAquatic,
             ItemId::TIMBER => RegenerationPace::Slow,
             ItemId::SALT => RegenerationPace::Geological,
             _ => RegenerationPace::Medium,
@@ -105,9 +109,19 @@ impl ResourceNode {
     pub fn step_environment_spatial(&mut self, climate: &ClimateState, elevation: f64, map_height: u32) {
         // Logistic growth with spatial Köppen-Geiger zonality & altitude lapse rate:
         let growth_mult = climate.spatial_growth_multiplier(elevation, self.location.y, map_height);
-        let r = self.pace.base_rate() * growth_mult;
+        let spawning_mult = if self.pace == RegenerationPace::SeasonalAquatic {
+            match climate.season {
+                crate::core::domain::environment::climate::Season::Spring => 3.0,
+                crate::core::domain::environment::climate::Season::Summer => 1.5,
+                crate::core::domain::environment::climate::Season::Autumn => 1.0,
+                crate::core::domain::environment::climate::Season::Winter => 0.3,
+            }
+        } else {
+            1.0
+        };
+        let r = self.pace.base_rate() * growth_mult * spawning_mult;
 
-        let seed_factor = self.maturity.max(0.05);
+        let seed_factor = self.maturity.max(0.08);
         let growth_delta = r * seed_factor * (1.0 - self.maturity);
 
         // Decay calculation: base * season * weather * wind vulnerability
@@ -142,8 +156,15 @@ impl ResourceNode {
             0.25
         };
 
-        let base_attempt = (desired_amount as f64 * efficiency_mult * maturity_quality).round() as u32;
-        let actual_harvested = base_attempt.min(self.current_stock).max(1);
+        let base_attempt = if desired_amount > 0 {
+            ((desired_amount as f64 * efficiency_mult * maturity_quality).round() as u32).max(1)
+        } else {
+            0
+        };
+        let actual_harvested = base_attempt.min(self.current_stock);
+        if actual_harvested == 0 {
+            return 0;
+        }
 
         self.current_stock = self.current_stock.saturating_sub(actual_harvested);
         self.maturity = if self.max_stock > 0 {

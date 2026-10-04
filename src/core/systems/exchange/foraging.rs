@@ -73,8 +73,8 @@ pub fn perform_agent_centric_foraging(
                 1.0
             };
 
-            // Stock abundance ratio (prevents over-depletion by naturally downgrading nearly exhausted patches)
-            let abundance_ratio = (node.current_stock as f64 / node.max_stock as f64).clamp(0.05, 1.0);
+            // Stock abundance ratio (Charnov Marginal Value Theorem: patch departure when returns diminish)
+            let abundance_ratio = (node.maturity * node.maturity).clamp(0.02, 1.0);
 
             // Physiological urgency weighting
             let urgency_weight = if is_sick && herb_count == 0 && node.item_id == ItemId::HERBAL_MEDICINE {
