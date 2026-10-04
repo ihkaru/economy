@@ -226,27 +226,27 @@ pub fn perform_trade_and_services(
         }
     }
 
-    // Case D: Depository Banking & Warehouse Receipts (Pottery Jar Custodians)
+    // Case D: Depository Banking & Warehouse Receipts (Pottery Jar & Basket Custodians)
     let mut banking_or_credit = false;
-    if !medical_service_occurred && !knowledge_trade_occurred && !barter_occurred {
+    if !medical_service_occurred && !knowledge_trade_occurred {
         // D.1 Deposit surplus grain into storage container for warehouse receipt
         let has_storage = |inv: &std::collections::BTreeMap<ItemId, u32>| -> bool {
             inv.contains_key(&ItemId::POTTERY_JAR) || inv.contains_key(&ItemId::WOVEN_BASKET)
         };
         for (custodian_id, depositor_id, c_inv, d_inv) in [(agent_a_id, agent_b_id, &a_inv, &b_inv), (agent_b_id, agent_a_id, &b_inv, &a_inv)] {
-            if has_storage(c_inv) && d_inv.get(&ItemId::GRAIN).copied().unwrap_or(0) >= 4 {
+            if has_storage(c_inv) && d_inv.get(&ItemId::GRAIN).copied().unwrap_or(0) >= 2 {
                 if let Some(dep) = agent_store.get_human_mut(depositor_id) {
-                    let _ = dep.remove_item(ItemId::GRAIN, 3);
+                    let _ = dep.remove_item(ItemId::GRAIN, 2);
                     dep.add_item(ItemId::WAREHOUSE_RECEIPT, 1);
                 }
                 if let Some(cust) = agent_store.get_human_mut(custodian_id) {
-                    cust.add_item(ItemId::GRAIN, 3);
+                    cust.add_item(ItemId::GRAIN, 2);
                 }
-                let inst = ItemInstance::new(ItemId::WAREHOUSE_RECEIPT, 1, serde_json::json!({"nature": "DepositoryReceipt", "grain_deposit": 3}))
+                let inst = ItemInstance::new(ItemId::WAREHOUSE_RECEIPT, 1, serde_json::json!({"nature": "DepositoryReceipt", "grain_deposit": 2}))
                     .with_instance_id(ItemInstanceId::new(*next_instance_id));
                 *next_instance_id += 1;
                 let entry = LedgerEntry::single(*next_trx_id, run_id.clone(), current_tick, depositor_id, custodian_id, Some(inst), None, serde_json::json!({
-                    "transaction_type": "granary_depository_banking", "custodian_id": custodian_id.0, "depositor_id": depositor_id.0, "grain_deposited": 3
+                    "transaction_type": "granary_depository_banking", "custodian_id": custodian_id.0, "depositor_id": depositor_id.0, "grain_deposited": 2
                 }));
                 *next_trx_id += 1;
                 let _ = ledger_store.record(entry);
@@ -258,16 +258,16 @@ pub fn perform_trade_and_services(
         // D.2 Redemption of Warehouse Receipt for grain
         if !banking_or_credit {
             for (holder_id, cust_id, h_inv, c_inv) in [(agent_a_id, agent_b_id, &a_inv, &b_inv), (agent_b_id, agent_a_id, &b_inv, &a_inv)] {
-                if h_inv.contains_key(&ItemId::WAREHOUSE_RECEIPT) && has_storage(c_inv) && c_inv.get(&ItemId::GRAIN).copied().unwrap_or(0) >= 3 {
+                if h_inv.contains_key(&ItemId::WAREHOUSE_RECEIPT) && has_storage(c_inv) && c_inv.get(&ItemId::GRAIN).copied().unwrap_or(0) >= 2 {
                     if let Some(h) = agent_store.get_human_mut(holder_id) {
                         let _ = h.remove_item(ItemId::WAREHOUSE_RECEIPT, 1);
-                        h.add_item(ItemId::GRAIN, 3);
+                        h.add_item(ItemId::GRAIN, 2);
                     }
                     if let Some(c) = agent_store.get_human_mut(cust_id) {
-                        let _ = c.remove_item(ItemId::GRAIN, 3);
+                        let _ = c.remove_item(ItemId::GRAIN, 2);
                     }
                     let entry = LedgerEntry::single(*next_trx_id, run_id.clone(), current_tick, holder_id, cust_id, None, None, serde_json::json!({
-                        "transaction_type": "warehouse_receipt_redemption", "holder_id": holder_id.0, "custodian_id": cust_id.0, "grain_redeemed": 3
+                        "transaction_type": "warehouse_receipt_redemption", "holder_id": holder_id.0, "custodian_id": cust_id.0, "grain_redeemed": 2
                     }));
                     *next_trx_id += 1;
                     let _ = ledger_store.record(entry);
