@@ -92,6 +92,42 @@ Dalam sains simulasi, kegagalan realitas terjadi ketika modeler memberlakukan at
       2. **Kulit Binatang Mentah (`RAW_HIDE`)**: Bahan baku vital pembuatan pakaian pelindung dingin.
       3. **Barang Modal Pelindung Tubuh (`LEATHER_CLOTHING`)**: Wajib dibuat melalui resep penyamakan dan penjahitan kulit untuk memitigasi bahaya mortalitas hipotermia cuaca dingin.
 
+### Dimensi 9: Mobilitas Spasial, Dinamika Sel Peta & Akses Lintas Laut (Spatial Mobility & Island Exploration)
+- [ ] **Audit Keterikatan Koordinat Statis (*Static Settlement Trap*)**:
+  - *Red Flag*: Seluruh populasi lahir, hidup, dan mati di satu sel tunggal (misal `(15, 25)`), sementara 99% peta dunia tidak pernah dijelajahi.
+  - *Koreksi Realitas*: Agen manusia pemburu-peramu dan petani purba memiliki mobilitas spasial:
+    1. Berpindah sel menuju simpul foraging yang paling optimal (*Charnov marginal foraging path*).
+    2. Menjelajah sel baru saat sumber daya lokal menipis atau populasi meningkat (*territorial expansion*).
+- [ ] **Audit Aksesibilitas Simpul Ekologis Terpencil**:
+  - *Red Flag*: Simpul vital (seperti tambang garam atau deposit mineral pulau) berada di koordinat terpencil (jarak >30 sel) yang terputus dari radius jangkauan foraging harian ($d \le 5.0$).
+  - *Koreksi Realitas*: Membutuhkan ekspedisi maritim terencana dengan perkakas modal air fisik (`RAFT`), di mana agen berlayar menembus sel `DeepOcean` untuk mengekstrak komoditas pulau dan membawanya pulang ke pemukiman induk.
+
+### Dimensi 10: Rantai Nilai Pangan Neolitik & Repertoar Teknologi 1.000 Tahun (The 1,000-Year Neolithic Package)
+- [ ] **Audit Rantai Pengolahan Gandum & Makanan Pokok**:
+  - *Hukum Nutrisi Arkeologis*: Manusia tidak memiliki rumen atau sistem pencernaan burung untuk mencerna biji serealia mentah (`RAW_GRAIN`) utuh.
+  - *Rantai Wajib*:
+    1. Sabit pemanen mikrolit (`HARVESTING_SICKLE`).
+    2. Penggilingan mekanik via batu gilang/lesung (`SADDLE_QUERN` / `MORTAR_AND_PESTLE`).
+    3. Tepung gandum halus (`GRAIN_FLOUR`).
+    4. Pengolahan termal api menjadi roti pipih bakar (`FLATBREAD`) atau bubur rebus (`PORRIDGE`).
+- [ ] **Audit Evolusi Material 36 Generasi (1.000 Tahun)**:
+  - Dalam rentang 1.000 tahun (transisi Mesolitik akhir ke Neolitik Penuh dan Kalkolitik), peradaban manusia wajib membuka:
+    - *Piroteknologi Arang*: `CHARCOAL` ($>1.000^\circ\text{C}$) dari pirolisis kayu untuk pembakaran tembikar kedap dan peleburan tembaga.
+    - *Tekstil Nabati*: Serat pintal (`CORDAGE`), pemintal benang (`SPINDLE_WHORL`), dan tenun (`WOVEN_TEXTILE`).
+    - *Senjata Berburu Akurat*: Busur & anak panah (`BOW_AND_ARROW`) dan jerat hewan (`ANIMAL_SNARE`).
+    - *Metalurgi Tembaga Awal*: Ekstraksi bijih malakit/tembaga (`COPPER_ORE`) $\to$ batangan (`COPPER_INGOT`) $\to$ bilah pahat (`COPPER_BLADE`).
+
+### Dimensi 11: Difusi Pengetahuan, Garansi Anti-Deadlock Eureka & Transmisi Kultural
+- [ ] **Audit Kebuntuan Prasyarat Telur-Ayam (*Chicken-and-Egg Eureka Deadlock*)**:
+  - *Red Flag*: Pengetahuan $K$ mensyaratkan memegang item $X$, namun item $X$ hanya bisa didapatkan atau diolah jika agen sudah menguasai pengetahuan $K$ atau sarana yang belum ditemukan.
+  - *Contoh Nyata*: `KNOWLEDGE_FISH_CURING` membutuhkan `SALT`, tetapi garam berada di pulau terpencil yang membutuhkan perahu rakit dan pengawetan untuk ekspedisi.
+- [ ] **Audit Konkurensi Bahan Simultan yang Ekstrem**:
+  - *Red Flag*: Eureka mensyaratkan memegang 3 bahan rival sekaligus (misal Clay + Timber + Fire) pada satu tick yang sama, sementara agen selalu mengonsumsi salah satu bahan untuk kebutuhan bertahan hidup darurat.
+- [ ] **Audit Kelengkapan Kurikulum Magang (*Apprenticeship Curriculum Completeness*)**:
+  - *Red Flag*: Suatu cetak biru pengetahuan tidak terdaftar dalam daftar tukar magang `trade.rs`, sehingga ketika penemu tunggal wafat tanpa anak hidup, pengetahuan tersebut punah selamanya dari peradaban (*technological extinction trap*).
+- [ ] **Audit Transmisi Kultural Antargenerasi (*Parental Tutoring*)**:
+  - Anak usia remaja (12–18 tahun) secara alami menyerap keahlian orang tuanya sebelum orang tua wafat, menjamin transmisi budaya kumulatif (*ratchet effect*) tanpa kehilangan memori kolektif.
+
 ---
 
 ## 🛠️ Checklist Praktis Saat Mengaudit Kode Spasial & Lingkungan di `src/`

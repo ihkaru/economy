@@ -70,6 +70,17 @@ Skill ini menetapkan **Standar Operasional Prosedur (SOP) Baku** untuk menjamin 
      2. *Integritas Bahan Baku Resep*: Memastikan resep tidak menggunakan bahan fiktif/tidak logis (seperti kapak batu yang dibuat murni dari kayu tanpa batuan keras, atau jaring anyam dari batang kayu gelondongan).
      3. *Keragaman Fauna & Hasil Buruan*: Menghindari monokultur fauna air (hanya ikan sungai). Alam wajib menyediakan simpul fauna darat buruan (*terrestrial wild game*) yang menghasilkan trias produk: daging segar (`RAW_MEAT`), kulit mentah (`RAW_HIDE`), dan pakaian kulit hangat pelindung dingin (`LEATHER_CLOTHING`).
 
+10. **Kewajiban Audit Spasial, Iklim/Musim, Repertoar 1.000 Tahun & Hambatan Pengetahuan (Mandatory Spatial, Climate, 1000-Year Repertoire & Knowledge Deadlock Audit)**:
+    - **WAJIB DIJAWAB DAN DIEVALUASI DI SETIAP BENCHMARK RUN**:
+      1. *Audit Spasial Sel & Peta Dunia*: Apakah agen memiliki mobilitas dinamis antar-sel (*cell-to-cell relocation*) ataukah terjebak statis di satu titik koordinat kelahiran? Apakah simpul sumber daya terpencil (seperti tambang garam pulau seberang laut) dapat diakses secara fisik ataukah terisolasi oleh batas radius foraging statis?
+      2. *Audit Iklim, Musim & Bahaya Biofisik*: Apakah musim dan cuaca memicu dampak biofisik nyata (pembekuan sungai/danau di musim dingin, penutupan vegetasi oleh salju, stres dehidrasi di musim kemarau) ataukah hanya sekadar fluktuasi angka suhu abstrak? Apakah kebutuhan hidrasi air tawar sudah dimodelkan selain kalori pangan?
+      3. *Audit Repertoar Item 1.000 Tahun (Neolithic Package)*: Dalam horizon sejarah panjang (hingga 1.000 tahun), apakah peradaban agen berhasil mentransformasi makanan pokok mentah menjadi produk olahan (gandum mentah $\to$ batu gilang/lesung $\to$ tepung halus $\to$ roti/bubur matang $\to$ minuman fermentasi)? Apakah piroteknologi tinggi (arang kayu $>1.000^\circ\text{C}$), tekstil serat nabati/tenun, senjata busur panah, dan metalurgi tembaga awal sudah hadir ataukah masyarakat terjebak permanen dalam autarki forager primitif?
+      4. *Audit Hambatan Pengetahuan & Kebuntuan Eureka (*Knowledge Deadlocks*)*: Apa yang menghambat atau mencegah cetak biru pengetahuan tertentu muncul di simulasi? Selidiki:
+         - *Chicken-and-Egg Deadlocks* (pengetahuan mensyaratkan memegang item yang lokasinya tak terjangkau tanpa pengetahuan itu sendiri).
+         - *Konkurensi Bahan Ketat* (syarat memegang 3+ bahan secara bersamaan pada tick yang sama sebelum bahan sempat terkumpul).
+         - *Pengecualian Kurikulum Magang* (pengetahuan tidak terdaftar di daftar barter magang `trade.rs`, sehingga punah saat penemu meninggal tanpa ahli waris).
+         - *Ketiadaan Tradisi Lisan Antargenerasi* (orang tua tidak mengajarkan keahlian kepada anak selama masa hidupnya).
+
 ---
 
 ## 🔬 Matriks Evaluasi Kondisi Awal vs Akhir Terhadap Realita Sejarah
@@ -140,25 +151,30 @@ Setiap laporan wajib memuat 14 bab eksekutif berikut:
 8. **Daftar Kronologis Kemunculan & Penemuan Item Sepanjang Sejarah**:
    - Tabel urutan kronologis pertama kali setiap item muncul / ditemukan (ID, Nama Item, Kategori, Tick, Tahun Sejarah, Konteks Kemunculan).
    - Analisis pola kemunculan barang (dari foraging primitif -> perkakas modal -> teknologi pengawetan -> jasa keahlian medis dan edukasi).
-9. **Evaluasi Kesenjangan Item Sejarah (*Archaeological Item Gap Analysis*)**:
-   - Matriks evaluasi 5 era arkeologi peradaban manusia:
-     - *Paleolitik Bawah/Tengah (300k - 50k BP)*: Api, kapak genggam kasar, perburuan, herba kunyah.
-     - *Paleolitik Atas (50k - 10k BP)*: Kapak batu halus, rakit perairan, pakaian kulit, jarum tulang.
-     - *Mesolitik (10k - 8k BP)*: Jaring ikan anyam, garam & pengasinan, panah/jebakan, kerang hias, wadah anyam.
-     - *Neolitik (8k - 4k BP)*: Budidaya gandum, tembikar/gerabah penyimpan pangan, hewan domestik, tenun tekstil.
-     - *Logam & Perunggu (4k - 1.2k BP)*: Metalurgi, tungku smelter, roda/gerobak, farmakope formal, sistem pembukuan/uang.
-   - Evaluasi komparatif: apa yang telah ada di model vs apa yang berstatus kesenjangan (*item gaps*) yang perlu dikembangkan berikutnya.
+9. **Evaluasi Kesenjangan Item Sejarah & Repertoar 1.000 Tahun (*1,000-Year Archaeological Item Repertoire*)**:
+   - **Jawaban Wajib Repertoar 1.000 Tahun**:
+     - *Rantai Pengolahan Gandum Neolitik*: Apakah gandum mentah masih dimakan mentah tanpa diolah, ataukah telah ada rantai nilai: batu asah/sabit (`SICKLE`), batu gilang/lesung (`QUERN_STONE`), tepung halus (`FLOUR`), roti panggang/bubur (`FLATBREAD`), dan minuman fermentasi (`FERMENTED_ALE`)?
+     - *Piroteknologi & Bahan Bakar Tinggi*: Apakah arang kayu (`CHARCOAL`) berkalori tinggi ($>1.000^\circ\text{C}$) telah muncul untuk membuka gerabah keramik matang dan peleburan tembaga?
+     - *Tekstil & Pakaian Serat*: Apakah serat nabati pintal (`CORDAGE`), pemberat tenun (`SPINDLE_WHORL`), dan kain tenun (`WOVEN_TEXTILE`) telah hadir mendampingi pakaian kulit binatang?
+     - *Senjata Jarak Jauh & Metalurgi Awal*: Apakah busur panah (`BOW_AND_ARROW`), jerat perangkap (`SNARE`), dan perkakas tembaga tempa/lebur (`COPPER_BLADE`) telah muncul dalam kurun 36 generasi?
+   - Matriks evaluasi 5 era arkeologi peradaban manusia (Paleolitik Bawah/Tengah, Paleolitik Atas, Mesolitik, Neolitik Penuh, Kalkolitik/Perunggu Awal).
 10. **Audit Spektrum Umur Simpan, Entropi Material & Evaluasi Kelayakan Dekade (*Material Longevity Spectrum*)**:
     - **Uji Kelayakan Dekade**: Evaluasi apakah masuk akal suatu item bertahan selama puluhan tahun berdasarkan sifat materialnya.
     - *Barang Anorganik Tahan Lama (Decades to Centuries)*: Batu (`Stone Axe`), Cangkang Kalsium Karbonat (`Cowrie Shells`), Kristal Garam (`Rock Salt`), dan Tembikar Keramik Bakar (`Pottery Jar`) terbukti arkeologis bertahan puluhan hingga ratusan tahun sebagai pusaka (*heirloom*) lintas generasi.
     - *Bahan Organik Rentan Entropi (Months to a Few Years)*: Kayu bakar mentah (`Timber`), jaring anyaman (`Fishing Net`), keranjang anyaman serat (`Woven Basket`), tanaman obat kering (`Herbal Medicine`), dan biji gandum lepas (`Wild Grain`) wajib mengalami laju entropi pelapukan pasif (rayap, jamur, oksidasi, kelembaban) dalam 6 bulan s/d 2-3 tahun tanpa wadah khusus.
-11. **Daya Dukung Ekologis & Kelestarian Sumber Daya (*Carrying Capacity*)**:
+11. **Audit Spasial Sel, Peta Dunia, Iklim/Musim & Hambatan Pengetahuan (*Spatial, Climate & Knowledge Deadlocks*)**:
+    - **Jawaban Wajib 4 Dimensi Krusial**:
+      1. *Mobilitas Spasial & Akses Sel*: Apakah agen berpindah sel atau terjebak statis di titik lahir? Apakah simpul terpencil (pulau seberang laut) dapat dicapai via ekspedisi laut bertransportasi rakit?
+      2. *Dampak Fisik Musim & Iklim*: Apakah musim dingin membekukan perairan sungai? Apakah musim kemarau memicu risiko dehidrasi dan menuntut ketersediaan air tawar (*hydrological constraint*)?
+      3. *Hambatan Inovasi Eureka (*Eureka Deadlocks*)*: Mengapa pengetahuan tertentu belum muncul? Audit kebuntuan prasyarat barang tak terjangkau (*chicken-and-egg lock*) atau konkurensi bahan simultan yang terlalu ketat.
+      4. *Kelengkapan Transmisi Kultural*: Apakah seluruh cetak biru pengetahuan terdaftar dalam barter magang `trade.rs` dan diajarkan dari orang tua ke anak agar tidak punah saat penemu wafat?
+12. **Daya Dukung Ekologis & Kelestarian Sumber Daya (*Carrying Capacity*)**:
     - Status biomassa dan tingkat kematangan (*maturity %*) seluruh simpul alam.
-12. **Profil Performa Komputasi & Rincian Mikro-Profiler Sub-Sistem**:
+13. **Profil Performa Komputasi & Rincian Mikro-Profiler Sub-Sistem**:
     - Analisis throughput total (TPS rata-rata, instantaneous min/max, dan wall-clock duration).
     - Tabel alokasi waktu per sub-sistem (`EnvironmentSystem`, `MetabolismSystem`, `LifecycleSystem`, `ExchangeSystem`, `StatisticSystem`) dengan breakdown persentase dan latensi per tick.
     - Diagnosis modul terberat dan perbandingan terhadap target baseline.
-13. **Audit Kompleksitas Algoritmik, Parsing, dan Evaluasi Big-O (Algorithmic Complexity & Optimization Audit)**:
+14. **Audit Kompleksitas Algoritmik, Parsing, dan Evaluasi Big-O (Algorithmic Complexity & Optimization Audit)**:
     - **Jawaban Wajib 4 Pertanyaan Kunci Performa**:
       1. *Apa gap dan masalah performa yang belum teratasi?* (Identifikasi sub-sistem terberat, alokasi memori berlebih, unindexed loops).
       2. *Apakah ada potensi untuk optimasi?* (Peluang reduksi footprint komputasi, penghapusan deep cloning, zero allocation).
@@ -168,7 +184,7 @@ Setiap laporan wajib memuat 14 bab eksekutif berikut:
       - Kueri pencarian `search_web` presisi bertanggal bulan & tahun saat ini (misal: `"Rust zero allocation event ledger metadata pattern 2026"`).
       - Ringkasan pola arsitektur mutakhir (seperti bitfield encoding, embedded storage, periodic non-autonomous logistic harvesting models).
       - Rencana implementasi konkret pada kode sumber.
-14. **Rekomendasi Langkah Pengembangan & Rencana Iterasi Berikutnya**:
+15. **Rekomendasi Langkah Pengembangan & Rencana Iterasi Berikutnya**:
     - Usulan perbaikan mekanisme mikro untuk iterasi berikutnya berdasarkan evaluasi realitas, hasil profiler, dan solusi best practice dari riset internet.
 
 ---
