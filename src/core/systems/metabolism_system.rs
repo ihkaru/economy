@@ -115,6 +115,24 @@ impl MetabolismSystem {
                 if agent.has_item(ItemId::BERRIES) && rng.check_probability(0.05) {
                     let _ = agent.remove_item(ItemId::BERRIES, 1);
                 }
+
+                // Material Entropy Spectrum: Passive Organic Aging & Weathering Decay
+                // (Inorganic goods like Stone Axe, Shells, and Salt do NOT suffer passive decay and last decades/centuries)
+                if agent.has_item(ItemId::WOVEN_BASKET) && rng.check_probability(0.002) {
+                    let _ = agent.remove_item(ItemId::WOVEN_BASKET, 1);
+                }
+                if agent.has_item(ItemId::FISHING_NET) && rng.check_probability(0.002) {
+                    let _ = agent.remove_item(ItemId::FISHING_NET, 1);
+                }
+                if agent.has_item(ItemId::RAFT) && rng.check_probability(0.001) {
+                    let _ = agent.remove_item(ItemId::RAFT, 1);
+                }
+                if agent.has_item(ItemId::TIMBER) && rng.check_probability(0.002) {
+                    let _ = agent.remove_item(ItemId::TIMBER, 1);
+                }
+                if agent.has_item(ItemId::HERBAL_MEDICINE) && rng.check_probability(0.003) {
+                    let _ = agent.remove_item(ItemId::HERBAL_MEDICINE, 1);
+                }
             }
 
             // Liebig's Law of the Minimum: Electrolyte preservation via Salt

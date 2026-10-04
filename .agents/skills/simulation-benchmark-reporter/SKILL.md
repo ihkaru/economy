@@ -58,6 +58,7 @@ Setiap analisis wajib mengisi dan memeriksa 6 dimensi komparasi realitas sejarah
 | **4. Keberlanjutan Biomassa & Daya Dukung (*Carrying Capacity*)** | Simpul alam perawan 100% matang (*peak virgin biomass*). | Kematangan (*maturity %*) hutan, perairan, dan padang gandum. | Pemanfaatan sumber daya alam harus menghasilkan ekuilibrium hayati logistik. Penebangan berlebihan memicu kelangkaan kayu lokal yang mendorong inovasi atau konservasi. | ⚠️ **Anomali Eksploitasi Mutlak (*Deforestation Trap*)**: Jika hutan kayu habis total (0%) tanpa kemampuan memulihkan diri. *Diagnosa*: Kecepatan tebang melampaui kurva regenerasi logistik $r \cdot S (1 - S/K)$. |
 | **5. Kedalaman Generasi & Suksesi Warisan** | Generasi 1 (Pioneer Settlers). | Generasi $G_{max}$ (Gen 4-5 pada 100 thn; Gen 35-45 pada 1,000 thn). | Suksesi biologis berlangsung mulus. Kematian orang tua mewariskan alat dan aset ke anak/pasangan, bukan hilang musnah ke ruang hampa. | ⚠️ **Anomali Suksesi Terputus (*Generational Stagnation*)**: Jika generasi berhenti di Gen 1 atau 2 setelah ratusan tahun. *Diagnosa*: Kematian dini anak atau kegagalan ikatan pernikahan generasi baru. |
 | **6. Pengetahuan & Pembagian Kerja (*Division of Labor*)** | 0 cetak biru teknologi (hanya naluri foraging dasar). | Gagasan beredar, transaksi magang (*apprenticeship*), spesialisasi. | Pengetahuan menyebar melalui pengajaran antargenerasi (magang). Spesialisasi muncul di mana pengrajin alat menukar alat dengan bahan pangan peternak/nelayan (*Adam Smith*). | ⚠️ **Anomali Amnesia Kolektif / Autarki Total**: Jika tidak ada pertukaran pengetahuan atau warga hidup 100% autarki tanpa pernah barter. *Diagnosa*: Kurangnya insentif diferensiasi utilitas marginal Hayekian. |
+| **7. Spektrum Umur Simpan & Entropi Material (*Material Longevity Spectrum*)** | Seluruh item baru diproduksi/dipanen. | Usia dan daya tahan stok barang beredar (anorganik vs organik). | **Apakah masuk akal barang bertahan puluhan tahun?**<br>• *Masuk Akal (Anorganik Tahan Lama)*: Batu (`Stone Axe`), Cangkang (`Cowrie Shells`), Garam (`Rock Salt`), dan Tembikar Keramik (`Pottery Jar`) tahan puluhan s/d ratusan tahun sebagai pusaka (*heirloom*) lintas generasi.<br>• *Tidak Masuk Akal (Organik Rentan Entropi)*: Kayu bakar mentah (`Timber`), keranjang serat (`Woven Basket`), jaring serat (`Fishing Net`), herbal kering (`Herbal Medicine`), dan biji gandum lepas (`Wild Grain`) lapuk/hancur oleh rayap, jamur, oksidasi, dan serangga dalam 6 bulan s/d 2–3 tahun tanpa wadah kedap khusus. | ⚠️ **Anomali Bahan Organik Abadi (*Immortal Organic Matter*)**: Jika komoditas organik seperti kayu gelondongan, keranjang serat, atau obat herbal tersimpan selama puluhan tahun di tas warga tanpa pernah melapuk atau kadaluarsa. *Diagnosa*: Belum adanya pemodelan entropi pasif (*passive weathering & organic decay*) berbasis waktu kalender. |
 
 ---
 
@@ -81,7 +82,7 @@ flowchart TD
 
 ## 📋 Struktur Standard Laporan Benchmark (`reports/REPORT_<commit>_*.md`)
 
-Setiap laporan wajib memuat 11 bab eksekutif berikut:
+Setiap laporan wajib memuat 13 bab eksekutif berikut:
 
 1. **Header Metadata Eksekusi**:
    - Commit Hash (Short & Full)
@@ -92,10 +93,10 @@ Setiap laporan wajib memuat 11 bab eksekutif berikut:
    - Konteks run (100 tahun vs 1,000 tahun).
    - Temuan makro terpenting.
 3. **Matriks Evaluasi Kondisi Awal vs Akhir Terhadap Realita Sejarah**:
-   - Tabel komparasi 6 dimensi realitas sejarah.
+   - Tabel komparasi 7 dimensi realitas sejarah.
    - Evaluasi kelayakan antropologis.
 4. **Deteksi Anomali Realita & Diagnosa Mekanisme (*Root Cause Diagnostics*)**:
-   - Identifikasi anomali (misal: modal abadi, pangan tidak membusuk, kepunahan demografis, dsb.).
+   - Identifikasi anomali (misal: modal abadi, bahan organik abadi, pangan tidak membusuk, kepunahan demografis, dsb.).
    - Analisis kode modul mana yang belum memodelkan hukum fisika/biologi terkait.
 5. **Audit Siklus Hidup & Demografi Multi-Generasi**:
    - Populasi hidup vs total kelahiran historis.
@@ -106,7 +107,7 @@ Setiap laporan wajib memuat 11 bab eksekutif berikut:
    - Angka kesakitan warga hidup, kematian akibat komplikasi infeksi/demam vs kelaparan vs usia tua.
    - Intervensi terapeutik: swamedikasi obat herbal, jasa pengobatan keluarga, dan transaksi jasa dokter/tabib (`SERVICE_MEDICAL`).
 7. **Audit Transaksi Ledger & Sirkulasi Aset (Ultimate Ledger)**:
-   - Rincian jenis transaksi atomik (panen, manufaktur alat, farmakope, jasa medis, barter, jasa magang, eureka).
+   - Rincian jenis transaksi atomik (panen, manufaktur alat/wadah, farmakope, jasa medis, barter, jasa magang, eureka).
    - Sirkulasi dan intensitas barang modal.
 8. **Daftar Kronologis Kemunculan & Penemuan Item Sepanjang Sejarah**:
    - Tabel urutan kronologis pertama kali setiap item muncul / ditemukan (ID, Nama Item, Kategori, Tick, Tahun Sejarah, Konteks Kemunculan).
@@ -115,17 +116,21 @@ Setiap laporan wajib memuat 11 bab eksekutif berikut:
    - Matriks evaluasi 5 era arkeologi peradaban manusia:
      - *Paleolitik Bawah/Tengah (300k - 50k BP)*: Api, kapak genggam kasar, perburuan, herba kunyah.
      - *Paleolitik Atas (50k - 10k BP)*: Kapak batu halus, rakit perairan, pakaian kulit, jarum tulang.
-     - *Mesolitik (10k - 8k BP)*: Jaring ikan anyam, garam & pengasinan, panah/jebakan, kerang hias.
+     - *Mesolitik (10k - 8k BP)*: Jaring ikan anyam, garam & pengasinan, panah/jebakan, kerang hias, wadah anyam.
      - *Neolitik (8k - 4k BP)*: Budidaya gandum, tembikar/gerabah penyimpan pangan, hewan domestik, tenun tekstil.
      - *Logam & Perunggu (4k - 1.2k BP)*: Metalurgi, tungku smelter, roda/gerobak, farmakope formal, sistem pembukuan/uang.
    - Evaluasi komparatif: apa yang telah ada di model vs apa yang berstatus kesenjangan (*item gaps*) yang perlu dikembangkan berikutnya.
-10. **Daya Dukung Ekologis & Kelestarian Sumber Daya (*Carrying Capacity*)**:
+10. **Audit Spektrum Umur Simpan, Entropi Material & Evaluasi Kelayakan Dekade (*Material Longevity Spectrum*)**:
+    - **Uji Kelayakan Dekade**: Evaluasi apakah masuk akal suatu item bertahan selama puluhan tahun berdasarkan sifat materialnya.
+    - *Barang Anorganik Tahan Lama (Decades to Centuries)*: Batu (`Stone Axe`), Cangkang Kalsium Karbonat (`Cowrie Shells`), Kristal Garam (`Rock Salt`), dan Tembikar Keramik Bakar (`Pottery Jar`) terbukti arkeologis bertahan puluhan hingga ratusan tahun sebagai pusaka (*heirloom*) lintas generasi.
+    - *Bahan Organik Rentan Entropi (Months to a Few Years)*: Kayu bakar mentah (`Timber`), jaring anyaman (`Fishing Net`), keranjang anyaman serat (`Woven Basket`), tanaman obat kering (`Herbal Medicine`), dan biji gandum lepas (`Wild Grain`) wajib mengalami laju entropi pelapukan pasif (rayap, jamur, oksidasi, kelembaban) dalam 6 bulan s/d 2-3 tahun tanpa wadah khusus.
+11. **Daya Dukung Ekologis & Kelestarian Sumber Daya (*Carrying Capacity*)**:
     - Status biomassa dan tingkat kematangan (*maturity %*) seluruh simpul alam.
-11. **Profil Performa Komputasi & Rincian Mikro-Profiler Sub-Sistem**:
+12. **Profil Performa Komputasi & Rincian Mikro-Profiler Sub-Sistem**:
     - Analisis throughput total (TPS rata-rata, instantaneous min/max, dan wall-clock duration).
     - Tabel alokasi waktu per sub-sistem (`EnvironmentSystem`, `MetabolismSystem`, `LifecycleSystem`, `ExchangeSystem`, `StatisticSystem`) dengan breakdown persentase dan latensi per tick.
     - Diagnosis modul terberat dan target optimasi memory/loop.
-12. **Rekomendasi Langkah Pengembangan & Rencana Iterasi Berikutnya**:
+13. **Rekomendasi Langkah Pengembangan & Rencana Iterasi Berikutnya**:
     - Usulan perbaikan mekanisme mikro untuk iterasi berikutnya berdasarkan evaluasi realitas dan hasil profiler.
 
 ---
