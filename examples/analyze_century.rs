@@ -17,11 +17,13 @@ fn item_meta(id: u64) -> (&'static str, &'static str) {
         108 => ("Polished Stone Axe", "Capital (Forestry Tool)"),
         109 => ("Woven Fishing Net", "Capital (Marine Harvesting Tool)"),
         110 => ("Herbal Medicine", "Good (Therapeutic Pharmacopoeia)"),
+        111 => ("Woven Carrying Basket", "Capital (Logistics Container)"),
         201 => ("Raft Building Blueprint", "Knowledge (Non-Rival Blueprint)"),
         202 => ("Fish Curing Preservation", "Knowledge (Non-Rival Technique)"),
         203 => ("Fire-Making Technique", "Knowledge (Non-Rival Technique)"),
         204 => ("Tool Crafting Blueprint", "Knowledge (Non-Rival Blueprint)"),
         205 => ("Herbal Medicine Blueprint", "Knowledge (Non-Rival Blueprint)"),
+        206 => ("Basket Weaving Blueprint", "Knowledge (Non-Rival Blueprint)"),
         301 => ("Fishing Right Permit", "Permit (Institutional Right)"),
         302 => ("Forestry Right Permit", "Permit (Institutional Right)"),
         401 => ("Manual Labor Service", "Service (Intangible Man-Hour)"),
@@ -227,13 +229,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     *trx_breakdown.entry(t.to_string()).or_insert(0) += 1;
 
                     match t {
-                        "capital_tool_production" => {
+                        "capital_tool_production" | "container_crafting" => {
                             if let Some(tool) = val.get("tool_crafted").and_then(|v| v.as_str()) {
                                 *tools_crafted.entry(tool.to_string()).or_insert(0) += 1;
                                 let tid = match tool {
                                     "Stone Axe" => 108,
                                     "Fishing Net" => 109,
                                     "Maritime Raft" => 106,
+                                    "Woven Basket" => 111,
                                     _ => 0,
                                 };
                                 if tid > 0 {
@@ -253,6 +256,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                                     "Fire-Making Technique" => 203,
                                     "Tool Crafting Blueprint" => 204,
                                     "Herbal Medicine Blueprint" => 205,
+                                    "Basket Weaving Blueprint" => 206,
                                     _ => 0,
                                 };
                                 if kid > 0 {
@@ -363,8 +367,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("│ Paleolitik Atas            │ Kapak Batu Halus, Rakit Perairan,    │ Kapak Batu (108), Rakit(106),│ Jarum Tulang, Pakaian Kulit, │");
     println!("│ (50.000 - 10.000 BP)       │ Harpun, Pakaian Kulit, Jarum Jahit   │ Jasa Medis (404)             │ Pigmen/Oker Merah Purba      │");
     println!("├────────────────────────────┼──────────────────────────────────────┼──────────────────────────────┼──────────────────────────────┤");
-    println!("│ Mesolitik                  │ Jaring Ikan Anyam, Garam Pengawet,   │ Jaring Ikan (109), Garam(105)│ Busur & Panah, Jebakan Ikan, │");
-    println!("│ (10.000 - 8.000 BP)        │ Ikan Asin Kering, Kerang Hiasan      │ Ikan Asin (102s), Kerang(107)│ Keranjang Anyaman Penyimpan  │");
+    println!("│ Mesolitik                  │ Jaring Ikan Anyam, Garam Pengawet,   │ Jaring(109), Garam(105),     │ Busur & Panah, Jebakan Ikan, │");
+    println!("│ (10.000 - 8.000 BP)        │ Ikan Asin Kering, Wadah Anyam        │ Wadah Anyam (111), Kerang    │ Pengasapan Ikan Lanjut       │");
     println!("├────────────────────────────┼──────────────────────────────────────┼──────────────────────────────┼──────────────────────────────┤");
     println!("│ Neolitik                   │ Gandum Tanam, Gerabah/Tembikar,      │ Gandum (103), Jasa Magang    │ Tempayan Gerabah (Pottery),  │");
     println!("│ (8.000 - 4.000 BP)         │ Hewan Ternak Domestik, Tenun Tekstil │ Pendidikan (402)             │ Sabit Batu, Ternak Domba/Sapi│");

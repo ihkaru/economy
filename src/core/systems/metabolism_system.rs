@@ -229,7 +229,21 @@ impl MetabolismSystem {
                 1.0
             };
             let fever_penalty = if is_sick { 300.0 } else { 0.0 };
-            let total_expenditure = (self.base_daily_calories * child_factor) + cold_penalty + heat_penalty + fever_penalty;
+            let encumbrance_penalty = if let Some(agent) = agent_store.get_human(id) {
+                let w = agent.inventory_weight_kg();
+                if w > 20.0 {
+                    ((w - 20.0) / 10.0) * 50.0
+                } else {
+                    0.0
+                }
+            } else {
+                0.0
+            };
+            let total_expenditure = (self.base_daily_calories * child_factor)
+                + cold_penalty
+                + heat_penalty
+                + fever_penalty
+                + encumbrance_penalty;
 
             // 5. Update agent state
             if let Some(agent) = agent_store.get_human_mut(id) {

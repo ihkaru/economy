@@ -121,6 +121,29 @@ impl Human {
             obj.insert("is_sick".to_string(), serde_json::json!(sick));
         }
     }
+
+    /// Calculate total weight of carried physical items in inventory (excluding watercraft)
+    pub fn inventory_weight_kg(&self) -> f64 {
+        let mut total = 0.0;
+        for (item_id, qty) in &self.inventory {
+            if *item_id == ItemId::RAFT {
+                continue; // Moored on water / vessel
+            }
+            total += item_id.default_weight_kg() * (*qty as f64);
+        }
+        total
+    }
+
+    /// Physical carrying capacity limit: base 25.0 kg, expanded by woven baskets (+25 kg each, up to 75 kg)
+    pub fn carrying_capacity_kg(&self) -> f64 {
+        let base = 25.0;
+        let baskets = self.inventory.get(&ItemId::WOVEN_BASKET).copied().unwrap_or(0);
+        base + (baskets as f64 * 25.0).min(50.0)
+    }
+
+    pub fn can_carry_additional_weight(&self, additional_kg: f64) -> bool {
+        self.inventory_weight_kg() + additional_kg <= self.carrying_capacity_kg()
+    }
 }
 
 impl Identifiable for Human {

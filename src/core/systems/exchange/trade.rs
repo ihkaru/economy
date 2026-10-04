@@ -144,6 +144,7 @@ pub fn perform_trade_and_services(
         ItemId::KNOWLEDGE_FISH_CURING,
         ItemId::KNOWLEDGE_TOOL_CRAFTING,
         ItemId::KNOWLEDGE_HERBAL_MEDICINE,
+        ItemId::KNOWLEDGE_BASKET_WEAVING,
     ] {
         if a_inv.contains_key(&k_id) && !b_inv.contains_key(&k_id) {
             let b_food = [ItemId::GRAIN, ItemId::FISH, ItemId::BERRIES]
