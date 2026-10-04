@@ -76,9 +76,9 @@ pub fn perform_agent_centric_foraging(
                 continue;
             }
 
-            // Calculate capital tool efficiency
+            // Calculate capital tool & learning-by-doing efficiency (Arrow 1962 / Adam Smith)
             let tool_multiplier = if let Some(agent) = agent_store.get_human(agent_id) {
-                if node.item_id == ItemId::TIMBER && agent.has_item(ItemId::STONE_AXE) {
+                let base_mult = if node.item_id == ItemId::TIMBER && agent.has_item(ItemId::STONE_AXE) {
                     3.0
                 } else if node.item_id == ItemId::FISH && agent.has_item(ItemId::FISHING_NET) {
                     3.0
@@ -86,7 +86,13 @@ pub fn perform_agent_centric_foraging(
                     3.0
                 } else {
                     1.0
-                }
+                };
+                let spec_key = node.item_id.0.to_string();
+                let exp = agent.attributes.get("specialization")
+                    .and_then(|s| s.get(&spec_key))
+                    .and_then(|v| v.as_u64())
+                    .unwrap_or(0);
+                (base_mult + (exp as f64 * 0.05)).min(5.0)
             } else {
                 1.0
             };
@@ -146,6 +152,18 @@ pub fn perform_agent_centric_foraging(
                             if let Some(agent) = agent_store.get_human_mut(agent_id) {
                                 agent.location = agent.location.step_towards(&best_node_loc);
                                 agent.add_item(node.item_id, actual_harvested);
+
+                                // Learning-by-Doing skill accumulation (Arrow 1962)
+                                if let Some(obj) = agent.attributes.as_object_mut() {
+                                    let spec = obj.entry("specialization".to_string()).or_insert_with(|| serde_json::json!({}));
+                                    if let Some(spec_obj) = spec.as_object_mut() {
+                                        let key = node.item_id.0.to_string();
+                                        let count = spec_obj.get(&key).and_then(|v| v.as_u64()).unwrap_or(0);
+                                        if count < 20 {
+                                            spec_obj.insert(key, serde_json::json!(count + 1));
+                                        }
+                                    }
+                                }
 
                                 // Hunting by-product: animal raw hide from terrestrial game hunting
                                 if node.item_id == ItemId::RAW_MEAT && rng.check_probability(0.50) {
