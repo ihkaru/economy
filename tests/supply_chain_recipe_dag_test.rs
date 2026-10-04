@@ -14,7 +14,7 @@ use economy::core::systems::exchange::perform_autonomous_crafting;
 #[test]
 fn test_canonical_recipe_registry_specifications() {
     let registry = RecipeRegistry::canonical();
-    assert_eq!(registry.all().len(), 11, "Expected 11 canonical recipes");
+    assert_eq!(registry.all().len(), 13, "Expected 13 canonical recipes");
 
     let stone_axe_recipe = registry.get_recipe(2).expect("Recipe 2 (Stone Axe) should exist");
     assert_eq!(stone_axe_recipe.name, "Polished Stone Axe");
@@ -54,6 +54,16 @@ fn test_canonical_recipe_registry_specifications() {
     assert_eq!(leather_recipe.category, "clothing_tailoring");
     assert_eq!(leather_recipe.required_knowledge, Some(ItemId::KNOWLEDGE_LEATHER_WORKING));
     assert_eq!(leather_recipe.outputs[0].item_id, ItemId::LEATHER_CLOTHING);
+
+    let spear_recipe = registry.get_recipe(12).expect("Recipe 12 (Hunting Spear) should exist");
+    assert_eq!(spear_recipe.name, "Prehistoric Hunting Spear");
+    assert_eq!(spear_recipe.category, "capital_tool_production");
+    assert_eq!(spear_recipe.outputs[0].item_id, ItemId::HUNTING_SPEAR);
+
+    let cured_meat_recipe = registry.get_recipe(13).expect("Recipe 13 (Cured Meat) should exist");
+    assert_eq!(cured_meat_recipe.name, "Salt-Cured Preserved Meat");
+    assert_eq!(cured_meat_recipe.category, "food_preservation");
+    assert_eq!(cured_meat_recipe.outputs[0].item_id, ItemId::CURED_MEAT);
 }
 
 #[test]
@@ -201,4 +211,70 @@ fn test_warm_leather_garment_tailoring() {
     assert_eq!(entries[0].metadata.get("transaction_type").unwrap(), "clothing_tailoring");
     assert_eq!(entries[0].metadata.get("product_name").unwrap(), "Warm Leather Garment");
 }
+
+#[test]
+fn test_prehistoric_hunting_spear_and_cured_meat_crafting() {
+    let mut agent_store = MemoryAgentStore::new();
+    let mut ledger_store = MemoryLedgerStore::new();
+    let mut rng = ChaChaRngAdapter::new(42);
+
+    let agent_id = AgentId::new(104);
+    let mut agent = Human::new(agent_id, Sex::Female, Tick::ZERO)
+        .with_initial_age(24 * 365)
+        .with_calories(6000.0)
+        .with_location(GeoCoordinate::new(16, 27));
+
+    // Agent already has Stone Axe, and now gathers materials for spear (1 Stone + 1 Timber + Tool Crafting)
+    // and cured meat (2 Raw Meat + 1 Salt + Fish Curing)
+    agent.add_item(ItemId::STONE_AXE, 1);
+    agent.add_item(ItemId::STONE, 1);
+    agent.add_item(ItemId::TIMBER, 1);
+    agent.add_item(ItemId::KNOWLEDGE_TOOL_CRAFTING, 1);
+    agent.add_item(ItemId::RAW_MEAT, 2);
+    agent.add_item(ItemId::SALT, 1);
+    agent.add_item(ItemId::KNOWLEDGE_FISH_CURING, 1);
+
+    agent_store.insert_human(agent);
+
+    let living_ids = vec![agent_id];
+    let run_id = RunId::new("test_spear_and_meat");
+    let mut next_trx_id = 1;
+    let mut next_instance_id = 1;
+
+    // Day 1: Autonomous Crafting (Crafts Prehistoric Hunting Spear)
+    perform_autonomous_crafting(
+        &run_id,
+        Tick(1),
+        &living_ids,
+        &mut agent_store,
+        &mut ledger_store,
+        &mut rng,
+        &mut next_trx_id,
+        &mut next_instance_id,
+    );
+
+    // Day 2: Autonomous Crafting (Crafts Salt-Cured Preserved Meat)
+    perform_autonomous_crafting(
+        &run_id,
+        Tick(2),
+        &living_ids,
+        &mut agent_store,
+        &mut ledger_store,
+        &mut rng,
+        &mut next_trx_id,
+        &mut next_instance_id,
+    );
+
+    let agent = agent_store.get_human(agent_id).unwrap();
+    assert_eq!(agent.inventory.get(&ItemId::STONE).copied().unwrap_or(0), 0, "Stone consumed");
+    assert_eq!(agent.inventory.get(&ItemId::TIMBER).copied().unwrap_or(0), 0, "Timber consumed");
+    assert_eq!(agent.inventory.get(&ItemId::HUNTING_SPEAR).copied().unwrap_or(0), 1, "Hunting spear crafted");
+    assert_eq!(agent.inventory.get(&ItemId::RAW_MEAT).copied().unwrap_or(0), 0, "Raw meat consumed");
+    assert_eq!(agent.inventory.get(&ItemId::SALT).copied().unwrap_or(0), 0, "Salt consumed");
+    assert_eq!(agent.inventory.get(&ItemId::CURED_MEAT).copied().unwrap_or(0), 2, "2 Cured meat produced");
+
+    let entries = ledger_store.all_entries();
+    assert_eq!(entries.len(), 2, "2 crafting transactions executed across 2 days");
+}
+
 

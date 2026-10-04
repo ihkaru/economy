@@ -28,6 +28,8 @@ fn item_meta(id: u64) -> (&'static str, &'static str) {
         119 => ("Wild Raw Hide", "Good (Raw Material)"),
         120 => ("Warm Leather Clothing", "Capital (Thermoregulation Apparel)"),
         121 => ("Wood-Smoked Preserved Meat", "Good (Preserved Food)"),
+        122 => ("Prehistoric Hunting Spear", "Capital (Terrestrial Hunting Tool)"),
+        123 => ("Salt-Cured Preserved Meat", "Good (Preserved Food)"),
         201 => ("Raft Building Blueprint", "Knowledge (Non-Rival Blueprint)"),
         202 => ("Fish Curing Preservation", "Knowledge (Non-Rival Technique)"),
         203 => ("Fire-Making Technique", "Knowledge (Non-Rival Technique)"),
@@ -255,6 +257,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                                     "Wood-Smoked Preserved Meat" | "Wood-Smoked Meat" => 121,
                                     "Warm Leather Garment" | "Warm Leather Clothing" | "Leather Clothing" => 120,
                                     "Ceramic Storage Pottery Jar" | "Ceramic Pottery Jar" | "Pottery Jar" => 116,
+                                    "Prehistoric Hunting Spear" | "Hunting Spear" => 122,
+                                    "Salt-Cured Preserved Meat" | "Salt-Cured Meat" => 123,
                                     _ => 0,
                                 };
                                 if tid > 0 {
@@ -428,7 +432,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let baskets_held = *living_inventory_totals.get("111").unwrap_or(&0);
     let jars_held = *living_inventory_totals.get("116").unwrap_or(&0);
     let clothing_held = *living_inventory_totals.get("120").unwrap_or(&0);
-    let total_tools_held = axes_held + nets_held + rafts_held + baskets_held + jars_held + clothing_held;
+    let spears_held = *living_inventory_totals.get("122").unwrap_or(&0);
+    let total_tools_held = axes_held + nets_held + rafts_held + baskets_held + jars_held + clothing_held + spears_held;
     let tools_per_capita = if alive_count > 0 { total_tools_held as f64 / alive_count as f64 } else { 0.0 };
 
     println!("\n======================================================================");
@@ -444,7 +449,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("│ Total Alat Diproduksi      │ 0 unit             │ {:<18} │ Fabrikasi Modal Kumulatif                        │", format!("{} unit", total_tools_fabricated));
     println!("│ Makanan Perishable Beredar │ 0 unit             │ {:<18} │ Risiko Pembusukan Pangan Segar                    │", format!("{} unit", perishable_items_held));
     println!("│ Transaksi Ekonomi          │ 0 transaksi        │ {:<18} │ Aktivitas Ledger dan Pembagian Kerja             │", format!("{} transaksi", total_transactions));
-    println!("│ Rantai Resep & Buruan Liar │ 0 resep / 1 fauna  │ {:<18} │ 11 Resep multi-input, fauna darat & air realistis │", format!("{} resep / 2 fauna", tools_crafted.len()));
+    println!("│ Rantai Resep & Buruan Liar │ 0 resep / 1 fauna  │ {:<18} │ 13 Resep multi-input, fauna darat & air realistis │", format!("{} resep / 2 fauna", tools_crafted.len()));
     println!("└────────────────────────────┴────────────────────┴────────────────────┴──────────────────────────────────────────────────┘");
 
     // 9. Reality Anomaly Detection & Diagnostics
@@ -495,7 +500,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let hide_held = *living_inventory_totals.get("119").unwrap_or(&0);
     let stone_held = *living_inventory_totals.get("117").unwrap_or(&0);
     let smoked_meat_crafted = *tools_crafted.get("Wood-Smoked Preserved Meat").unwrap_or(&0);
+    let cured_meat_crafted = *tools_crafted.get("Salt-Cured Preserved Meat").unwrap_or(&0);
     let clothing_crafted = *tools_crafted.get("Warm Leather Garment").unwrap_or(&0);
+    let spears_crafted = *tools_crafted.get("Prehistoric Hunting Spear").unwrap_or(&0);
     let leather_eureka = *discoveries.get("Leather Working & Tailoring Blueprint").unwrap_or(&0);
 
     println!("\n======================================================================");
@@ -505,8 +512,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("  - Stok Daging Buruan Segar (Meat)  : {} unit", meat_held);
     println!("  - Stok Kulit Hewan Liar (Raw Hide) : {} unit", hide_held);
     println!("  - Daging Asap Diproduksi (Preserved): {} unit", smoked_meat_crafted);
+    println!("  - Daging Garam Diproduksi (Cured)  : {} unit", cured_meat_crafted);
     println!("  - Pakaian Kulit Dibuat (Clothing)  : {} helai", clothing_crafted);
     println!("  - Pakaian Kulit Beredar Saat Ini   : {} helai", clothing_held);
+    println!("  - Tombak Berburu Dibuat (Spears)   : {} unit", spears_crafted);
+    println!("  - Tombak Berburu Beredar Saat Ini  : {} unit", spears_held);
     println!("  - Eureka Penyamakan Kulit & Jahit  : {} penemu", leather_eureka);
 
     // 11. Render Final Tables

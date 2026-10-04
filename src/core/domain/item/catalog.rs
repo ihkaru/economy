@@ -6,95 +6,55 @@ pub fn build_canonical_items() -> Vec<ItemDefinition> {
     vec![
         // Fase 1: Paleolithic Foraging & Immediate Return
         ItemDefinition::new(
-            ItemId::BERRIES,
-            "Buah Beri Liar (Wild Berries)",
-            ItemCategory::Good,
+            ItemId::BERRIES, "Buah Beri Liar (Wild Berries)", ItemCategory::Good,
             serde_json::json!({
-                "historical_era": "Paleolithic_Foraging",
-                "unit": "kg",
-                "utility_type": "Nutrition",
-                "calories_per_unit": 300.0,
-                "shelf_life_days": 7,
+                "historical_era": "Paleolithic_Foraging", "unit": "kg", "utility_type": "Nutrition",
+                "calories_per_unit": 300.0, "shelf_life_days": 7,
                 "description": "Pangan segar cepat saji dari semak belukar liar, mudah busuk"
             }),
-        )
-        .with_weight(0.2)
-        .with_perishable(true),
+        ).with_weight(0.2).with_perishable(true),
 
         ItemDefinition::new(
-            ItemId::FISH,
-            "Ikan Segar (Fresh Fish)",
-            ItemCategory::Good,
+            ItemId::FISH, "Ikan Segar (Fresh Fish)", ItemCategory::Good,
             serde_json::json!({
-                "historical_era": "Paleolithic_Foraging",
-                "unit": "ekor",
-                "utility_type": "Nutrition",
-                "calories_per_unit": 500.0,
-                "shelf_life_days": 3,
+                "historical_era": "Paleolithic_Foraging", "unit": "ekor", "utility_type": "Nutrition",
+                "calories_per_unit": 500.0, "shelf_life_days": 3,
                 "description": "Sumber protein hewani air tawar, membutuhkan konsumsi segera sebelum busuk"
             }),
-        )
-        .with_weight(0.5)
-        .with_perishable(true),
+        ).with_weight(0.5).with_perishable(true),
 
         ItemDefinition::new(
-            ItemId::GRAIN,
-            "Biji Gandum Liar (Wild Grain)",
-            ItemCategory::Good,
+            ItemId::GRAIN, "Biji Gandum Liar (Wild Grain)", ItemCategory::Good,
             serde_json::json!({
-                "historical_era": "Paleolithic_Foraging",
-                "unit": "kg",
-                "utility_type": "Nutrition",
-                "calories_per_unit": 800.0,
-                "shelf_life_days": 365,
+                "historical_era": "Paleolithic_Foraging", "unit": "kg", "utility_type": "Nutrition",
+                "calories_per_unit": 800.0, "shelf_life_days": 365,
                 "description": "Pangan pokok berkarbohidrat padat, kering dan tahan simpan lama"
             }),
-        )
-        .with_weight(1.0)
-        .with_perishable(false),
+        ).with_weight(1.0).with_perishable(false),
 
         ItemDefinition::new(
-            ItemId::TIMBER,
-            "Kayu Gelondongan (Raw Timber)",
-            ItemCategory::Good,
+            ItemId::TIMBER, "Kayu Gelondongan (Raw Timber)", ItemCategory::Good,
             serde_json::json!({
-                "historical_era": "Paleolithic_Foraging",
-                "unit": "batang",
-                "utility_type": "RawMaterial",
+                "historical_era": "Paleolithic_Foraging", "unit": "batang", "utility_type": "RawMaterial",
                 "description": "Bahan baku konstruksi, tiang rakit, dan bahan bakar penghangat tubuh"
             }),
-        )
-        .with_weight(5.0)
-        .with_perishable(false),
+        ).with_weight(5.0).with_perishable(false),
 
         ItemDefinition::new(
-            ItemId::SERVICE_LABOR,
-            "Waktu Tenaga Kerja Fisik (Labor Hours)",
-            ItemCategory::Service,
+            ItemId::SERVICE_LABOR, "Waktu Tenaga Kerja Fisik (Labor Hours)", ItemCategory::Service,
             serde_json::json!({
-                "historical_era": "Paleolithic_Foraging",
-                "unit": "man_hour",
-                "utility_type": "LaborTime",
+                "historical_era": "Paleolithic_Foraging", "unit": "man_hour", "utility_type": "LaborTime",
                 "description": "Waktu dan tenaga biologis yang dicurahkan manusia untuk aktivitas produktif"
             }),
-        )
-        .with_weight(0.0)
-        .with_perishable(false),
+        ).with_weight(0.0).with_perishable(false),
 
         ItemDefinition::new(
-            ItemId::KNOWLEDGE_FIRE_MAKING,
-            "Gagasan Menyalakan Api (Pyrotechnology Blueprint)",
-            ItemCategory::Knowledge,
+            ItemId::KNOWLEDGE_FIRE_MAKING, "Gagasan Menyalakan Api (Pyrotechnology Blueprint)", ItemCategory::Knowledge,
             serde_json::json!({
-                "historical_era": "Paleolithic_Pyrotechnology",
-                "unit": "idea",
-                "utility_type": "Skill",
-                "rivalry": "NonRival",
+                "historical_era": "Paleolithic_Pyrotechnology", "unit": "idea", "utility_type": "Skill", "rivalry": "NonRival",
                 "description": "Gagasan teknologi menghasilkan api melalui gesekan kayu atau batu pemantik"
             }),
-        )
-        .with_weight(0.0)
-        .with_nature(ItemNature::NonRivalKnowledge),
+        ).with_weight(0.0).with_nature(ItemNature::NonRivalKnowledge),
 
         // Fase 2: Paleolithic Pyrotechnology & Hand-Axe
         ItemDefinition::new(
@@ -107,7 +67,7 @@ pub fn build_canonical_items() -> Vec<ItemDefinition> {
                 "utility_type": "CapitalTool",
                 "harvest_multiplier": 3.0,
                 "target_resource": "Timber",
-                "recipe": {"timber": 5},
+                "recipe": {"stone": 1, "timber": 1},
                 "description": "Barang modal purba pertama: meningkatkan efisiensi tebang kayu 300%"
             }),
         )
@@ -269,6 +229,26 @@ pub fn build_canonical_items() -> Vec<ItemDefinition> {
                 "historical_era": "Paleolithic_Pyrotechnology", "unit": "kg",
                 "utility_type": "Nutrition", "calories_per_unit": 700.0, "shelf_life_days": 1095,
                 "description": "Daging awetan hasil pengasapan kayu: tahan bertahun-tahun tanpa garam"
+            }),
+        ).with_weight(0.4).with_perishable(false),
+
+        ItemDefinition::new(
+            ItemId::HUNTING_SPEAR, "Tombak Berburu Litik (Lithic Hunting Spear)", ItemCategory::Good,
+            serde_json::json!({
+                "historical_era": "Paleolithic_Pyrotechnology", "unit": "buah",
+                "utility_type": "CapitalTool", "harvest_multiplier": 3.0, "target_resource": "RawMeat",
+                "recipe": {"stone": 1, "timber": 1},
+                "description": "Barang modal perburuan satwa: meningkatkan hasil buruan daging dan kulit 300%"
+            }),
+        ).with_weight(1.5).with_perishable(false),
+
+        ItemDefinition::new(
+            ItemId::CURED_MEAT, "Dendeng Daging Asin (Salt-Cured Preserved Meat)", ItemCategory::Good,
+            serde_json::json!({
+                "historical_era": "Neolithic_Preservation_Storage", "unit": "kg",
+                "utility_type": "Nutrition", "calories_per_unit": 700.0, "shelf_life_days": 1825,
+                "recipe": {"raw_meat": 2, "salt": 1},
+                "description": "Daging awetan hasil penggaraman mineral: tahan bertahun-tahun tanpa busuk"
             }),
         ).with_weight(0.4).with_perishable(false),
 

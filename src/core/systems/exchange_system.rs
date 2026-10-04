@@ -48,12 +48,12 @@ impl ExchangeSystem {
         let mut discoveries: Vec<(AgentId, ItemId, &'static str)> = Vec::new();
         for id in &living_agent_ids {
             if let Some(agent) = agent_store.get_human(*id) {
-                // Agents with leisure and high energy reserves can experiment and discover ideas
-                if agent.calorie_reserve > 10000.0 && agent.days_starving == 0 {
+                // Agents with leisure and metabolic energy reserves can experiment and discover ideas
+                if agent.calorie_reserve >= 4500.0 && agent.days_starving == 0 {
                     // Raft building knowledge discovery (if holding Timber near water)
                     if agent.has_item(ItemId::TIMBER)
                         && !agent.has_item(ItemId::KNOWLEDGE_RAFT_BUILDING)
-                        && rng.check_probability(0.02)
+                        && rng.check_probability(0.005)
                     {
                         discoveries.push((*id, ItemId::KNOWLEDGE_RAFT_BUILDING, "Raft Construction Blueprint"));
                     }
@@ -61,35 +61,35 @@ impl ExchangeSystem {
                     if agent.has_item(ItemId::FISH)
                         && agent.has_item(ItemId::SALT)
                         && !agent.has_item(ItemId::KNOWLEDGE_FISH_CURING)
-                        && rng.check_probability(0.03)
+                        && rng.check_probability(0.005)
                     {
                         discoveries.push((*id, ItemId::KNOWLEDGE_FISH_CURING, "Salting & Fish Curing Preservation"));
                     }
                     // Tool crafting knowledge discovery (if holding Timber)
                     if agent.has_item(ItemId::TIMBER)
                         && !agent.has_item(ItemId::KNOWLEDGE_TOOL_CRAFTING)
-                        && rng.check_probability(0.02)
+                        && rng.check_probability(0.005)
                     {
                         discoveries.push((*id, ItemId::KNOWLEDGE_TOOL_CRAFTING, "Tool Crafting Blueprint"));
                     }
                     // Herbal medicine knowledge discovery (if holding Berries or Herbs)
                     if (agent.has_item(ItemId::BERRIES) || agent.has_item(ItemId::HERBAL_MEDICINE))
                         && !agent.has_item(ItemId::KNOWLEDGE_HERBAL_MEDICINE)
-                        && rng.check_probability(0.03)
+                        && rng.check_probability(0.005)
                     {
                         discoveries.push((*id, ItemId::KNOWLEDGE_HERBAL_MEDICINE, "Herbal Medicine Blueprint"));
                     }
                     // Basket weaving knowledge discovery (if holding Timber/fibers)
                     if agent.has_item(ItemId::TIMBER)
                         && !agent.has_item(ItemId::KNOWLEDGE_BASKET_WEAVING)
-                        && rng.check_probability(0.02)
+                        && rng.check_probability(0.005)
                     {
                         discoveries.push((*id, ItemId::KNOWLEDGE_BASKET_WEAVING, "Basket Weaving Blueprint"));
                     }
                     // Fire-making pyrotechnology discovery (if holding Timber)
                     if agent.has_item(ItemId::TIMBER)
                         && !agent.has_item(ItemId::KNOWLEDGE_FIRE_MAKING)
-                        && rng.check_probability(0.02)
+                        && rng.check_probability(0.005)
                     {
                         discoveries.push((*id, ItemId::KNOWLEDGE_FIRE_MAKING, "Fire-Making Technique"));
                     }
@@ -98,7 +98,7 @@ impl ExchangeSystem {
                         && agent.has_item(ItemId::TIMBER)
                         && agent.has_item(ItemId::KNOWLEDGE_FIRE_MAKING)
                         && !agent.has_item(ItemId::KNOWLEDGE_POTTERY_MAKING)
-                        && rng.check_probability(0.03)
+                        && rng.check_probability(0.005)
                     {
                         discoveries.push((*id, ItemId::KNOWLEDGE_POTTERY_MAKING, "Ceramic Pottery Firing Technique"));
                     }
@@ -106,7 +106,7 @@ impl ExchangeSystem {
                     if agent.has_item(ItemId::RAW_HIDE)
                         && agent.has_item(ItemId::KNOWLEDGE_TOOL_CRAFTING)
                         && !agent.has_item(ItemId::KNOWLEDGE_LEATHER_WORKING)
-                        && rng.check_probability(0.03)
+                        && rng.check_probability(0.005)
                     {
                         discoveries.push((*id, ItemId::KNOWLEDGE_LEATHER_WORKING, "Leather Working & Tailoring Blueprint"));
                     }

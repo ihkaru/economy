@@ -171,6 +171,36 @@ impl RecipeRegistry {
                 0.0,
                 180.0,
             ),
+            // 12. Terrestrial Hunting Capital Tool: Prehistoric Hunting Spear
+            ProductionRecipe::new(
+                12,
+                "Prehistoric Hunting Spear",
+                "capital_tool_production",
+                &[
+                    RecipeIngredient { item_id: ItemId::STONE, quantity: 1 },
+                    RecipeIngredient { item_id: ItemId::TIMBER, quantity: 1 },
+                ],
+                &[RecipeIngredient { item_id: ItemId::HUNTING_SPEAR, quantity: 1 }],
+                Some(ItemId::KNOWLEDGE_TOOL_CRAFTING),
+                None,
+                0.0,
+                150.0,
+            ),
+            // 13. Mineral Meat Curing: Salt-Cured Preserved Meat
+            ProductionRecipe::new(
+                13,
+                "Salt-Cured Preserved Meat",
+                "food_preservation",
+                &[
+                    RecipeIngredient { item_id: ItemId::RAW_MEAT, quantity: 2 },
+                    RecipeIngredient { item_id: ItemId::SALT, quantity: 1 },
+                ],
+                &[RecipeIngredient { item_id: ItemId::CURED_MEAT, quantity: 2 }],
+                Some(ItemId::KNOWLEDGE_FISH_CURING),
+                None,
+                0.0,
+                60.0,
+            ),
         ])
     }
 }

@@ -38,6 +38,10 @@ pub fn evaluate_marginal_utility(item_id: ItemId, calorie_reserve: f64, current_
             let urgency = (9000.0 / (calorie_reserve + 500.0)).clamp(0.5, 9.0);
             65.0 * urgency
         }
+        ItemId::CURED_MEAT => {
+            let urgency = (9000.0 / (calorie_reserve + 500.0)).clamp(0.5, 9.0);
+            70.0 * urgency
+        }
         ItemId::DRIED_BERRIES => {
             let urgency = (7000.0 / (calorie_reserve + 500.0)).clamp(0.5, 7.0);
             45.0 * urgency
@@ -46,6 +50,7 @@ pub fn evaluate_marginal_utility(item_id: ItemId, calorie_reserve: f64, current_
         ItemId::STONE => 30.0,
         ItemId::RAW_HIDE => 45.0,
         ItemId::LEATHER_CLOTHING => 180.0,
+        ItemId::HUNTING_SPEAR => 130.0,
         ItemId::SALT => 55.0, // High durability, good preservative, natural medium of exchange
         ItemId::RAFT => 150.0,
         ItemId::STONE_AXE => 120.0,

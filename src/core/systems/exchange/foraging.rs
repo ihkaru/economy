@@ -22,7 +22,7 @@ pub fn perform_agent_centric_foraging(
     next_instance_id: &mut u64,
 ) {
     for &agent_id in living_agent_ids {
-        let (loc, calorie_reserve, is_sick, inventory_weight, capacity, timber_count, herb_count, clay_count, stone_count, has_axe) = {
+        let (loc, calorie_reserve, is_sick, inventory_weight, capacity, timber_count, herb_count, clay_count, stone_count, has_axe, has_spear) = {
             if let Some(agent) = agent_store.get_human(agent_id) {
                 (
                     agent.location,
@@ -35,6 +35,7 @@ pub fn perform_agent_centric_foraging(
                     agent.inventory.get(&ItemId::CLAY).copied().unwrap_or(0),
                     agent.inventory.get(&ItemId::STONE).copied().unwrap_or(0),
                     agent.has_item(ItemId::STONE_AXE),
+                    agent.has_item(ItemId::HUNTING_SPEAR),
                 )
             } else {
                 continue;
@@ -69,6 +70,8 @@ pub fn perform_agent_centric_foraging(
                     3.0
                 } else if node.item_id == ItemId::FISH && agent.has_item(ItemId::FISHING_NET) {
                     3.0
+                } else if node.item_id == ItemId::RAW_MEAT && agent.has_item(ItemId::HUNTING_SPEAR) {
+                    3.0
                 } else {
                     1.0
                 }
@@ -94,8 +97,8 @@ pub fn perform_agent_centric_foraging(
                 2.5 // Food preservation medium
             } else if node.item_id == ItemId::HERBAL_MEDICINE && herb_count < 3 {
                 2.0 // Small preventive medical stock
-            } else if node.item_id == ItemId::STONE && (!has_axe || stone_count < 2) {
-                3.2 // Raw material for Stone Axe crafting
+            } else if node.item_id == ItemId::STONE && (!has_axe || !has_spear || stone_count < 2) {
+                3.5 // Raw material for Stone Axe and Hunting Spear crafting
             } else if node.item_id == ItemId::CLAY && clay_count < 6 {
                 2.2 // Raw material for ceramic pottery crafting
             } else {
@@ -141,6 +144,8 @@ pub fn perform_agent_centric_foraging(
                                         let _ = agent.remove_item(ItemId::STONE_AXE, 1);
                                     } else if node.item_id == ItemId::FISH && rng.check_probability(0.02) {
                                         let _ = agent.remove_item(ItemId::FISHING_NET, 1);
+                                    } else if node.item_id == ItemId::RAW_MEAT && rng.check_probability(0.025) {
+                                        let _ = agent.remove_item(ItemId::HUNTING_SPEAR, 1);
                                     }
                                 }
                             }

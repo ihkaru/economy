@@ -98,6 +98,7 @@ impl MetabolismSystem {
                     (ItemId::SMOKED_FISH, 600.0),   // Wood-Smoked Preserved Fish
                     (ItemId::SMOKED_MEAT, 700.0),   // Wood-Smoked Preserved Meat
                     (ItemId::CURED_FISH, 650.0),    // Salt-Cured Preserved Fish
+                    (ItemId::CURED_MEAT, 700.0),    // Salt-Cured Preserved Meat
                     (ItemId::DRIED_BERRIES, 400.0), // Sun-Dried Desiccated Berries
                 ];
 
@@ -157,6 +158,9 @@ impl MetabolismSystem {
                 }
                 if agent.has_item(ItemId::LEATHER_CLOTHING) && rng.check_probability(0.0005) {
                     let _ = agent.remove_item(ItemId::LEATHER_CLOTHING, 1);
+                }
+                if agent.has_item(ItemId::HUNTING_SPEAR) && rng.check_probability(0.001) {
+                    let _ = agent.remove_item(ItemId::HUNTING_SPEAR, 1);
                 }
             }
 
