@@ -210,22 +210,22 @@ pub fn perform_trade_and_services(
         let a_offer = a_inv
             .iter()
             .filter(|(id, qty)| **qty > 0 && !id.is_knowledge())
-            .min_by(|(id1, q1), (id2, q2)| {
-                let u1 = evaluate_marginal_utility(**id1, a_cal, **q1) * mult_a(**id1);
-                let u2 = evaluate_marginal_utility(**id2, a_cal, **q2) * mult_a(**id2);
-                u1.partial_cmp(&u2).unwrap_or(std::cmp::Ordering::Equal)
+            .map(|(id, qty)| {
+                let u = evaluate_marginal_utility(*id, a_cal, *qty) * mult_a(*id);
+                (*id, u)
             })
-            .map(|(id, _)| *id);
+            .min_by(|(_, u1), (_, u2)| u1.partial_cmp(u2).unwrap_or(std::cmp::Ordering::Equal))
+            .map(|(id, _)| id);
 
         let b_offer = b_inv
             .iter()
             .filter(|(id, qty)| **qty > 0 && !id.is_knowledge())
-            .min_by(|(id1, q1), (id2, q2)| {
-                let u1 = evaluate_marginal_utility(**id1, b_cal, **q1) * mult_b(**id1);
-                let u2 = evaluate_marginal_utility(**id2, b_cal, **q2) * mult_b(**id2);
-                u1.partial_cmp(&u2).unwrap_or(std::cmp::Ordering::Equal)
+            .map(|(id, qty)| {
+                let u = evaluate_marginal_utility(*id, b_cal, *qty) * mult_b(*id);
+                (*id, u)
             })
-            .map(|(id, _)| *id);
+            .min_by(|(_, u1), (_, u2)| u1.partial_cmp(u2).unwrap_or(std::cmp::Ordering::Equal))
+            .map(|(id, _)| id);
 
         if let (Some(item_a), Some(item_b)) = (a_offer, b_offer)
             && item_a != item_b

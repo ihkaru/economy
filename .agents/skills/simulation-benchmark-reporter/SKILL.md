@@ -44,6 +44,14 @@ Skill ini menetapkan **Standar Operasional Prosedur (SOP) Baku** untuk menjamin 
    - Simulator wajib memancarkan **live progress heartbeat** secara berkala (misal tiap 5 tahun / 1.825 ticks pada run 100 tahun) yang menampilkan `[Year X | Tick Y (Z%)] Living: N | Total: M | Speed: T TPS | ETA: S s` agar jalannya simulasi transparan, tidak 'buta', dan kemacetan/stuck dapat terdeteksi dini.
    - Setiap akhir eksekusi wajib mencetak **Per-System Micro-Profiler Breakdown** (alokasi waktu nanodetik untuk `EnvironmentSystem`, `MetabolismSystem`, `LifecycleSystem`, `ExchangeSystem`, dan `StatisticSystem`) untuk mengidentifikasi bottleneck komputasi secara presisi.
 
+7. **Audit Kompleksitas Algoritmik, Parsing Data & Efisiensi Big-O (Algorithmic & Parsing Audit Mandate)**:
+   - Setiap laporan resmi **WAJIB MENJAWAB SECARA EKSPLISIT** 4 pertanyaan inti performa rekayasa perangkat lunak:
+     1. *Apa gap dan masalah performa yang belum teratasi?* (Identifikasi sub-sistem terberat, alokasi memori berlebih, unindexed loops).
+     2. *Apakah ada potensi untuk optimasi?* (Peluang reduksi footprint komputasi, penghapusan deep cloning, zero allocation).
+     3. *Apakah masalah parsing dan serialisasi sudah menggunakan algoritma tercepat?* (Evaluasi overhead AST `serde_json::Value` pada hot path jutaan transaksi, perbandingan terhadap typed binary/zero-copy representation, dan eliminasi format string berulang).
+     4. *Apakah ada notasi Big-O ($O(1)$ vs $O(N)$) terbaik yang bisa diterapkan?* (Konversi scanning riwayat berulang $O(N)$ menjadi *running accumulators* amortized $O(1)$ atau $O(\log N)$, direct table indexing, dan optimasi komparator sort).
+   - Hasil audit ini wajib langsung ditindaklanjuti pada iterasi implementasi berikutnya.
+
 ---
 
 ## 🔬 Matriks Evaluasi Kondisi Awal vs Akhir Terhadap Realita Sejarah
@@ -129,8 +137,14 @@ Setiap laporan wajib memuat 13 bab eksekutif berikut:
 12. **Profil Performa Komputasi & Rincian Mikro-Profiler Sub-Sistem**:
     - Analisis throughput total (TPS rata-rata, instantaneous min/max, dan wall-clock duration).
     - Tabel alokasi waktu per sub-sistem (`EnvironmentSystem`, `MetabolismSystem`, `LifecycleSystem`, `ExchangeSystem`, `StatisticSystem`) dengan breakdown persentase dan latensi per tick.
-    - Diagnosis modul terberat dan target optimasi memory/loop.
-13. **Rekomendasi Langkah Pengembangan & Rencana Iterasi Berikutnya**:
+    - Diagnosis modul terberat dan perbandingan terhadap target baseline.
+13. **Audit Kompleksitas Algoritmik, Parsing, dan Evaluasi Big-O (Algorithmic Complexity & Optimization Audit)**:
+    - **Jawaban Wajib 4 Pertanyaan Kunci Performa**:
+      1. *Apa gap dan masalah performa yang belum teratasi?* (Identifikasi sub-sistem terberat, alokasi memori berlebih, unindexed loops).
+      2. *Apakah ada potensi untuk optimasi?* (Peluang reduksi footprint komputasi, penghapusan deep cloning, zero allocation).
+      3. *Apakah masalah parsing dan serialisasi sudah menggunakan algoritma tercepat?* (Evaluasi overhead AST `serde_json::Value` pada hot path jutaan transaksi, perbandingan terhadap typed binary/zero-copy representation, dan eliminasi format string berulang).
+      4. *Apakah ada notasi Big-O ($O(1)$ vs $O(N)$) terbaik yang bisa diterapkan?* (Konversi scanning riwayat berulang $O(N)$ menjadi *running accumulators* amortized $O(1)$ atau $O(\log N)$, direct table indexing, dan optimasi komparator sort).
+14. **Rekomendasi Langkah Pengembangan & Rencana Iterasi Berikutnya**:
     - Usulan perbaikan mekanisme mikro untuk iterasi berikutnya berdasarkan evaluasi realitas dan hasil profiler.
 
 ---

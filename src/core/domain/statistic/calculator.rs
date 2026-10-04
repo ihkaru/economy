@@ -1,6 +1,4 @@
 use serde::{Deserialize, Serialize};
-use crate::core::domain::agent::human::Human;
-use crate::core::domain::agent::traits::HasLifecycle;
 use crate::core::domain::time::Tick;
 use crate::core::ports::agent_store::AgentStorePort;
 use crate::core::ports::environment_store::EnvironmentStorePort;
@@ -51,15 +49,23 @@ pub struct PopulationDemographyCalculator;
 
 impl StatisticCalculator for PopulationDemographyCalculator {
     fn calculate(&self, ctx: &StatisticContext) -> StatisticValue {
-        let all_humans = ctx.agents.get_all_humans();
-        let total_count = all_humans.len();
-        let living_humans: Vec<&Human> = all_humans.iter().filter(|h| h.is_alive()).collect();
-        let living_count = living_humans.len();
-        let deceased_count = total_count.saturating_sub(living_count);
+        let total_count = ctx.agents.count_total();
+        let mut living_count = 0;
+        let mut male_count = 0;
+        let mut female_count = 0;
+        let mut married_count = 0;
 
-        let male_count = living_humans.iter().filter(|h| h.sex == crate::core::domain::agent::human::Sex::Male).count();
-        let female_count = living_humans.iter().filter(|h| h.sex == crate::core::domain::agent::human::Sex::Female).count();
-        let married_count = living_humans.iter().filter(|h| h.spouse_id.is_some()).count();
+        for h in ctx.agents.iter_living_humans() {
+            living_count += 1;
+            match h.sex {
+                crate::core::domain::agent::human::Sex::Male => male_count += 1,
+                crate::core::domain::agent::human::Sex::Female => female_count += 1,
+            }
+            if h.spouse_id.is_some() {
+                married_count += 1;
+            }
+        }
+        let deceased_count = total_count.saturating_sub(living_count);
 
         StatisticValue::scalar_and_payload(
             living_count as f64,
@@ -80,30 +86,30 @@ pub struct WealthDistributionCalculator;
 
 impl StatisticCalculator for WealthDistributionCalculator {
     fn calculate(&self, ctx: &StatisticContext) -> StatisticValue {
-        let all_humans = ctx.agents.get_all_humans();
-        let living: Vec<&Human> = all_humans.iter().filter(|h| h.is_alive()).collect();
-        let count = living.len();
+        let mut count = 0;
+        let mut total_assets: u64 = 0;
+        let mut min_assets: u32 = u32::MAX;
+        let mut max_assets: u32 = 0;
 
-        let total_assets: u64 = living
-            .iter()
-            .map(|h| h.inventory.values().sum::<u32>() as u64)
-            .sum();
+        for h in ctx.agents.iter_living_humans() {
+            count += 1;
+            let inv_sum: u32 = h.inventory.values().sum();
+            total_assets += inv_sum as u64;
+            if inv_sum < min_assets {
+                min_assets = inv_sum;
+            }
+            if inv_sum > max_assets {
+                max_assets = inv_sum;
+            }
+        }
+        if count == 0 {
+            min_assets = 0;
+        }
         let avg_assets = if count > 0 {
             total_assets as f64 / count as f64
         } else {
             0.0
         };
-
-        let min_assets = living
-            .iter()
-            .map(|h| h.inventory.values().sum::<u32>())
-            .min()
-            .unwrap_or(0);
-        let max_assets = living
-            .iter()
-            .map(|h| h.inventory.values().sum::<u32>())
-            .max()
-            .unwrap_or(0);
 
         StatisticValue::scalar_and_payload(
             avg_assets,
@@ -123,27 +129,17 @@ pub struct EmergentCurrencyCalculator;
 
 impl StatisticCalculator for EmergentCurrencyCalculator {
     fn calculate(&self, ctx: &StatisticContext) -> StatisticValue {
-        let all_entries = ctx.ledger.all_entries();
-        let mut trade_counts: std::collections::BTreeMap<u64, u64> = std::collections::BTreeMap::new();
-
-        for entry in all_entries {
-            // Count bilateral trades (inter-agent market exchanges where both parties exchange goods/services/knowledge)
-            if !entry.items_from_a.is_empty() && !entry.items_from_b.is_empty() {
-                for it1 in &entry.items_from_a {
-                    *trade_counts.entry(it1.item_id.0).or_insert(0) += 1;
-                }
-                for it2 in &entry.items_from_b {
-                    *trade_counts.entry(it2.item_id.0).or_insert(0) += 1;
-                }
-            }
-        }
+        let trade_counts = ctx.ledger.bilateral_trade_item_counts();
 
         let mut dominant_item = 0;
         let mut max_trades = 0;
-        for (item_id, count) in &trade_counts {
+        let mut frequencies: std::collections::BTreeMap<u64, u64> = std::collections::BTreeMap::new();
+
+        for (item_id, count) in trade_counts {
+            frequencies.insert(item_id.0, *count);
             if *count > max_trades {
                 max_trades = *count;
-                dominant_item = *item_id;
+                dominant_item = item_id.0;
             }
         }
 
@@ -164,7 +160,7 @@ impl StatisticCalculator for EmergentCurrencyCalculator {
                 "dominant_currency_item_id": dominant_item,
                 "dominant_currency_name": dominant_name,
                 "velocity_trade_count": max_trades,
-                "item_trade_frequencies": trade_counts,
+                "item_trade_frequencies": frequencies,
             }),
         )
     }
@@ -207,13 +203,7 @@ pub struct TradeVolumeCalculator;
 impl StatisticCalculator for TradeVolumeCalculator {
     fn calculate(&self, ctx: &StatisticContext) -> StatisticValue {
         let total_transactions = ctx.ledger.total_records();
-        let all_entries = ctx.ledger.all_entries();
-
-        let market_trades = all_entries
-            .iter()
-            .filter(|e| !e.items_from_a.is_empty() && !e.items_from_b.is_empty())
-            .count();
-
+        let market_trades = ctx.ledger.bilateral_market_trades_count();
         let harvest_trades = total_transactions.saturating_sub(market_trades);
 
         StatisticValue::scalar_and_payload(

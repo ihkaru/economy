@@ -158,6 +158,7 @@ pub struct StatisticalTableDefinition {
     pub title: String,
     pub schedule: ReleaseSchedule,
     pub access: AccessRequirement,
+    pub access_json: serde_json::Value,
     pub calculator: Arc<dyn StatisticalTableCalculator>,
 }
 
@@ -169,11 +170,13 @@ impl StatisticalTableDefinition {
         access: AccessRequirement,
         calculator: impl StatisticalTableCalculator + 'static,
     ) -> Self {
+        let access_json = serde_json::to_value(&access).unwrap_or_default();
         Self {
             id: id.into(),
             title: title.into(),
             schedule,
             access,
+            access_json,
             calculator: Arc::new(calculator),
         }
     }

@@ -9,5 +9,7 @@ pub trait LedgerStorePort: Send + Sync {
     fn all_entries(&self) -> &[LedgerEntry];
     fn drain_all(&mut self) -> Vec<LedgerEntry>;
     fn item_transaction_counts(&self) -> &BTreeMap<ItemId, u64>;
+    fn bilateral_market_trades_count(&self) -> usize;
+    fn bilateral_trade_item_counts(&self) -> &BTreeMap<ItemId, u64>;
 }
 

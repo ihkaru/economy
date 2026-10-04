@@ -71,7 +71,7 @@ impl StatisticSystem {
                     schedule_desc: def.schedule.description(),
                     primary_value: computed.primary_scalar,
                     payload: computed.payload,
-                    access_requirement: serde_json::to_value(&def.access).unwrap_or_default(),
+                    access_requirement: def.access_json.clone(),
                 };
                 self.next_release_id += 1;
 
@@ -91,7 +91,7 @@ impl StatisticSystem {
                     release_tick: current_tick,
                     schedule_desc: table_def.schedule.description(),
                     table,
-                    access_requirement: serde_json::to_value(&table_def.access).unwrap_or_default(),
+                    access_requirement: table_def.access_json.clone(),
                 };
                 self.next_table_release_id += 1;
 

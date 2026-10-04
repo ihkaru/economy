@@ -7,6 +7,8 @@ use crate::core::ports::ledger_store::LedgerStorePort;
 pub struct MemoryLedgerStore {
     entries: Vec<LedgerEntry>,
     item_counts: BTreeMap<ItemId, u64>,
+    bilateral_trade_count: usize,
+    bilateral_item_counts: BTreeMap<ItemId, u64>,
 }
 
 impl MemoryLedgerStore {
@@ -14,6 +16,8 @@ impl MemoryLedgerStore {
         Self {
             entries: Vec::new(),
             item_counts: BTreeMap::new(),
+            bilateral_trade_count: 0,
+            bilateral_item_counts: BTreeMap::new(),
         }
     }
 
@@ -23,6 +27,16 @@ impl MemoryLedgerStore {
         }
         for it in &entry.items_from_b {
             *self.item_counts.entry(it.item_id).or_insert(0) += 1;
+        }
+
+        if !entry.items_from_a.is_empty() && !entry.items_from_b.is_empty() {
+            self.bilateral_trade_count += 1;
+            for it in &entry.items_from_a {
+                *self.bilateral_item_counts.entry(it.item_id).or_insert(0) += 1;
+            }
+            for it in &entry.items_from_b {
+                *self.bilateral_item_counts.entry(it.item_id).or_insert(0) += 1;
+            }
         }
     }
 }
@@ -52,11 +66,21 @@ impl LedgerStorePort for MemoryLedgerStore {
 
     fn drain_all(&mut self) -> Vec<LedgerEntry> {
         self.item_counts.clear();
+        self.bilateral_trade_count = 0;
+        self.bilateral_item_counts.clear();
         std::mem::take(&mut self.entries)
     }
 
     fn item_transaction_counts(&self) -> &BTreeMap<ItemId, u64> {
         &self.item_counts
+    }
+
+    fn bilateral_market_trades_count(&self) -> usize {
+        self.bilateral_trade_count
+    }
+
+    fn bilateral_trade_item_counts(&self) -> &BTreeMap<ItemId, u64> {
+        &self.bilateral_item_counts
     }
 }
 
