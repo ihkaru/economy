@@ -329,8 +329,10 @@ pub fn perform_trade_and_services(
         }
     }
 
-    // Case E: Emergent Coasean Firm Coalition / Production Partnership
-    if !medical_service_occurred && !knowledge_trade_occurred && !barter_occurred && !banking_or_credit {
+    // Case E: Emergent Coasean Firm Coalition / Production Partnership & Wage Employment
+    if !medical_service_occurred && !knowledge_trade_occurred && !banking_or_credit {
+        let mut firm_occurred = false;
+        // E.1 Milling Joint Venture (50:50 share of milled flour)
         for (cap_id, lab_id, cap_inv, lab_inv) in [(agent_a_id, agent_b_id, &a_inv, &b_inv), (agent_b_id, agent_a_id, &b_inv, &a_inv)] {
             if cap_inv.contains_key(&ItemId::SADDLE_QUERN) && lab_inv.get(&ItemId::GRAIN).copied().unwrap_or(0) >= 2 {
                 if let Some(lab) = agent_store.get_human_mut(lab_id) {
@@ -349,7 +351,42 @@ pub fn perform_trade_and_services(
                 }));
                 *next_trx_id += 1;
                 let _ = ledger_store.record(entry);
+                firm_occurred = true;
                 break;
+            }
+        }
+
+        // E.2 Coasean Firm Wage Contract (Capitalist advances wage food, employs laborer with tools)
+        if !firm_occurred {
+            for (cap_id, lab_id, cap_inv, lab_cal) in [(agent_a_id, agent_b_id, &a_inv, b_cal), (agent_b_id, agent_a_id, &b_inv, a_cal)] {
+                if lab_cal < 3500.0 && (cap_inv.contains_key(&ItemId::STONE_AXE) || cap_inv.contains_key(&ItemId::HUNTING_SPEAR)) {
+                    let wage_food = [ItemId::FLATBREAD, ItemId::GRAIN_FLOUR, ItemId::CURED_FISH, ItemId::SMOKED_MEAT, ItemId::GRAIN]
+                        .into_iter().find(|&f| cap_inv.get(&f).copied().unwrap_or(0) >= 2);
+                    if let Some(wage_item) = wage_food {
+                        let (produced_item, qty) = if cap_inv.contains_key(&ItemId::STONE_AXE) {
+                            (ItemId::TIMBER, 2)
+                        } else {
+                            (ItemId::RAW_MEAT, 1)
+                        };
+                        if let Some(cap) = agent_store.get_human_mut(cap_id) {
+                            let _ = cap.remove_item(wage_item, 1);
+                            cap.add_item(produced_item, qty);
+                        }
+                        if let Some(lab) = agent_store.get_human_mut(lab_id) {
+                            lab.add_item(wage_item, 1);
+                        }
+                        let inst_w = ItemInstance::new(wage_item, 1, serde_json::json!({"role": "WageAdvance"})).with_instance_id(ItemInstanceId::new(*next_instance_id));
+                        *next_instance_id += 1;
+                        let inst_p = ItemInstance::new(produced_item, qty, serde_json::json!({"role": "EnterpriseProduct"})).with_instance_id(ItemInstanceId::new(*next_instance_id));
+                        *next_instance_id += 1;
+                        let entry = LedgerEntry::new(*next_trx_id, run_id.clone(), current_tick, cap_id, lab_id, vec![inst_p], vec![inst_w], serde_json::json!({
+                            "transaction_type": "firm_wage_employment", "capitalist_id": cap_id.0, "laborer_id": lab_id.0, "wage_item_id": wage_item.0, "product_id": produced_item.0
+                        }));
+                        *next_trx_id += 1;
+                        let _ = ledger_store.record(entry);
+                        break;
+                    }
+                }
             }
         }
     }
