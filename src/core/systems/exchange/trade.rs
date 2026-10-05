@@ -9,7 +9,8 @@ use crate::core::ports::agent_store::AgentStorePort;
 use crate::core::ports::ledger_store::LedgerStorePort;
 use crate::core::ports::statistic_store::StatisticStorePort;
 use crate::core::systems::exchange::market_intelligence::{
-    agent_has_market_access, derive_market_scarcity_multiplier, evaluate_marginal_utility,
+    agent_has_market_access, evaluate_liquidity_premium, evaluate_marginal_utility,
+    update_agent_market_observation,
 };
 
 /// Executes bilateral knowledge apprenticeship or physical commodity barter between two reachable agents
@@ -117,11 +118,32 @@ pub fn perform_trade_and_services(
 
     // Case C: Bilateral Physical Goods Barter (if no service occurred)
     if !medical_service_occurred && !knowledge_trade_occurred {
-        let a_informed = agent_has_market_access(agent_a_id, agent_store);
-        let b_informed = agent_has_market_access(agent_b_id, agent_store);
+        // 1. Bounded observation with lag: Agents near bulletin/educated update personal stats with lag
+        for &aid in &[agent_a_id, agent_b_id] {
+            if agent_has_market_access(aid, agent_store) {
+                if let Some(a) = agent_store.get_human_mut(aid) {
+                    update_agent_market_observation(a, stat_store, current_tick.0);
+                }
+            }
+        }
 
-        let mult_a = |id: ItemId| if a_informed { derive_market_scarcity_multiplier(stat_store, id) } else { 1.0 };
-        let mult_b = |id: ItemId| if b_informed { derive_market_scarcity_multiplier(stat_store, id) } else { 1.0 };
+        // 2. Peer-to-peer word-of-mouth information diffusion (gossip transmission)
+        if let (Some(a_stats), Some(b_stats)) = (
+            agent_store.get_human(agent_a_id).map(|a| a.personal_stats.clone()),
+            agent_store.get_human(agent_b_id).map(|b| b.personal_stats.clone()),
+        ) {
+            let mut new_a = a_stats;
+            let mut new_b = b_stats;
+            new_a.diffuse_information(&mut new_b, current_tick.0);
+            if let Some(a) = agent_store.get_human_mut(agent_a_id) { a.personal_stats = new_a; }
+            if let Some(b) = agent_store.get_human_mut(agent_b_id) { b.personal_stats = new_b; }
+        }
+
+        // 3. Subjective scarcity valuation from agent's personal memory with lag decay
+        let mult_a = |id: ItemId| agent_store.get_human(agent_a_id).map(|a| a.scarcity_multiplier(id, current_tick.0)).unwrap_or(1.0);
+        let mult_b = |id: ItemId| agent_store.get_human(agent_b_id).map(|b| b.scarcity_multiplier(id, current_tick.0)).unwrap_or(1.0);
+        let lag_a = agent_store.get_human(agent_a_id).map(|a| current_tick.0.saturating_sub(a.personal_stats.last_observation_tick)).unwrap_or(0);
+        let lag_b = agent_store.get_human(agent_b_id).map(|b| current_tick.0.saturating_sub(b.personal_stats.last_observation_tick)).unwrap_or(0);
 
         let a_offer = a_inv
             .iter()
@@ -151,25 +173,10 @@ pub fn perform_trade_and_services(
             let b_stock_a = b_inv.get(&item_a).copied().unwrap_or(0);
             let b_stock_b = b_inv.get(&item_b).copied().unwrap_or(0);
 
-            // Carl Menger's Saleability (Absatzfähigkeit): durable/universal goods carry a liquidity premium
-            let liquidity_premium = |id: ItemId| -> f64 {
-                if id == ItemId::WAREHOUSE_RECEIPT {
-                    1.75 // Highest saleability: fully backed warehouse certificate, zero weight
-                } else if id == ItemId::CLAY_TABLET {
-                    1.60 // High saleability promissory debt token / proto-paper currency
-                } else if id == ItemId::SHELLS || id == ItemId::SALT {
-                    1.40 // High saleability commodity currency premium
-                } else if id == ItemId::GRAIN {
-                    1.15 // Staple currency backup
-                } else {
-                    1.0
-                }
-            };
-
             let u_a_gives = evaluate_marginal_utility(item_a, a_cal, a_stock_a) * mult_a(item_a);
-            let u_a_receives = evaluate_marginal_utility(item_b, a_cal, a_stock_b) * mult_a(item_b) * liquidity_premium(item_b);
+            let u_a_receives = evaluate_marginal_utility(item_b, a_cal, a_stock_b) * mult_a(item_b) * evaluate_liquidity_premium(item_b);
             let u_b_gives = evaluate_marginal_utility(item_b, b_cal, b_stock_b) * mult_b(item_b);
-            let u_b_receives = evaluate_marginal_utility(item_a, b_cal, b_stock_a) * mult_b(item_a) * liquidity_premium(item_a);
+            let u_b_receives = evaluate_marginal_utility(item_a, b_cal, b_stock_a) * mult_b(item_a) * evaluate_liquidity_premium(item_a);
 
             let price_ratio = mult_a(item_a) / mult_a(item_b).max(0.1);
             let (qty_a, qty_b) = if price_ratio >= 1.75 && b_stock_b >= 2 {
@@ -180,14 +187,19 @@ pub fn perform_trade_and_services(
                 (1, 1)
             };
 
-            if u_a_receives * (qty_b as f64) > u_a_gives * (qty_a as f64) && u_b_receives * (qty_a as f64) > u_b_gives * (qty_b as f64) {
+            let surplus_a = u_a_receives * (qty_b as f64) - u_a_gives * (qty_a as f64);
+            let surplus_b = u_b_receives * (qty_a as f64) - u_b_gives * (qty_b as f64);
+
+            if surplus_a > 0.0 && surplus_b > 0.0 {
                 if let Some(agent_a) = agent_store.get_human_mut(agent_a_id) {
                     let _ = agent_a.remove_item(item_a, qty_a);
                     agent_a.add_item(item_b, qty_b);
+                    agent_a.record_personal_trade(surplus_a);
                 }
                 if let Some(agent_b) = agent_store.get_human_mut(agent_b_id) {
                     let _ = agent_b.remove_item(item_b, qty_b);
                     agent_b.add_item(item_a, qty_a);
+                    agent_b.record_personal_trade(surplus_b);
                 }
 
                 let instance_a = ItemInstance::new(
@@ -219,12 +231,12 @@ pub fn perform_trade_and_services(
                         "transaction_type": "bilateral_barter",
                         "item_a_id": item_a.0,
                         "item_b_id": item_b.0,
-                        "surplus_a": u_a_receives - u_a_gives,
-                        "surplus_b": u_b_receives - u_b_gives,
-                        "agent_a_informed": a_informed,
-                        "agent_b_informed": b_informed,
+                        "surplus_a": surplus_a,
+                        "surplus_b": surplus_b,
+                        "agent_a_lag": lag_a,
+                        "agent_b_lag": lag_b,
                         "is_indirect_exchange": is_indirect,
-                        "information_asymmetry": a_informed != b_informed,
+                        "information_asymmetry": (lag_a != lag_b),
                     }),
                 );
                 *next_trx_id += 1;

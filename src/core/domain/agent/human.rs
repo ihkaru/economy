@@ -17,6 +17,7 @@ pub enum VitalStatus {
     Deceased { tick_of_death: Tick, reason: String },
 }
 
+use crate::core::domain::agent::stats::AgentPersonalStats;
 use crate::core::domain::spatial::coordinate::GeoCoordinate;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -40,6 +41,9 @@ pub struct Human {
     pub days_starving: u32,
     /// Deterministic inventory order via BTreeMap
     pub inventory: BTreeMap<ItemId, u32>,
+    /// Personal internal economic statistics and lagged market memory
+    #[serde(default)]
+    pub personal_stats: AgentPersonalStats,
     /// Flexible JSON attributes (e.g. education, health index, skills)
     pub attributes: serde_json::Value,
 }
@@ -61,6 +65,7 @@ impl Human {
             hydration_reserve: 100.0,
             days_starving: 0,
             inventory: BTreeMap::new(),
+            personal_stats: AgentPersonalStats::new(),
             attributes: serde_json::json!({}),
         }
     }
@@ -89,6 +94,20 @@ impl Human {
         self.father_id = father;
         self.mother_id = mother;
         self
+    }
+
+    /// Evaluates subjective scarcity multiplier using agent's personal internal memory with lag
+    pub fn scarcity_multiplier(&self, item_id: ItemId, current_tick: u64) -> f64 {
+        self.personal_stats.get_scarcity_multiplier(item_id, current_tick)
+    }
+
+    /// Records a personal bilateral trade and updates subjective surplus and attributes
+    pub fn record_personal_trade(&mut self, surplus: f64) {
+        self.personal_stats.record_trade(surplus);
+        if let Some(obj) = self.attributes.as_object_mut() {
+            obj.insert("trade_count".to_string(), serde_json::json!(self.personal_stats.trade_count));
+            obj.insert("cumulative_surplus".to_string(), serde_json::json!(self.personal_stats.cumulative_surplus));
+        }
     }
 
     pub fn mark_deceased(&mut self, current_tick: Tick, reason: impl Into<String>) {

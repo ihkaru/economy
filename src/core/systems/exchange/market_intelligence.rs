@@ -1,3 +1,4 @@
+use crate::core::domain::agent::human::Human;
 use crate::core::domain::agent::id::AgentId;
 use crate::core::domain::agent::traits::EconomicActor;
 use crate::core::domain::item::id::ItemId;
@@ -71,6 +72,43 @@ pub fn evaluate_marginal_utility(item_id: ItemId, calorie_reserve: f64, current_
         _ => 20.0,
     };
     base * diminishing
+}
+
+/// Carl Menger's Saleability (Absatzfähigkeit): durable/universal goods carry a liquidity premium
+pub fn evaluate_liquidity_premium(id: ItemId) -> f64 {
+    match id {
+        ItemId::WAREHOUSE_RECEIPT => 1.75, // Highest saleability: warehouse certificate
+        ItemId::CLAY_TABLET => 1.60,       // High saleability: promissory debt token
+        ItemId::SHELLS | ItemId::SALT => 1.40, // Commodity currency premium
+        ItemId::GRAIN => 1.15,             // Staple currency backup
+        _ => 1.0,
+    }
+}
+
+/// Updates an agent's internal personal stats with lagged market observation (enforcing observation lag, never real-time)
+pub fn update_agent_market_observation(agent: &mut Human, stat_store: &dyn StatisticStorePort, current_tick: u64) {
+    let lag = current_tick.saturating_sub(agent.personal_stats.last_observation_tick);
+    // Agents only refresh their observation if at least 15 ticks have elapsed since last visit
+    if lag >= 15 {
+        if let Some(release) = stat_store.get_latest_table("TAB_COMM_01") {
+            let observation_lag = 7.max(current_tick.saturating_sub(release.release_tick.0));
+            for row in &release.table.rows {
+                if let (Some(TableCell::Integer(id_val)), Some(TableCell::Integer(nature_qty))) = (row.cells.first(), row.cells.get(4)) {
+                    let item_id = ItemId::new(*id_val as u64);
+                    let signal = if *nature_qty < 250 {
+                        1.45
+                    } else if *nature_qty < 1000 {
+                        1.20
+                    } else if *nature_qty > 5000 {
+                        0.85
+                    } else {
+                        1.0
+                    };
+                    agent.personal_stats.observe_market_with_lag(item_id, signal, current_tick, observation_lag);
+                }
+            }
+        }
+    }
 }
 
 /// Query the latest published commodity table to derive market scarcity expectations (Hayekian Market Intelligence)
