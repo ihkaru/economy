@@ -293,37 +293,11 @@ pub fn perform_trade_and_services(
             }
         }
 
-        // D.3 Emergency Food Credit Loan & Promissory Debt Token Minting (Pre-harvest lean season)
+        // D.3 Redemption / Debt Settlement of Promissory Debt Tablet with Seasonal Interest Repayment
         let loan_foods = [ItemId::FLATBREAD, ItemId::GRAIN, ItemId::CURED_MEAT, ItemId::SMOKED_MEAT, ItemId::CURED_FISH, ItemId::DRIED_BERRIES];
         if !banking_or_credit {
-            for (cred_id, deb_id, c_inv, d_cal) in [(agent_b_id, agent_a_id, &b_inv, a_cal), (agent_a_id, agent_b_id, &a_inv, b_cal)] {
-                if d_cal < 8000.0 {
-                    if let Some(&food_id) = loan_foods.iter().find(|&&f| c_inv.get(&f).copied().unwrap_or(0) >= 3) {
-                        if let Some(cred) = agent_store.get_human_mut(cred_id) {
-                            let _ = cred.remove_item(food_id, 2);
-                            cred.add_item(ItemId::CLAY_TABLET, 1);
-                        }
-                        if let Some(deb) = agent_store.get_human_mut(deb_id) {
-                            deb.add_item(food_id, 2);
-                        }
-                        let inst = ItemInstance::new(food_id, 2, serde_json::json!({"nature": "CreditLoan", "principal": 2, "interest_due": 1})).with_instance_id(ItemInstanceId::new(*next_instance_id));
-                        *next_instance_id += 1;
-                        let entry = LedgerEntry::single(*next_trx_id, run_id.clone(), current_tick, cred_id, deb_id, Some(inst), None, serde_json::json!({
-                            "transaction_type": "promissory_debt_issuance", "creditor_id": cred_id.0, "debtor_id": deb_id.0, "food_id": food_id.0, "principal": 2, "interest_rate": 0.50
-                        }));
-                        *next_trx_id += 1;
-                        let _ = ledger_store.record(entry);
-                        banking_or_credit = true;
-                        break;
-                    }
-                }
-            }
-        }
-
-        // D.4 Redemption of Promissory Debt Tablet with Seasonal Interest Repayment (Post-harvest settlement)
-        if !banking_or_credit {
             for (holder_id, redeemer_id, h_inv, r_inv, r_cal) in [(agent_a_id, agent_b_id, &a_inv, &b_inv, b_cal), (agent_b_id, agent_a_id, &b_inv, &a_inv, a_cal)] {
-                if h_inv.contains_key(&ItemId::CLAY_TABLET) && r_cal > 6500.0 {
+                if h_inv.contains_key(&ItemId::CLAY_TABLET) && r_cal > 6000.0 {
                     let mut food_to_repay = None;
                     for &f in &loan_foods {
                         let stock = r_inv.get(&f).copied().unwrap_or(0);
@@ -344,6 +318,32 @@ pub fn perform_trade_and_services(
                         }
                         let entry = LedgerEntry::single(*next_trx_id, run_id.clone(), current_tick, holder_id, redeemer_id, None, None, serde_json::json!({
                             "transaction_type": "promissory_debt_settlement", "holder_id": holder_id.0, "debtor_id": redeemer_id.0, "food_id": repay_item.0, "principal": 2, "interest_paid": interest
+                        }));
+                        *next_trx_id += 1;
+                        let _ = ledger_store.record(entry);
+                        banking_or_credit = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        // D.4 Emergency Food Credit Loan & Promissory Debt Token Minting (Pre-harvest lean season)
+        if !banking_or_credit {
+            for (cred_id, deb_id, c_inv, d_cal) in [(agent_b_id, agent_a_id, &b_inv, a_cal), (agent_a_id, agent_b_id, &a_inv, b_cal)] {
+                if d_cal < 8000.0 {
+                    if let Some(&food_id) = loan_foods.iter().find(|&&f| c_inv.get(&f).copied().unwrap_or(0) >= 3) {
+                        if let Some(cred) = agent_store.get_human_mut(cred_id) {
+                            let _ = cred.remove_item(food_id, 2);
+                            cred.add_item(ItemId::CLAY_TABLET, 1);
+                        }
+                        if let Some(deb) = agent_store.get_human_mut(deb_id) {
+                            deb.add_item(food_id, 2);
+                        }
+                        let inst = ItemInstance::new(food_id, 2, serde_json::json!({"nature": "CreditLoan", "principal": 2, "interest_due": 1})).with_instance_id(ItemInstanceId::new(*next_instance_id));
+                        *next_instance_id += 1;
+                        let entry = LedgerEntry::single(*next_trx_id, run_id.clone(), current_tick, cred_id, deb_id, Some(inst), None, serde_json::json!({
+                            "transaction_type": "promissory_debt_issuance", "creditor_id": cred_id.0, "debtor_id": deb_id.0, "food_id": food_id.0, "principal": 2, "interest_rate": 0.50
                         }));
                         *next_trx_id += 1;
                         let _ = ledger_store.record(entry);
