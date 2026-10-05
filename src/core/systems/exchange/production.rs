@@ -70,7 +70,9 @@ pub fn perform_autonomous_crafting(
 
             let should_craft = match primary_output_id {
                 ItemId::WOVEN_BASKET => current_holding < 2,
-                ItemId::STONE_AXE | ItemId::FISHING_NET | ItemId::RAFT | ItemId::HUNTING_SPEAR | ItemId::SADDLE_QUERN => current_holding == 0,
+                ItemId::STONE_AXE | ItemId::FISHING_NET | ItemId::RAFT | ItemId::HUNTING_SPEAR | ItemId::BONE_NEEDLE => current_holding == 0,
+                ItemId::SADDLE_QUERN => current_holding == 0 && (inventory_snapshot.contains_key(&ItemId::GRAIN) || inventory_snapshot.get(&ItemId::STONE).copied().unwrap_or(0) >= 3),
+                ItemId::LITHIC_FLAKE => current_holding < 2,
                 ItemId::HERBAL_MEDICINE => is_sick || current_holding < 2,
                 ItemId::CURED_FISH | ItemId::CURED_MEAT | ItemId::SMOKED_FISH | ItemId::SMOKED_MEAT => current_holding < 8,
                 ItemId::DRIED_BERRIES => current_holding < 6,

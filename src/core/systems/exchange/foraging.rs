@@ -87,12 +87,12 @@ pub fn perform_agent_centric_foraging(
 
             // Calculate capital tool & learning-by-doing efficiency (Arrow 1962 / Adam Smith)
             let tool_multiplier = if let Some(agent) = agent_store.get_human(agent_id) {
-                let base_mult = if node.item_id == ItemId::TIMBER && agent.has_item(ItemId::STONE_AXE) {
-                    3.0
-                } else if node.item_id == ItemId::FISH && agent.has_item(ItemId::FISHING_NET) {
-                    3.0
-                } else if node.item_id == ItemId::RAW_MEAT && agent.has_item(ItemId::HUNTING_SPEAR) {
-                    3.0
+                let base_mult = if node.item_id == ItemId::TIMBER {
+                    if agent.has_item(ItemId::STONE_AXE) { 3.0 } else { 0.25 }
+                } else if node.item_id == ItemId::FISH {
+                    if agent.has_item(ItemId::FISHING_NET) { 3.0 } else { 0.25 }
+                } else if node.item_id == ItemId::RAW_MEAT {
+                    if agent.has_item(ItemId::HUNTING_SPEAR) { 3.0 } else { 0.20 }
                 } else {
                     1.0
                 };
@@ -178,9 +178,14 @@ pub fn perform_agent_centric_foraging(
                                     }
                                 }
 
-                                // Hunting by-product: animal raw hide from terrestrial game hunting
-                                if node.item_id == ItemId::RAW_MEAT && rng.check_probability(0.50) {
-                                    agent.add_item(ItemId::RAW_HIDE, 1);
+                                // Hunting by-products: animal raw hide & carcass bones from terrestrial game hunting (requires spear)
+                                if node.item_id == ItemId::RAW_MEAT && agent.has_item(ItemId::HUNTING_SPEAR) {
+                                    if rng.check_probability(0.50) {
+                                        agent.add_item(ItemId::RAW_HIDE, 1);
+                                    }
+                                    if rng.check_probability(0.60) {
+                                        agent.add_item(ItemId::ANIMAL_BONE, 1);
+                                    }
                                 }
 
                                 // Tool wear-and-tear degradation

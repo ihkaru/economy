@@ -33,13 +33,40 @@ impl RecipeRegistry {
                 0.0,
                 120.0,
             ),
+            // 19. Lithic Reduction: Knapped Stone Blade Flaking
+            ProductionRecipe::new(
+                19,
+                "Knapped Stone Blade Flake",
+                "capital_tool_production",
+                &[RecipeIngredient { item_id: ItemId::STONE, quantity: 1 }],
+                &[RecipeIngredient { item_id: ItemId::LITHIC_FLAKE, quantity: 2 }],
+                Some(ItemId::KNOWLEDGE_TOOL_CRAFTING),
+                None,
+                0.0,
+                30.0,
+            ),
+            // 20. Bone Toolworking: Bone Needle Abrasive Grinding
+            ProductionRecipe::new(
+                20,
+                "Bone Needle Abrasive Grinding",
+                "capital_tool_production",
+                &[
+                    RecipeIngredient { item_id: ItemId::ANIMAL_BONE, quantity: 1 },
+                    RecipeIngredient { item_id: ItemId::STONE, quantity: 1 },
+                ],
+                &[RecipeIngredient { item_id: ItemId::BONE_NEEDLE, quantity: 1 }],
+                Some(ItemId::KNOWLEDGE_TOOL_CRAFTING),
+                None,
+                0.0,
+                50.0,
+            ),
             // 2. Forestry Capital Tool: Polished Stone Axe
             ProductionRecipe::new(
                 2,
                 "Polished Stone Axe",
                 "capital_tool_production",
                 &[
-                    RecipeIngredient { item_id: ItemId::STONE, quantity: 1 },
+                    RecipeIngredient { item_id: ItemId::LITHIC_FLAKE, quantity: 1 },
                     RecipeIngredient { item_id: ItemId::TIMBER, quantity: 1 },
                 ],
                 &[RecipeIngredient { item_id: ItemId::STONE_AXE, quantity: 1 }],
@@ -167,7 +194,7 @@ impl RecipeRegistry {
                 ],
                 &[RecipeIngredient { item_id: ItemId::LEATHER_CLOTHING, quantity: 1 }],
                 Some(ItemId::KNOWLEDGE_LEATHER_WORKING),
-                None,
+                Some(ItemId::BONE_NEEDLE),
                 0.0,
                 180.0,
             ),
@@ -177,7 +204,7 @@ impl RecipeRegistry {
                 "Prehistoric Hunting Spear",
                 "capital_tool_production",
                 &[
-                    RecipeIngredient { item_id: ItemId::STONE, quantity: 1 },
+                    RecipeIngredient { item_id: ItemId::LITHIC_FLAKE, quantity: 1 },
                     RecipeIngredient { item_id: ItemId::TIMBER, quantity: 1 },
                 ],
                 &[RecipeIngredient { item_id: ItemId::HUNTING_SPEAR, quantity: 1 }],

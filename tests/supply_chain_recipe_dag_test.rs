@@ -14,12 +14,12 @@ use economy::core::systems::exchange::perform_autonomous_crafting;
 #[test]
 fn test_canonical_recipe_registry_specifications() {
     let registry = RecipeRegistry::canonical();
-    assert_eq!(registry.all().len(), 18, "Expected 18 canonical recipes");
+    assert_eq!(registry.all().len(), 20, "Expected 20 canonical recipes");
 
     let stone_axe_recipe = registry.get_recipe(2).expect("Recipe 2 (Stone Axe) should exist");
     assert_eq!(stone_axe_recipe.name, "Polished Stone Axe");
-    assert_eq!(stone_axe_recipe.inputs.len(), 2, "Stone Axe requires 2 inputs: Stone + Timber");
-    assert_eq!(stone_axe_recipe.inputs[0].item_id, ItemId::STONE);
+    assert_eq!(stone_axe_recipe.inputs.len(), 2, "Stone Axe requires 2 inputs: Lithic Flake + Timber");
+    assert_eq!(stone_axe_recipe.inputs[0].item_id, ItemId::LITHIC_FLAKE);
     assert_eq!(stone_axe_recipe.inputs[0].quantity, 1);
     assert_eq!(stone_axe_recipe.inputs[1].item_id, ItemId::TIMBER);
     assert_eq!(stone_axe_recipe.inputs[1].quantity, 1);
@@ -53,11 +53,13 @@ fn test_canonical_recipe_registry_specifications() {
     assert_eq!(leather_recipe.name, "Warm Leather Garment");
     assert_eq!(leather_recipe.category, "clothing_tailoring");
     assert_eq!(leather_recipe.required_knowledge, Some(ItemId::KNOWLEDGE_LEATHER_WORKING));
+    assert_eq!(leather_recipe.required_tool, Some(ItemId::BONE_NEEDLE));
     assert_eq!(leather_recipe.outputs[0].item_id, ItemId::LEATHER_CLOTHING);
 
     let spear_recipe = registry.get_recipe(12).expect("Recipe 12 (Hunting Spear) should exist");
     assert_eq!(spear_recipe.name, "Prehistoric Hunting Spear");
     assert_eq!(spear_recipe.category, "capital_tool_production");
+    assert_eq!(spear_recipe.inputs[0].item_id, ItemId::LITHIC_FLAKE);
     assert_eq!(spear_recipe.outputs[0].item_id, ItemId::HUNTING_SPEAR);
 
     let cured_meat_recipe = registry.get_recipe(13).expect("Recipe 13 (Cured Meat) should exist");
@@ -84,6 +86,19 @@ fn test_canonical_recipe_registry_specifications() {
     assert_eq!(tablet_recipe.inputs[0].item_id, ItemId::CLAY);
     assert_eq!(tablet_recipe.outputs[0].item_id, ItemId::CLAY_TABLET);
     assert_eq!(tablet_recipe.outputs[0].quantity, 2);
+
+    let flake_recipe = registry.get_recipe(19).expect("Recipe 19 (Lithic Flake) should exist");
+    assert_eq!(flake_recipe.name, "Knapped Stone Blade Flake");
+    assert_eq!(flake_recipe.inputs[0].item_id, ItemId::STONE);
+    assert_eq!(flake_recipe.outputs[0].item_id, ItemId::LITHIC_FLAKE);
+    assert_eq!(flake_recipe.outputs[0].quantity, 2);
+
+    let needle_recipe = registry.get_recipe(20).expect("Recipe 20 (Bone Needle) should exist");
+    assert_eq!(needle_recipe.name, "Bone Needle Abrasive Grinding");
+    assert_eq!(needle_recipe.inputs[0].item_id, ItemId::ANIMAL_BONE);
+    assert_eq!(needle_recipe.inputs[1].item_id, ItemId::STONE);
+    assert_eq!(needle_recipe.outputs[0].item_id, ItemId::BONE_NEEDLE);
+    assert_eq!(needle_recipe.outputs[0].quantity, 1);
 }
 
 #[test]
@@ -197,10 +212,11 @@ fn test_warm_leather_garment_tailoring() {
         .with_calories(6000.0)
         .with_location(GeoCoordinate::new(16, 27));
 
-    // Give materials: 2 Raw Hide + 1 Timber + Leather Working Knowledge
+    // Give materials: 2 Raw Hide + 1 Timber + Leather Working Knowledge + Bone Needle tool
     agent.add_item(ItemId::RAW_HIDE, 2);
     agent.add_item(ItemId::TIMBER, 1);
     agent.add_item(ItemId::KNOWLEDGE_LEATHER_WORKING, 1);
+    agent.add_item(ItemId::BONE_NEEDLE, 1);
 
     agent_store.insert_human(agent);
 
@@ -224,6 +240,7 @@ fn test_warm_leather_garment_tailoring() {
     assert_eq!(agent.inventory.get(&ItemId::RAW_HIDE).copied().unwrap_or(0), 0, "Raw hide consumed");
     assert_eq!(agent.inventory.get(&ItemId::TIMBER).copied().unwrap_or(0), 0, "Timber consumed");
     assert_eq!(agent.inventory.get(&ItemId::LEATHER_CLOTHING).copied().unwrap_or(0), 1, "Leather clothing produced");
+    assert_eq!(agent.inventory.get(&ItemId::BONE_NEEDLE).copied().unwrap_or(0), 1, "Bone needle capital tool retained");
     assert!(agent.has_item(ItemId::LEATHER_CLOTHING));
 
     let entries = ledger_store.all_entries();
@@ -244,10 +261,10 @@ fn test_prehistoric_hunting_spear_and_cured_meat_crafting() {
         .with_calories(6000.0)
         .with_location(GeoCoordinate::new(16, 27));
 
-    // Agent already has Stone Axe, and now gathers materials for spear (1 Stone + 1 Timber + Tool Crafting)
+    // Agent already has Stone Axe, and now gathers materials for spear (1 Lithic Flake + 1 Timber + Tool Crafting)
     // and cured meat (2 Raw Meat + 1 Salt + Fish Curing)
     agent.add_item(ItemId::STONE_AXE, 1);
-    agent.add_item(ItemId::STONE, 1);
+    agent.add_item(ItemId::LITHIC_FLAKE, 1);
     agent.add_item(ItemId::TIMBER, 1);
     agent.add_item(ItemId::KNOWLEDGE_TOOL_CRAFTING, 1);
     agent.add_item(ItemId::RAW_MEAT, 2);
@@ -286,7 +303,7 @@ fn test_prehistoric_hunting_spear_and_cured_meat_crafting() {
     );
 
     let agent = agent_store.get_human(agent_id).unwrap();
-    assert_eq!(agent.inventory.get(&ItemId::STONE).copied().unwrap_or(0), 0, "Stone consumed");
+    assert_eq!(agent.inventory.get(&ItemId::LITHIC_FLAKE).copied().unwrap_or(0), 0, "Lithic flake consumed");
     assert_eq!(agent.inventory.get(&ItemId::TIMBER).copied().unwrap_or(0), 0, "Timber consumed");
     assert_eq!(agent.inventory.get(&ItemId::HUNTING_SPEAR).copied().unwrap_or(0), 1, "Hunting spear crafted");
     assert_eq!(agent.inventory.get(&ItemId::RAW_MEAT).copied().unwrap_or(0), 0, "Raw meat consumed");
@@ -295,6 +312,67 @@ fn test_prehistoric_hunting_spear_and_cured_meat_crafting() {
 
     let entries = ledger_store.all_entries();
     assert_eq!(entries.len(), 2, "2 crafting transactions executed across 2 days");
+}
+
+#[test]
+fn test_lithic_flaking_and_bone_needle_crafting() {
+    let mut agent_store = MemoryAgentStore::new();
+    let mut ledger_store = MemoryLedgerStore::new();
+    let mut rng = ChaChaRngAdapter::new(42);
+
+    let agent_id = AgentId::new(105);
+    let mut agent = Human::new(agent_id, Sex::Male, Tick::ZERO)
+        .with_initial_age(23 * 365)
+        .with_calories(6000.0)
+        .with_location(GeoCoordinate::new(15, 25));
+
+    // Agent has raw lithic stone, carcass animal bone, and tool crafting knowledge
+    agent.add_item(ItemId::STONE, 2);
+    agent.add_item(ItemId::ANIMAL_BONE, 1);
+    agent.add_item(ItemId::KNOWLEDGE_TOOL_CRAFTING, 1);
+
+    agent_store.insert_human(agent);
+
+    let living_ids = vec![agent_id];
+    let run_id = RunId::new("test_lithic_bone");
+    let mut next_trx_id = 1;
+    let mut next_instance_id = 1;
+
+    // Day 1: Lithic Reduction (Knaps Stone into 2 Lithic Flakes)
+    perform_autonomous_crafting(
+        &run_id,
+        Tick(1),
+        &living_ids,
+        &mut agent_store,
+        &mut ledger_store,
+        &mut rng,
+        &mut next_trx_id,
+        &mut next_instance_id,
+    );
+
+    let agent = agent_store.get_human(agent_id).unwrap();
+    assert_eq!(agent.inventory.get(&ItemId::LITHIC_FLAKE).copied().unwrap_or(0), 2, "2 Lithic Flakes produced");
+    assert_eq!(agent.inventory.get(&ItemId::STONE).copied().unwrap_or(0), 1, "1 Stone remaining");
+
+    // Day 2: Bone Toolworking (Grinds Animal Bone + Stone into Bone Needle)
+    perform_autonomous_crafting(
+        &run_id,
+        Tick(2),
+        &living_ids,
+        &mut agent_store,
+        &mut ledger_store,
+        &mut rng,
+        &mut next_trx_id,
+        &mut next_instance_id,
+    );
+
+    let agent = agent_store.get_human(agent_id).unwrap();
+    assert_eq!(agent.inventory.get(&ItemId::BONE_NEEDLE).copied().unwrap_or(0), 1, "1 Bone Needle produced");
+    assert_eq!(agent.inventory.get(&ItemId::ANIMAL_BONE).copied().unwrap_or(0), 0, "Animal bone consumed");
+    assert_eq!(agent.inventory.get(&ItemId::STONE).copied().unwrap_or(0), 0, "Second stone consumed as abrasive");
+
+    let entries = ledger_store.all_entries();
+    assert_eq!(entries.len(), 2, "2 tool manufacturing transactions in ledger");
 }
 
 

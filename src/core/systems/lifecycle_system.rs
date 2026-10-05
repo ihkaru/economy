@@ -1,6 +1,7 @@
 use crate::core::domain::agent::human::{Human, Sex};
 use crate::core::domain::agent::id::AgentId;
 use crate::core::domain::agent::traits::{EconomicActor, HasLifecycle, SocialActor};
+use crate::core::domain::item::id::ItemId;
 use crate::core::domain::time::{Tick, TickDuration};
 use crate::core::ports::agent_store::AgentStorePort;
 use crate::core::ports::rng_port::RngPort;
@@ -157,10 +158,41 @@ impl LifecycleSystem {
                 let male_id = eligible_males[i];
                 let female_id = eligible_females[i];
 
-                if let Some(male) = agent_store.get_human_mut(male_id) {
-                    male.set_spouse(Some(female_id));
+                let male_viable = agent_store.get_human(male_id).map(|m| {
+                    m.has_item(ItemId::SHELLS)
+                        || m.has_item(ItemId::LEATHER_CLOTHING)
+                        || m.inventory.keys().any(|id| id.is_tool())
+                        || m.calorie_reserve >= 3500.0
+                }).unwrap_or(false);
+
+                let female_viable = agent_store.get_human(female_id).map(|f| {
+                    f.has_item(ItemId::SHELLS)
+                        || f.has_item(ItemId::LEATHER_CLOTHING)
+                        || f.inventory.keys().any(|id| id.is_tool())
+                        || f.calorie_reserve >= 3500.0
+                }).unwrap_or(false);
+
+                // Marriage requires minimum economic viability or prestige courtship goods
+                if !male_viable && !female_viable {
+                    continue;
                 }
+
+                // Symbolic courtship / bride-wealth gift transfer if male holds SHELLS
+                let male_gave_shell = if let Some(male) = agent_store.get_human_mut(male_id) {
+                    let has_shell = male.has_item(ItemId::SHELLS);
+                    if has_shell {
+                        let _ = male.remove_item(ItemId::SHELLS, 1);
+                    }
+                    male.set_spouse(Some(female_id));
+                    has_shell
+                } else {
+                    false
+                };
+
                 if let Some(female) = agent_store.get_human_mut(female_id) {
+                    if male_gave_shell {
+                        female.add_item(ItemId::SHELLS, 1);
+                    }
                     female.set_spouse(Some(male_id));
                 }
             }

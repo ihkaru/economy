@@ -20,12 +20,29 @@ pub enum ItemNature {
     InstitutionalRight,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum InteractionRole {
+    /// Essential biophysical sustenance required to preserve life and prevent starvation/illness
+    Sustenance,
+    /// Physical capital equipment required as an operational prerequisite for harvesting or craft
+    ProductionCapital,
+    /// Prestige good, status symbol, or ceremonial gift required for courtship, marriage, and alliances
+    SocialStatusAndGifting,
+    /// Liquid medium of exchange, promissory credit token, or warehouse claim required to settle contracts
+    MediumAndCollateral,
+    /// Institutional concession or legal permit required to access common pool resources
+    InstitutionalConcession,
+    /// Raw unshaped or intermediate material destined for transformation in multi-tier supply chains
+    RawInputMaterial,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ItemDefinition {
     pub id: ItemId,
     pub name: String,
     pub category: ItemCategory,
     pub nature: ItemNature,
+    pub interaction_role: InteractionRole,
     pub weight_kg: f64,
     pub is_perishable: bool,
     /// Flexible JSON attributes for supply chain properties (e.g. recipe, inputs, shelf-life, tier, historical_era)
@@ -40,11 +57,19 @@ impl ItemDefinition {
             ItemCategory::Service => (ItemNature::RivalPhysical, 0.0), // Service time has 0 mass
             _ => (ItemNature::RivalPhysical, 1.0),
         };
+        let interaction_role = match category {
+            ItemCategory::Good => InteractionRole::RawInputMaterial,
+            ItemCategory::Currency => InteractionRole::MediumAndCollateral,
+            ItemCategory::Permit => InteractionRole::InstitutionalConcession,
+            ItemCategory::Knowledge => InteractionRole::ProductionCapital,
+            ItemCategory::Service => InteractionRole::ProductionCapital,
+        };
         Self {
             id,
             name: name.into(),
             category,
             nature,
+            interaction_role,
             weight_kg,
             is_perishable: false,
             attributes,
@@ -53,6 +78,11 @@ impl ItemDefinition {
 
     pub fn with_nature(mut self, nature: ItemNature) -> Self {
         self.nature = nature;
+        self
+    }
+
+    pub fn with_interaction_role(mut self, role: InteractionRole) -> Self {
+        self.interaction_role = role;
         self
     }
 
@@ -70,6 +100,30 @@ impl ItemDefinition {
         matches!(self.nature, ItemNature::NonRivalKnowledge)
     }
 
+    pub fn is_sustenance(&self) -> bool {
+        matches!(self.interaction_role, InteractionRole::Sustenance)
+    }
+
+    pub fn is_production_capital(&self) -> bool {
+        matches!(self.interaction_role, InteractionRole::ProductionCapital)
+    }
+
+    pub fn is_social_status(&self) -> bool {
+        matches!(self.interaction_role, InteractionRole::SocialStatusAndGifting)
+    }
+
+    pub fn is_medium_or_collateral(&self) -> bool {
+        matches!(self.interaction_role, InteractionRole::MediumAndCollateral)
+    }
+
+    pub fn is_institutional_concession(&self) -> bool {
+        matches!(self.interaction_role, InteractionRole::InstitutionalConcession)
+    }
+
+    pub fn is_raw_material(&self) -> bool {
+        matches!(self.interaction_role, InteractionRole::RawInputMaterial)
+    }
+
     /// Generates formal JSON Schema (Draft-07 compliant) for ItemDefinition
     pub fn json_schema() -> serde_json::Value {
         serde_json::json!({
@@ -77,7 +131,7 @@ impl ItemDefinition {
             "title": "ItemDefinition",
             "description": "Standard Specification Schema for Economic Items, Goods, Services, Knowledge, and Permits",
             "type": "object",
-            "required": ["id", "name", "category", "nature", "weight_kg", "is_perishable", "attributes"],
+            "required": ["id", "name", "category", "nature", "interaction_role", "weight_kg", "is_perishable", "attributes"],
             "properties": {
                 "id": {
                     "type": "integer",
@@ -97,6 +151,18 @@ impl ItemDefinition {
                     "type": "string",
                     "enum": ["RivalPhysical", "NonRivalKnowledge", "InstitutionalRight"],
                     "description": "Ontological nature governing transferability and rivalry"
+                },
+                "interaction_role": {
+                    "type": "string",
+                    "enum": [
+                        "Sustenance",
+                        "ProductionCapital",
+                        "SocialStatusAndGifting",
+                        "MediumAndCollateral",
+                        "InstitutionalConcession",
+                        "RawInputMaterial"
+                    ],
+                    "description": "Functional prerequisite role of this item in inter-agent interactions"
                 },
                 "weight_kg": {
                     "type": "number",
