@@ -46,9 +46,15 @@ impl LifecycleSystem {
                 let age_in_years = (agent.age_ticks as f64) * fractional_years;
                 
                 // Annual mortality probability using Gompertz-Makeham curve
-                // Baseline hazard + pre-industrial infant vulnerability (bathtub curve) + exponential senescence
-                let infant_hazard = if age_in_years < 1.0 { 0.02 } else { 0.0 };
-                let annual_mortality = (0.001 + infant_hazard + 0.00008 * (1.095_f64).powf(age_in_years)).min(0.999);
+                // Baseline hazard + pre-industrial infant & early child vulnerability (bathtub curve) + exponential senescence
+                let early_childhood_hazard = if age_in_years < 1.0 {
+                    0.08 // Pre-industrial infant vulnerability (~8% annual hazard)
+                } else if age_in_years < 5.0 {
+                    0.02 // Early childhood vulnerability (~2% annual hazard)
+                } else {
+                    0.0
+                };
+                let annual_mortality = (0.001 + early_childhood_hazard + 0.00008 * (1.095_f64).powf(age_in_years)).min(0.999);
                 
                 // Convert annual probability to per-tick probability: 1 - (1 - P_annual)^fractional_years
                 let tick_mortality = 1.0 - (1.0 - annual_mortality).powf(fractional_years);

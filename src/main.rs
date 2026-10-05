@@ -152,7 +152,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let mut human = Human::new(agent_id, sex, Tick::ZERO)
             .with_initial_age(initial_age_ticks)
             .with_item(ItemId::GRAIN, 5) // Initial 5 units of grain food stock
-            .with_item(ItemId::TIMBER, 2) // Basic crafting/firewood stock
+            .with_item(ItemId::TIMBER, 3) // Firewood & basic construction buffer
+            .with_item(ItemId::LEATHER_CLOTHING, 1) // Pioneer apparel against hypothermia
             .with_location(economy::core::domain::spatial::GeoCoordinate::new(15, 25))
             .with_calories(25000.0); // 12-day initial caloric buffer
 

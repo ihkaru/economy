@@ -365,8 +365,9 @@ pub fn perform_trade_and_services(
 
         // E.2 Coasean Firm Wage Contract (Capitalist advances wage food, employs laborer with tools)
         if !firm_occurred {
-            for (cap_id, lab_id, cap_inv, lab_cal) in [(agent_a_id, agent_b_id, &a_inv, b_cal), (agent_b_id, agent_a_id, &b_inv, a_cal)] {
-                if lab_cal < 4000.0 && (cap_inv.contains_key(&ItemId::STONE_AXE) || cap_inv.contains_key(&ItemId::HUNTING_SPEAR) || cap_inv.contains_key(&ItemId::FISHING_NET)) {
+            for (cap_id, lab_id, cap_inv, lab_inv, lab_cal) in [(agent_a_id, agent_b_id, &a_inv, &b_inv, b_cal), (agent_b_id, agent_a_id, &b_inv, &a_inv, a_cal)] {
+                let lab_lacks_capital = !lab_inv.contains_key(&ItemId::STONE_AXE) && !lab_inv.contains_key(&ItemId::HUNTING_SPEAR) && !lab_inv.contains_key(&ItemId::FISHING_NET);
+                if (lab_cal < 6000.0 || (lab_lacks_capital && lab_cal < 14000.0)) && (cap_inv.contains_key(&ItemId::STONE_AXE) || cap_inv.contains_key(&ItemId::HUNTING_SPEAR) || cap_inv.contains_key(&ItemId::FISHING_NET)) {
                     let wage_food = [ItemId::DRIED_BERRIES, ItemId::FLATBREAD, ItemId::GRAIN_FLOUR, ItemId::CURED_FISH, ItemId::SMOKED_MEAT, ItemId::GRAIN]
                         .into_iter().find(|&f| cap_inv.get(&f).copied().unwrap_or(0) >= 1);
                     if let Some(wage_item) = wage_food {
