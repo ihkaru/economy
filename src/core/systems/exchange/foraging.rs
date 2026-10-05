@@ -118,22 +118,22 @@ pub fn perform_agent_centric_foraging(
                 6.0 // Firewood needed for thermoregulation against cold
             } else if meat_fish_count > 0 && salt_count < 2 && node.item_id == ItemId::SALT {
                 5.5 // Urgent preservation: Salt needed to cure perishable meat/fish before spoilage
-            } else if node.item_id == ItemId::STONE && (!has_axe || !has_spear || stone_count < 2) {
+            } else if node.item_id == ItemId::STONE && stone_count < 4 && (!has_axe || !has_spear || stone_count < 2) {
                 4.5 // Raw material for Stone Axe and Hunting Spear crafting
             } else if node.item_id == ItemId::CLAY && clay_count < 4 {
                 3.8 // Raw material for ceramic pottery jars and clay debt tablets
-            } else if node.item_id == ItemId::SHELLS && shell_count < 5 {
+            } else if node.item_id == ItemId::SHELLS && shell_count < 6 {
                 3.5 // Ancient maritime commodity currency (Carl Menger saleability)
-            } else if node.item_id == ItemId::SALT && salt_count < 3 {
+            } else if node.item_id == ItemId::SALT && salt_count < 4 {
                 3.2 // Food preservation medium and high-liquidity store of value
             } else if node.item_id == ItemId::TIMBER && timber_count < 8 {
                 3.0 // Raw material for tool/basket/raft crafting
-            } else if node.is_edible && (calorie_reserve < 5500.0 || food_count < 3) {
-                3.0 // Well-fed maintenance buffer
+            } else if node.is_edible && food_count < 8 {
+                3.0 // Well-fed maintenance buffer and market exchange surplus
             } else if node.item_id == ItemId::HERBAL_MEDICINE && herb_count < 2 {
                 2.0 // Small preventive medical stock
             } else {
-                0.2 // Hoarding disincentive for saturated goods (diminishing marginal utility)
+                0.3 // Hoarding disincentive for saturated goods (diminishing marginal utility)
             };
 
             let score = urgency_weight * tool_multiplier * abundance_ratio;
@@ -147,7 +147,7 @@ pub fn perform_agent_centric_foraging(
 
         // 2. Execute harvest on chosen best node if score is viable
         if let Some(target_node_id) = best_node_id {
-            if best_score > 0.5 {
+            if best_score > 0.25 {
                 let target_node = env_store
                     .nodes_mut()
                     .iter_mut()
