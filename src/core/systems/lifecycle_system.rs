@@ -94,6 +94,12 @@ impl LifecycleSystem {
                         }
                     }
                 }
+                // 3) Tribal customary inheritance: surviving adult kin in village
+                if heir_id.is_none() {
+                    heir_id = living_ids.iter().find(|&&lid| {
+                        lid != *id && agent_store.get_human(lid).map(|a| a.is_alive() && a.age_ticks >= 15 * 365).unwrap_or(false)
+                    }).copied();
+                }
 
                 // Transfer physical capital / inventory to heir (Zero Ex-Nihilo Conservation)
                 if let Some(heir) = heir_id {

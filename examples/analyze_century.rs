@@ -78,6 +78,8 @@ struct DecadeRecord {
     granary_deposits: u64,
     notes_redeemed: u64,
     credit_tablets: u64,
+    credit_loans: u64,
+    debt_settlements: u64,
     scientific_eurekas: u64,
     medical_care: u64,
 }
@@ -347,7 +349,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                         "firm_production_partnership" => decadal_records[dec_idx].firm_partnerships += 1,
                         "granary_depository_banking" => decadal_records[dec_idx].granary_deposits += 1,
                         "warehouse_receipt_redemption" => decadal_records[dec_idx].notes_redeemed += 1,
-                        "promissory_debt_issuance" | "promissory_debt_settlement" => decadal_records[dec_idx].credit_tablets += 1,
+                        "promissory_debt_issuance" | "granary_credit_loan" => {
+                            decadal_records[dec_idx].credit_tablets += 1;
+                            decadal_records[dec_idx].credit_loans += 1;
+                        }
+                        "promissory_debt_settlement" | "promissory_tablet_redemption" => {
+                            decadal_records[dec_idx].credit_tablets += 1;
+                            decadal_records[dec_idx].debt_settlements += 1;
+                        }
                         "scientific_discovery" => decadal_records[dec_idx].scientific_eurekas += 1,
                         "medical_care_service" | "knowledge_service_trade" => decadal_records[dec_idx].medical_care += 1,
                         _ => {}
@@ -501,6 +510,23 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             d.decade, d.start_year, d.end_year, d.barter_trades, d.firm_wages, d.firm_partnerships, d.granary_deposits, d.notes_redeemed, d.credit_tablets, d.medical_care, d.scientific_eurekas);
     }
     println!("└─────────┴──────────────┴──────────────┴──────────────┴──────────────┴──────────────┴──────────────┴──────────────┴──────────────┴──────────────┘");
+
+    println!("\n========================================================================================================================");
+    println!("📈 DINAMIKA MONETER, KREDIT & MODAL PRODUKTIF SEIRING WAKTU (MONEY, CREDIT & CAPITAL ACCUMULATION)");
+    println!("========================================================================================================================");
+    println!("┌─────────┬──────────────┬──────────────┬──────────────┬──────────────┬──────────────┬──────────────┬──────────────┬──────────────┐");
+    println!("│ Dekade  │ Rentang Thn  │ Emisi Depo   │ Tebus Nota   │ Kredit Pinjam│ Pelunasan    │ Sukses Bayar │ Modal Dibuat │ Olah Pangan  │");
+    println!("├─────────┼──────────────┼──────────────┼──────────────┼──────────────┼──────────────┼──────────────┼──────────────┼──────────────┤");
+    for d in &decadal_records {
+        let settle_rate = if d.credit_loans > 0 {
+            format!("{:.1}%", (d.debt_settlements as f64 / d.credit_loans as f64) * 100.0)
+        } else {
+            "-".to_string()
+        };
+        println!("│ D{:<6} │ Thn {:>2.0}-{:<2.0}  │ {:>8} depo│ {:>8} nota│ {:>8} pinj│ {:>8} lunas│ {:>12} │ {:>8} unit│ {:>8} ev  │",
+            d.decade, d.start_year, d.end_year, d.granary_deposits, d.notes_redeemed, d.credit_loans, d.debt_settlements, settle_rate, d.tool_production, d.food_processing);
+    }
+    println!("└─────────┴──────────────┴──────────────┴──────────────┴──────────────┴──────────────┴──────────────┴──────────────┴──────────────┘");
 
     // 6. Epidemiology, Disease & Healthcare Sector Audit
     let medical_services_count = *trx_breakdown.get("medical_care_service").unwrap_or(&0);

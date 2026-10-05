@@ -236,45 +236,30 @@ pub fn perform_trade_and_services(
     // Case D: Depository Banking & Warehouse Receipts (Pottery Jar & Basket Custodians)
     let mut banking_or_credit = false;
     if !medical_service_occurred && !knowledge_trade_occurred {
-        // D.1 Deposit surplus grain into storage container for warehouse receipt
+        let durable_foods = [
+            ItemId::GRAIN, ItemId::FLATBREAD, ItemId::GRAIN_FLOUR,
+            ItemId::DRIED_BERRIES, ItemId::CURED_FISH, ItemId::SMOKED_MEAT,
+        ];
         let has_storage = |inv: &std::collections::BTreeMap<ItemId, u32>| -> bool {
             inv.contains_key(&ItemId::POTTERY_JAR) || inv.contains_key(&ItemId::WOVEN_BASKET)
         };
-        for (custodian_id, depositor_id, c_inv, d_inv) in [(agent_a_id, agent_b_id, &a_inv, &b_inv), (agent_b_id, agent_a_id, &b_inv, &a_inv)] {
-            if has_storage(c_inv) && d_inv.get(&ItemId::GRAIN).copied().unwrap_or(0) >= 2 {
-                if let Some(dep) = agent_store.get_human_mut(depositor_id) {
-                    let _ = dep.remove_item(ItemId::GRAIN, 2);
-                    dep.add_item(ItemId::WAREHOUSE_RECEIPT, 1);
-                }
-                if let Some(cust) = agent_store.get_human_mut(custodian_id) {
-                    cust.add_item(ItemId::GRAIN, 2);
-                }
-                let inst = ItemInstance::new(ItemId::WAREHOUSE_RECEIPT, 1, serde_json::json!({"nature": "DepositoryReceipt", "grain_deposit": 2}))
-                    .with_instance_id(ItemInstanceId::new(*next_instance_id));
-                *next_instance_id += 1;
-                let entry = LedgerEntry::single(*next_trx_id, run_id.clone(), current_tick, depositor_id, custodian_id, Some(inst), None, serde_json::json!({
-                    "transaction_type": "granary_depository_banking", "custodian_id": custodian_id.0, "depositor_id": depositor_id.0, "grain_deposited": 2
-                }));
-                *next_trx_id += 1;
-                let _ = ledger_store.record(entry);
-                banking_or_credit = true;
-                break;
-            }
-        }
 
-        // D.2 Redemption of Warehouse Receipt for grain
-        if !banking_or_credit {
-            for (holder_id, cust_id, h_inv, c_inv) in [(agent_a_id, agent_b_id, &a_inv, &b_inv), (agent_b_id, agent_a_id, &b_inv, &a_inv)] {
-                if h_inv.contains_key(&ItemId::WAREHOUSE_RECEIPT) && has_storage(c_inv) && c_inv.get(&ItemId::GRAIN).copied().unwrap_or(0) >= 2 {
-                    if let Some(h) = agent_store.get_human_mut(holder_id) {
-                        let _ = h.remove_item(ItemId::WAREHOUSE_RECEIPT, 1);
-                        h.add_item(ItemId::GRAIN, 2);
+        // D.1 Deposit surplus durable food into storage container for warehouse receipt
+        for (custodian_id, depositor_id, c_inv, d_inv) in [(agent_a_id, agent_b_id, &a_inv, &b_inv), (agent_b_id, agent_a_id, &b_inv, &a_inv)] {
+            if has_storage(c_inv) {
+                if let Some(&dep_food) = durable_foods.iter().find(|&&f| d_inv.get(&f).copied().unwrap_or(0) >= 3) {
+                    if let Some(dep) = agent_store.get_human_mut(depositor_id) {
+                        let _ = dep.remove_item(dep_food, 2);
+                        dep.add_item(ItemId::WAREHOUSE_RECEIPT, 1);
                     }
-                    if let Some(c) = agent_store.get_human_mut(cust_id) {
-                        let _ = c.remove_item(ItemId::GRAIN, 2);
+                    if let Some(cust) = agent_store.get_human_mut(custodian_id) {
+                        cust.add_item(dep_food, 2);
                     }
-                    let entry = LedgerEntry::single(*next_trx_id, run_id.clone(), current_tick, holder_id, cust_id, None, None, serde_json::json!({
-                        "transaction_type": "warehouse_receipt_redemption", "holder_id": holder_id.0, "custodian_id": cust_id.0, "grain_redeemed": 2
+                    let inst = ItemInstance::new(ItemId::WAREHOUSE_RECEIPT, 1, serde_json::json!({"nature": "DepositoryReceipt", "food_deposit": dep_food.0, "qty": 2}))
+                        .with_instance_id(ItemInstanceId::new(*next_instance_id));
+                    *next_instance_id += 1;
+                    let entry = LedgerEntry::single(*next_trx_id, run_id.clone(), current_tick, depositor_id, custodian_id, Some(inst), None, serde_json::json!({
+                        "transaction_type": "granary_depository_banking", "custodian_id": custodian_id.0, "depositor_id": depositor_id.0, "food_id": dep_food.0, "qty_deposited": 2
                     }));
                     *next_trx_id += 1;
                     let _ = ledger_store.record(entry);
@@ -284,23 +269,20 @@ pub fn perform_trade_and_services(
             }
         }
 
-        // D.3 Emergency Food Credit Loan & Promissory Debt Token Minting
-        let loan_foods = [ItemId::FLATBREAD, ItemId::GRAIN, ItemId::CURED_MEAT, ItemId::SMOKED_MEAT, ItemId::CURED_FISH];
+        // D.2 Redemption of Warehouse Receipt for durable food
         if !banking_or_credit {
-            for (cred_id, deb_id, c_inv, d_cal) in [(agent_b_id, agent_a_id, &b_inv, a_cal), (agent_a_id, agent_b_id, &a_inv, b_cal)] {
-                if d_cal < 3500.0 {
-                    if let Some(&food_id) = loan_foods.iter().find(|&&f| c_inv.get(&f).copied().unwrap_or(0) >= 4) {
-                        if let Some(cred) = agent_store.get_human_mut(cred_id) {
-                            let _ = cred.remove_item(food_id, 2);
-                            cred.add_item(ItemId::CLAY_TABLET, 1);
+            for (holder_id, cust_id, h_inv, c_inv, h_cal) in [(agent_a_id, agent_b_id, &a_inv, &b_inv, a_cal), (agent_b_id, agent_a_id, &b_inv, &a_inv, b_cal)] {
+                if h_inv.contains_key(&ItemId::WAREHOUSE_RECEIPT) && has_storage(c_inv) && (h_cal < 9000.0 || c_inv.iter().any(|(k, v)| durable_foods.contains(k) && *v >= 4)) {
+                    if let Some(&f) = durable_foods.iter().find(|&&f| c_inv.get(&f).copied().unwrap_or(0) >= 2) {
+                        if let Some(h) = agent_store.get_human_mut(holder_id) {
+                            let _ = h.remove_item(ItemId::WAREHOUSE_RECEIPT, 1);
+                            h.add_item(f, 2);
                         }
-                        if let Some(deb) = agent_store.get_human_mut(deb_id) {
-                            deb.add_item(food_id, 2);
+                        if let Some(c) = agent_store.get_human_mut(cust_id) {
+                            let _ = c.remove_item(f, 2);
                         }
-                        let inst = ItemInstance::new(food_id, 2, serde_json::json!({"nature": "CreditLoan"})).with_instance_id(ItemInstanceId::new(*next_instance_id));
-                        *next_instance_id += 1;
-                        let entry = LedgerEntry::single(*next_trx_id, run_id.clone(), current_tick, cred_id, deb_id, Some(inst), None, serde_json::json!({
-                            "transaction_type": "granary_credit_loan", "creditor_id": cred_id.0, "debtor_id": deb_id.0, "food_id": food_id.0, "principal": 2
+                        let entry = LedgerEntry::single(*next_trx_id, run_id.clone(), current_tick, holder_id, cust_id, None, None, serde_json::json!({
+                            "transaction_type": "warehouse_receipt_redemption", "holder_id": holder_id.0, "custodian_id": cust_id.0, "food_id": f.0, "qty_redeemed": 2
                         }));
                         *next_trx_id += 1;
                         let _ = ledger_store.record(entry);
@@ -311,20 +293,47 @@ pub fn perform_trade_and_services(
             }
         }
 
-        // D.4 Redemption of Promissory Debt Tablet
+        // D.3 Emergency Food Credit Loan & Promissory Debt Token Minting (Pre-harvest lean season)
+        let loan_foods = [ItemId::FLATBREAD, ItemId::GRAIN, ItemId::CURED_MEAT, ItemId::SMOKED_MEAT, ItemId::CURED_FISH, ItemId::DRIED_BERRIES];
         if !banking_or_credit {
-            for (holder_id, redeemer_id, h_inv, r_inv) in [(agent_a_id, agent_b_id, &a_inv, &b_inv), (agent_b_id, agent_a_id, &b_inv, &a_inv)] {
-                if h_inv.contains_key(&ItemId::CLAY_TABLET) {
-                    if let Some(&f) = loan_foods.iter().find(|&&f| r_inv.get(&f).copied().unwrap_or(0) >= 4) {
+            for (cred_id, deb_id, c_inv, d_cal) in [(agent_b_id, agent_a_id, &b_inv, a_cal), (agent_a_id, agent_b_id, &a_inv, b_cal)] {
+                if d_cal < 8000.0 {
+                    if let Some(&food_id) = loan_foods.iter().find(|&&f| c_inv.get(&f).copied().unwrap_or(0) >= 3) {
+                        if let Some(cred) = agent_store.get_human_mut(cred_id) {
+                            let _ = cred.remove_item(food_id, 2);
+                            cred.add_item(ItemId::CLAY_TABLET, 1);
+                        }
+                        if let Some(deb) = agent_store.get_human_mut(deb_id) {
+                            deb.add_item(food_id, 2);
+                        }
+                        let inst = ItemInstance::new(food_id, 2, serde_json::json!({"nature": "CreditLoan", "principal": 2, "interest_due": 1})).with_instance_id(ItemInstanceId::new(*next_instance_id));
+                        *next_instance_id += 1;
+                        let entry = LedgerEntry::single(*next_trx_id, run_id.clone(), current_tick, cred_id, deb_id, Some(inst), None, serde_json::json!({
+                            "transaction_type": "promissory_debt_issuance", "creditor_id": cred_id.0, "debtor_id": deb_id.0, "food_id": food_id.0, "principal": 2, "interest_rate": 0.50
+                        }));
+                        *next_trx_id += 1;
+                        let _ = ledger_store.record(entry);
+                        banking_or_credit = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        // D.4 Redemption of Promissory Debt Tablet with Seasonal Interest Repayment (Post-harvest settlement)
+        if !banking_or_credit {
+            for (holder_id, redeemer_id, h_inv, r_inv, r_cal) in [(agent_a_id, agent_b_id, &a_inv, &b_inv, b_cal), (agent_b_id, agent_a_id, &b_inv, &a_inv, a_cal)] {
+                if h_inv.contains_key(&ItemId::CLAY_TABLET) && r_cal > 7000.0 {
+                    if let Some(&f) = loan_foods.iter().find(|&&f| r_inv.get(&f).copied().unwrap_or(0) >= 3) {
                         if let Some(h) = agent_store.get_human_mut(holder_id) {
                             let _ = h.remove_item(ItemId::CLAY_TABLET, 1);
-                            h.add_item(f, 2);
+                            h.add_item(f, 3);
                         }
                         if let Some(r) = agent_store.get_human_mut(redeemer_id) {
-                            let _ = r.remove_item(f, 2);
+                            let _ = r.remove_item(f, 3);
                         }
                         let entry = LedgerEntry::single(*next_trx_id, run_id.clone(), current_tick, holder_id, redeemer_id, None, None, serde_json::json!({
-                            "transaction_type": "promissory_tablet_redemption", "holder_id": holder_id.0, "redeemer_id": redeemer_id.0, "food_id": f.0
+                            "transaction_type": "promissory_debt_settlement", "holder_id": holder_id.0, "debtor_id": redeemer_id.0, "food_id": f.0, "principal": 2, "interest_paid": 1
                         }));
                         *next_trx_id += 1;
                         let _ = ledger_store.record(entry);
