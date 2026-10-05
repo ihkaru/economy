@@ -42,7 +42,7 @@ fn setup_and_run(run_id_str: &str, seed: u64, total_ticks: u64, output_dir: &str
         ResourceNode::new(
             1,
             "Forest",
-            ItemId::new(1),
+            economy::core::domain::item::id::ItemId::TIMBER,
             economy::core::domain::spatial::GeoCoordinate::new(0, 0),
             500,
             1000,
@@ -54,7 +54,7 @@ fn setup_and_run(run_id_str: &str, seed: u64, total_ticks: u64, output_dir: &str
         ResourceNode::new(
             2,
             "Fishery",
-            ItemId::new(2),
+            economy::core::domain::item::id::ItemId::FISH,
             economy::core::domain::spatial::GeoCoordinate::new(0, 0),
             300,
             600,

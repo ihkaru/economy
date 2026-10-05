@@ -112,8 +112,8 @@ pub fn perform_agent_centric_foraging(
             // Physiological urgency weighting & Gossen's diminishing marginal utility
             let urgency_weight = if is_sick && herb_count == 0 && node.item_id == ItemId::HERBAL_MEDICINE {
                 15.0 // Desperate need for medicine to cure illness
-            } else if calorie_reserve < 3500.0 && node.is_edible {
-                10.0 // Hungry/starving: food has maximum marginal utility
+            } else if (calorie_reserve < 4500.0 || food_count < 2) && node.is_edible {
+                9.0 // Food security buffer: agents ensure survival before mineral/currency expeditions
             } else if timber_count < 3 && node.item_id == ItemId::TIMBER {
                 6.0 // Firewood needed for thermoregulation against cold
             } else if meat_fish_count > 0 && salt_count < 2 && node.item_id == ItemId::SALT {
