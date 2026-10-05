@@ -175,51 +175,54 @@ impl ExchangeSystem {
 
         // 4. Inter-Agent Trade (Emergent Bilateral Barter, Medical Services & Apprenticeship)
         if living_agent_ids.len() >= 2 {
-            let idx_a = rng.gen_range_u64(0, living_agent_ids.len() as u64) as usize;
-            let mut idx_b = rng.gen_range_u64(0, (living_agent_ids.len() - 1) as u64) as usize;
-            if idx_b >= idx_a {
-                idx_b += 1;
-            }
-
-            let agent_a_id = living_agent_ids[idx_a];
-            let agent_b_id = living_agent_ids[idx_b];
-
-            // Spatial check: Calculate distance between Agent A and Agent B
-            let (_dist, can_reach) = {
-                let a = agent_store.get_human(agent_a_id);
-                let b = agent_store.get_human(agent_b_id);
-                if let (Some(a), Some(b)) = (a, b) {
-                    let d = a.location.euclidean_distance(&b.location);
-                    let a_has_vessel = a.has_item(ItemId::RAFT);
-                    let b_has_vessel = b.has_item(ItemId::RAFT);
-                    let reachable = d <= 10.0 || (a_has_vessel || b_has_vessel);
-                    (d, reachable)
-                } else {
-                    (0.0, false)
+            let trade_attempts = (living_agent_ids.len() / 10).clamp(2, 6);
+            for _ in 0..trade_attempts {
+                let idx_a = rng.gen_range_u64(0, living_agent_ids.len() as u64) as usize;
+                let mut idx_b = rng.gen_range_u64(0, (living_agent_ids.len() - 1) as u64) as usize;
+                if idx_b >= idx_a {
+                    idx_b += 1;
                 }
-            };
 
-            if can_reach {
-                // Maritime journey wear-and-tear on raft
-                if _dist > 10.0 && rng.check_probability(0.01) {
-                    if let Some(agent_a) = agent_store.get_human_mut(agent_a_id) {
-                        if agent_a.has_item(ItemId::RAFT) {
-                            let _ = agent_a.remove_item(ItemId::RAFT, 1);
+                let agent_a_id = living_agent_ids[idx_a];
+                let agent_b_id = living_agent_ids[idx_b];
+
+                // Spatial check: Calculate distance between Agent A and Agent B
+                let (_dist, can_reach) = {
+                    let a = agent_store.get_human(agent_a_id);
+                    let b = agent_store.get_human(agent_b_id);
+                    if let (Some(a), Some(b)) = (a, b) {
+                        let d = a.location.euclidean_distance(&b.location);
+                        let a_has_vessel = a.has_item(ItemId::RAFT);
+                        let b_has_vessel = b.has_item(ItemId::RAFT);
+                        let reachable = d <= 10.0 || (a_has_vessel || b_has_vessel);
+                        (d, reachable)
+                    } else {
+                        (0.0, false)
+                    }
+                };
+
+                if can_reach {
+                    // Maritime journey wear-and-tear on raft
+                    if _dist > 10.0 && rng.check_probability(0.01) {
+                        if let Some(agent_a) = agent_store.get_human_mut(agent_a_id) {
+                            if agent_a.has_item(ItemId::RAFT) {
+                                let _ = agent_a.remove_item(ItemId::RAFT, 1);
+                            }
                         }
                     }
-                }
 
-                perform_trade_and_services(
-                    run_id,
-                    current_tick,
-                    agent_a_id,
-                    agent_b_id,
-                    agent_store,
-                    ledger_store,
-                    stat_store,
-                    &mut self.next_trx_id,
-                    &mut self.next_instance_id,
-                );
+                    perform_trade_and_services(
+                        run_id,
+                        current_tick,
+                        agent_a_id,
+                        agent_b_id,
+                        agent_store,
+                        ledger_store,
+                        stat_store,
+                        &mut self.next_trx_id,
+                        &mut self.next_instance_id,
+                    );
+                }
             }
         }
     }

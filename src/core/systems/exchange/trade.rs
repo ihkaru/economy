@@ -323,17 +323,27 @@ pub fn perform_trade_and_services(
         // D.4 Redemption of Promissory Debt Tablet with Seasonal Interest Repayment (Post-harvest settlement)
         if !banking_or_credit {
             for (holder_id, redeemer_id, h_inv, r_inv, r_cal) in [(agent_a_id, agent_b_id, &a_inv, &b_inv, b_cal), (agent_b_id, agent_a_id, &b_inv, &a_inv, a_cal)] {
-                if h_inv.contains_key(&ItemId::CLAY_TABLET) && r_cal > 7000.0 {
-                    if let Some(&f) = loan_foods.iter().find(|&&f| r_inv.get(&f).copied().unwrap_or(0) >= 3) {
+                if h_inv.contains_key(&ItemId::CLAY_TABLET) && r_cal > 6500.0 {
+                    let mut food_to_repay = None;
+                    for &f in &loan_foods {
+                        let stock = r_inv.get(&f).copied().unwrap_or(0);
+                        if stock >= 3 {
+                            food_to_repay = Some((f, 3, 1));
+                            break;
+                        } else if stock >= 2 && food_to_repay.is_none() {
+                            food_to_repay = Some((f, 2, 0));
+                        }
+                    }
+                    if let Some((repay_item, repay_qty, interest)) = food_to_repay {
                         if let Some(h) = agent_store.get_human_mut(holder_id) {
                             let _ = h.remove_item(ItemId::CLAY_TABLET, 1);
-                            h.add_item(f, 3);
+                            h.add_item(repay_item, repay_qty);
                         }
                         if let Some(r) = agent_store.get_human_mut(redeemer_id) {
-                            let _ = r.remove_item(f, 3);
+                            let _ = r.remove_item(repay_item, repay_qty);
                         }
                         let entry = LedgerEntry::single(*next_trx_id, run_id.clone(), current_tick, holder_id, redeemer_id, None, None, serde_json::json!({
-                            "transaction_type": "promissory_debt_settlement", "holder_id": holder_id.0, "debtor_id": redeemer_id.0, "food_id": f.0, "principal": 2, "interest_paid": 1
+                            "transaction_type": "promissory_debt_settlement", "holder_id": holder_id.0, "debtor_id": redeemer_id.0, "food_id": repay_item.0, "principal": 2, "interest_paid": interest
                         }));
                         *next_trx_id += 1;
                         let _ = ledger_store.record(entry);
