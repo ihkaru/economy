@@ -99,6 +99,7 @@ impl Human {
         };
         if let Some(obj) = self.attributes.as_object_mut() {
             obj.insert("death_reason".to_string(), serde_json::json!(r));
+            obj.insert("death_tick".to_string(), serde_json::json!(current_tick.0));
         }
     }
 

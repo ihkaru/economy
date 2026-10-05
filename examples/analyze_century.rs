@@ -30,6 +30,12 @@ fn item_meta(id: u64) -> (&'static str, &'static str) {
         121 => ("Wood-Smoked Preserved Meat", "Good (Preserved Food)"),
         122 => ("Prehistoric Hunting Spear", "Capital (Terrestrial Hunting Tool)"),
         123 => ("Salt-Cured Preserved Meat", "Good (Preserved Food)"),
+        124 => ("Saddle Quern Stone", "Capital (Food Milling Tool)"),
+        125 => ("Milled Grain Flour", "Good (Processed Nutrition)"),
+        126 => ("Baked Flatbread", "Good (High-Energy Staple)"),
+        127 => ("Pyrotechnic Charcoal", "Good (High-Heat Fuel)"),
+        128 => ("Promissory Debt Tablet", "Currency (Credit Debt Token)"),
+        129 => ("Warehouse Receipt", "Currency (Commodity Paper Money)"),
         201 => ("Raft Building Blueprint", "Knowledge (Non-Rival Blueprint)"),
         202 => ("Fish Curing Preservation", "Knowledge (Non-Rival Technique)"),
         203 => ("Fire-Making Technique", "Knowledge (Non-Rival Technique)"),
@@ -46,6 +52,34 @@ fn item_meta(id: u64) -> (&'static str, &'static str) {
         404 => ("Medical Caregiving", "Service (Intangible Healthcare)"),
         _ => ("Custom Artifact", "Other"),
     }
+}
+
+#[derive(Default, Clone, Debug)]
+#[allow(dead_code)]
+struct DecadeRecord {
+    decade: usize,
+    start_year: f64,
+    end_year: f64,
+    start_tick: u64,
+    end_tick: u64,
+    population_end: usize,
+    births: u64,
+    deaths_total: u64,
+    deaths_starvation: u64,
+    deaths_disease: u64,
+    deaths_old_age: u64,
+    total_transactions: u64,
+    barter_trades: u64,
+    harvests: u64,
+    tool_production: u64,
+    food_processing: u64,
+    firm_wages: u64,
+    firm_partnerships: u64,
+    granary_deposits: u64,
+    notes_redeemed: u64,
+    credit_tablets: u64,
+    scientific_eurekas: u64,
+    medical_care: u64,
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -119,17 +153,34 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut starvation_deaths: u64 = 0;
     let mut old_age_deaths: u64 = 0;
 
+    let mut decadal_records: Vec<DecadeRecord> = (0..10).map(|i| {
+        DecadeRecord {
+            decade: i + 1,
+            start_year: (i * 10) as f64,
+            end_year: ((i + 1) * 10) as f64,
+            start_tick: (i as u64 * 3650) + 1,
+            end_tick: (i as u64 + 1) * 3650,
+            ..Default::default()
+        }
+    }).collect();
+    let mut agent_lifecycles: Vec<(u64, Option<u64>)> = Vec::new();
+
     while let Some(batch) = reader.next() {
         let batch = batch?;
         total_agents += batch.num_rows();
 
+        let agent_id_col = batch.column(0).as_any().downcast_ref::<UInt64Array>().unwrap();
+        let birth_tick_col = batch.column(2).as_any().downcast_ref::<UInt64Array>().unwrap();
         let age_ticks_col = batch.column(3).as_any().downcast_ref::<UInt64Array>().unwrap();
         let is_alive_col = batch.column(4).as_any().downcast_ref::<arrow::array::BooleanArray>().unwrap();
         let inv_col = batch.column(15).as_any().downcast_ref::<StringArray>().unwrap();
         let attr_col = batch.column(16).as_any().downcast_ref::<StringArray>().unwrap();
 
         for i in 0..batch.num_rows() {
-            let age_years = age_ticks_col.value(i) as f64 / 365.0;
+            let agent_id = agent_id_col.value(i);
+            let birth_tick = birth_tick_col.value(i);
+            let age_ticks = age_ticks_col.value(i);
+            let age_years = age_ticks as f64 / 365.0;
             ages.push(age_years);
             if age_years > max_age_years {
                 max_age_years = age_years;
@@ -138,6 +189,38 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             let is_alive = is_alive_col.value(i);
             let attr_str = attr_col.value(i);
             let attr_val: serde_json::Value = serde_json::from_str(attr_str).unwrap_or(serde_json::Value::Null);
+
+            let death_tick: Option<u64> = if is_alive {
+                None
+            } else if let Some(dt) = attr_val.get("death_tick").and_then(|v| v.as_u64()) {
+                Some(dt)
+            } else if birth_tick > 0 {
+                Some(birth_tick + age_ticks)
+            } else {
+                let initial_age_ticks = ((20.0 + ((agent_id % 11) as f64)) * 365.0).round() as u64;
+                Some(age_ticks.saturating_sub(initial_age_ticks))
+            };
+
+            agent_lifecycles.push((birth_tick, death_tick));
+
+            if birth_tick > 0 {
+                let b_dec = ((birth_tick.saturating_sub(1)) / 3650).min(9) as usize;
+                decadal_records[b_dec].births += 1;
+            }
+
+            if let Some(dt) = death_tick {
+                let d_dec = ((dt.saturating_sub(1)) / 3650).min(9) as usize;
+                decadal_records[d_dec].deaths_total += 1;
+                if let Some(reason) = attr_val.get("death_reason").and_then(|v| v.as_str()) {
+                    if reason.contains("Illness") || reason.contains("fever") {
+                        decadal_records[d_dec].deaths_disease += 1;
+                    } else if reason.contains("Starvation") {
+                        decadal_records[d_dec].deaths_starvation += 1;
+                    } else {
+                        decadal_records[d_dec].deaths_old_age += 1;
+                    }
+                }
+            }
 
             if let Some(g_num) = attr_val.get("generation").and_then(|g| g.as_u64()) {
                 if g_num > max_generation {
@@ -177,6 +260,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
             }
         }
+    }
+
+    for d in 0..10 {
+        let end_tick = decadal_records[d].end_tick;
+        let living_at_end = agent_lifecycles.iter().filter(|(b, d_opt)| {
+            *b <= end_tick && match d_opt {
+                Some(dt) => *dt > end_tick,
+                None => true,
+            }
+        }).count();
+        decadal_records[d].population_end = living_at_end;
     }
 
     println!("👥 DEMOGRAPHIC LIFECYCLE AUDIT:");
@@ -225,6 +319,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         for i in 0..batch.num_rows() {
             let tick = tick_col.value(i);
+            let dec_idx = ((tick.saturating_sub(1)) / 3650).min(9) as usize;
+            decadal_records[dec_idx].total_transactions += 1;
 
             if let Some(col_a) = item_a_col {
                 if !col_a.is_null(i) {
@@ -241,6 +337,21 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             if let Ok(val) = serde_json::from_str::<serde_json::Value>(meta_str) {
                 if let Some(t) = val.get("transaction_type").and_then(|v| v.as_str()) {
                     *trx_breakdown.entry(t.to_string()).or_insert(0) += 1;
+
+                    match t {
+                        "bilateral_barter" => decadal_records[dec_idx].barter_trades += 1,
+                        "natural_resource_harvest" => decadal_records[dec_idx].harvests += 1,
+                        "capital_tool_production" | "container_crafting" | "clothing_tailoring" => decadal_records[dec_idx].tool_production += 1,
+                        "food_preservation" | "ceramic_storage" | "grain_milling_quern" | "flatbread_baking" => decadal_records[dec_idx].food_processing += 1,
+                        "firm_wage_employment" => decadal_records[dec_idx].firm_wages += 1,
+                        "firm_production_partnership" => decadal_records[dec_idx].firm_partnerships += 1,
+                        "granary_depository_banking" => decadal_records[dec_idx].granary_deposits += 1,
+                        "warehouse_receipt_redemption" => decadal_records[dec_idx].notes_redeemed += 1,
+                        "promissory_debt_issuance" | "promissory_debt_settlement" => decadal_records[dec_idx].credit_tablets += 1,
+                        "scientific_discovery" => decadal_records[dec_idx].scientific_eurekas += 1,
+                        "medical_care_service" | "knowledge_service_trade" => decadal_records[dec_idx].medical_care += 1,
+                        _ => {}
+                    }
 
                     match t {
                         "capital_tool_production" | "container_crafting" | "food_preservation" | "ceramic_storage" | "clothing_tailoring" => {
@@ -365,7 +476,33 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     println!("└─────┴──────────────────────────┴─────────────────────────────┴──────────┴──────────┴──────────────────────────────────────────┘");
 
-    // 5. Epidemiology, Disease & Healthcare Sector Audit
+    // 5. Decadal Macroeconomic & Demographic Trajectory
+    println!("\n========================================================================================================================");
+    println!("📊 TRAJEKTORI MAKROEKONOMI & DEMOGRAFI DEKADE KE DEKADE (DECADAL MACROECONOMIC & DEMOGRAPHIC TRAJECTORY)");
+    println!("========================================================================================================================");
+    println!("┌─────────┬──────────────┬──────────────┬──────────────┬───────────────────────────────┬──────────────┬──────────────┬──────────────┬──────────────┐");
+    println!("│ Dekade  │ Rentang Thn  │ Populasi Akh │ Kelahiran    │ Kematian (Tot/Lpr/Skt/Tua)    │ Transaksi    │ Panen Sumber │ Modal Dibuat │ Olah Pangan  │");
+    println!("├─────────┼──────────────┼──────────────┼──────────────┼───────────────────────────────┼──────────────┼──────────────┼──────────────┼──────────────┤");
+    for d in &decadal_records {
+        let death_detail = format!("{}/{}/{}/{}", d.deaths_total, d.deaths_starvation, d.deaths_disease, d.deaths_old_age);
+        println!("│ D{:<6} │ Thn {:>2.0}-{:<2.0}  │ {:>8} jiwa│ {:>8} bayi│ {:>29} │ {:>10} trx│ {:>10} ev │ {:>8} unit│ {:>8} ev  │",
+            d.decade, d.start_year, d.end_year, d.population_end, d.births, death_detail, d.total_transactions, d.harvests, d.tool_production, d.food_processing);
+    }
+    println!("└─────────┴──────────────┴──────────────┴──────────────┴───────────────────────────────┴──────────────┴──────────────┴──────────────┴──────────────┘");
+
+    println!("\n========================================================================================================================");
+    println!("🏛️ PERKEMBANGAN INSTITUSI MODERN, UANG & KONTRAK SEIRING WAKTU (INSTITUTIONAL & FINANCIAL EVOLUTION)");
+    println!("========================================================================================================================");
+    println!("┌─────────┬──────────────┬──────────────┬──────────────┬──────────────┬──────────────┬──────────────┬──────────────┬──────────────┬──────────────┐");
+    println!("│ Dekade  │ Rentang Thn  │ Barter Pasar │ Upah Firma   │ Kemitraan JV │ Bank Lumbung │ Nota Tebus   │ Tablet Utang │ Jasa/Medis   │ Eureka Ilmu  │");
+    println!("├─────────┼──────────────┼──────────────┼──────────────┼──────────────┼──────────────┼──────────────┼──────────────┼──────────────┼──────────────┤");
+    for d in &decadal_records {
+        println!("│ D{:<6} │ Thn {:>2.0}-{:<2.0}  │ {:>8} trx│ {:>8} gaji│ {:>8} jv  │ {:>8} depo│ {:>8} nota│ {:>8} kpg │ {:>8} sesi│ {:>8} temu│",
+            d.decade, d.start_year, d.end_year, d.barter_trades, d.firm_wages, d.firm_partnerships, d.granary_deposits, d.notes_redeemed, d.credit_tablets, d.medical_care, d.scientific_eurekas);
+    }
+    println!("└─────────┴──────────────┴──────────────┴──────────────┴──────────────┴──────────────┴──────────────┴──────────────┴──────────────┴──────────────┘");
+
+    // 6. Epidemiology, Disease & Healthcare Sector Audit
     let medical_services_count = *trx_breakdown.get("medical_care_service").unwrap_or(&0);
     let pharmacopoeia_count = *trx_breakdown.get("pharmacopoeia_preparation").unwrap_or(&0);
     let medical_eureka_count = *discoveries.get("Herbal Medicine Blueprint").unwrap_or(&0);
@@ -381,7 +518,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("  - Pembuatan Obat Herbal (Farmasi)  : {} batch obat", pharmacopoeia_count);
     println!("  - Terobosan Eureka Medis           : {} kali", medical_eureka_count);
 
-    // 6. Historical Item Gap Analysis (Archaeological Matrix)
+    // 7. Historical Item Gap Analysis (Archaeological Matrix)
     println!("\n======================================================================");
     println!("🏛️ EVALUASI KESENJANGAN ITEM SEJARAH (ARCHAEOLOGICAL ITEM GAP ANALYSIS)");
     println!("======================================================================");
@@ -404,7 +541,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("│ (4.000 - 1.200 BP)         │ Gerobak Roda, Farmakope, Pembukuan   │ Buku Besar Ledger Kas        │ Alat Perunggu, Gerobak Kayu  │");
     println!("└────────────────────────────┴──────────────────────────────────────┴──────────────────────────────┴──────────────────────────────┘");
 
-    // 7. Environment Nodes Status
+    // 8. Environment Nodes Status
     let env_file = File::open(run_dir.join("environment.parquet"))?;
     let builder = ParquetRecordBatchReaderBuilder::try_new(env_file)?;
     let mut reader = builder.build()?;
@@ -423,7 +560,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
-    // 8. Historical Reality Evaluation (Initial vs Final)
+    // 9. Historical Reality Evaluation (Initial vs Final)
     let initial_agents = 50.0;
     let cagr = ((alive_count as f64 / initial_agents).powf(1.0 / simulated_years.max(1.0)) - 1.0) * 100.0;
     let axes_held = *living_inventory_totals.get("108").unwrap_or(&0);
@@ -452,7 +589,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("│ Rantai Resep & Buruan Liar │ 0 resep / 1 fauna  │ {:<18} │ 13 Resep multi-input, fauna darat & air realistis │", format!("{} resep / 2 fauna", tools_crafted.len()));
     println!("└────────────────────────────┴────────────────────┴────────────────────┴──────────────────────────────────────────────────┘");
 
-    // 9. Reality Anomaly Detection & Diagnostics
+    // 10. Reality Anomaly Detection & Diagnostics
     println!("\n⚠️  DETEKSI ANOMALI REALITA & DIAGNOSA AKAR MASALAH:");
     let mut anomalies_found = 0;
 
@@ -495,7 +632,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("\n  💡 Rekomendasi: Sempurnakan mekanisme mikro di atas untuk mencapai realitas sejarah penuh.");
     }
 
-    // 10. Recipe Origin & Hunting Diversity Audit
+    // 11. Recipe Origin & Hunting Diversity Audit
     let meat_held = *living_inventory_totals.get("118").unwrap_or(&0);
     let hide_held = *living_inventory_totals.get("119").unwrap_or(&0);
     let stone_held = *living_inventory_totals.get("117").unwrap_or(&0);
@@ -519,7 +656,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("  - Tombak Berburu Beredar Saat Ini  : {} unit", spears_held);
     println!("  - Eureka Penyamakan Kulit & Jahit  : {} penemu", leather_eureka);
 
-    // 11. Render Final Tables
+    // 12. Render Final Tables
     if tables_path.exists() {
         let tables_file = File::open(tables_path)?;
         let builder = ParquetRecordBatchReaderBuilder::try_new(tables_file)?;
