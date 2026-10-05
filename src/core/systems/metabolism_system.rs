@@ -164,6 +164,16 @@ impl MetabolismSystem {
                 if agent.has_item(ItemId::HUNTING_SPEAR) && rng.check_probability(0.001) {
                     let _ = agent.remove_item(ItemId::HUNTING_SPEAR, 1);
                 }
+
+                // Storage Spoilage Entropy: Perishables without container or salt suffer biological decay
+                let has_container = agent.has_item(ItemId::POTTERY_JAR) || agent.has_item(ItemId::WOVEN_BASKET) || agent.has_item(ItemId::SALT);
+                if !has_container {
+                    for perishable in [ItemId::FISH, ItemId::BERRIES, ItemId::RAW_MEAT] {
+                        if agent.has_item(perishable) && rng.check_probability(0.01) {
+                            let _ = agent.remove_item(perishable, 1);
+                        }
+                    }
+                }
             }
 
             // Liebig's Law of the Minimum: Electrolyte preservation via Salt
