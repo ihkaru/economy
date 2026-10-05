@@ -252,6 +252,18 @@ impl RecipeRegistry {
                 0.0,
                 70.0,
             ),
+            // 18. Prehistoric Accounting & Credit: Inscribed Clay Tablet
+            ProductionRecipe::new(
+                18,
+                "Inscribed Clay Tablet",
+                "tablet_crafting",
+                &[RecipeIngredient { item_id: ItemId::CLAY, quantity: 1 }],
+                &[RecipeIngredient { item_id: ItemId::CLAY_TABLET, quantity: 2 }],
+                Some(ItemId::KNOWLEDGE_POTTERY_MAKING),
+                None,
+                0.0,
+                40.0,
+            ),
         ])
     }
 }

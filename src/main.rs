@@ -178,6 +178,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         ResourceNode::new(8, "Highland Game Hunting Grounds", ItemId::RAW_MEAT, GeoCoordinate::new(16, 27), 1500, 6000, 50.0, 2.0, 650.0, serde_json::json!({"resource": "RawMeat", "biome": "HighlandForest"})).with_pace(RegenerationPace::Medium),
         ResourceNode::new(9, "Rocky Riverbed Stone Quarry", ItemId::STONE, GeoCoordinate::new(14, 27), 2000, 5000, 10.0, 2.0, 0.0, serde_json::json!({"resource": "Stone", "biome": "RiverbedQuarry"})).with_pace(RegenerationPace::Geological),
         ResourceNode::new(10, "Mainland Saline Mineral Spring", ItemId::SALT, GeoCoordinate::new(17, 26), 600, 1500, 15.0, 1.0, 0.0, serde_json::json!({"resource": "RockSalt", "biome": "MineralSpring"})).with_pace(RegenerationPace::Slow),
+        ResourceNode::new(11, "Shallow Coastal Coral Reef", ItemId::SHELLS, GeoCoordinate::new(20, 25), 800, 2000, 25.0, 1.5, 0.0, serde_json::json!({"resource": "CowrieShells", "biome": "CoastalReef"})).with_pace(RegenerationPace::Slow),
     ];
     let world_map = economy::core::domain::spatial::WorldMap::generate_continent_and_archipelago(50, 50);
     let env_store = MemoryEnvironmentStore::new(climate, resource_nodes).with_world_map(world_map);

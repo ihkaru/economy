@@ -79,6 +79,7 @@ pub fn perform_autonomous_crafting(
                 ItemId::GRAIN_FLOUR => current_holding < 6,
                 ItemId::FLATBREAD => current_holding < 8,
                 ItemId::CHARCOAL => current_holding < 4,
+                ItemId::CLAY_TABLET => current_holding < 4,
                 _ => current_holding < 3,
             };
 

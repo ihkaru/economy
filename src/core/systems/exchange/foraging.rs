@@ -26,8 +26,13 @@ pub fn perform_agent_centric_foraging(
     let settlement_loc = GeoCoordinate::new(15, 25);
 
     for &agent_id in living_agent_ids {
-        let (loc, calorie_reserve, is_sick, inventory_weight, capacity, timber_count, herb_count, clay_count, stone_count, has_axe, has_spear, has_raft) = {
+        let (loc, calorie_reserve, is_sick, inventory_weight, capacity, timber_count, herb_count, clay_count, stone_count, salt_count, shell_count, meat_fish_count, food_count, has_axe, has_spear, has_raft) = {
             if let Some(agent) = agent_store.get_human(agent_id) {
+                let meat_fish = agent.inventory.get(&ItemId::RAW_MEAT).copied().unwrap_or(0)
+                    + agent.inventory.get(&ItemId::FISH).copied().unwrap_or(0);
+                let food = agent.inventory.get(&ItemId::BERRIES).copied().unwrap_or(0)
+                    + agent.inventory.get(&ItemId::GRAIN).copied().unwrap_or(0)
+                    + meat_fish;
                 (
                     agent.location,
                     agent.calorie_reserve,
@@ -38,6 +43,10 @@ pub fn perform_agent_centric_foraging(
                     agent.inventory.get(&ItemId::HERBAL_MEDICINE).copied().unwrap_or(0),
                     agent.inventory.get(&ItemId::CLAY).copied().unwrap_or(0),
                     agent.inventory.get(&ItemId::STONE).copied().unwrap_or(0),
+                    agent.inventory.get(&ItemId::SALT).copied().unwrap_or(0),
+                    agent.inventory.get(&ItemId::SHELLS).copied().unwrap_or(0),
+                    meat_fish,
+                    food,
                     agent.has_item(ItemId::STONE_AXE),
                     agent.has_item(ItemId::HUNTING_SPEAR),
                     agent.has_item(ItemId::RAFT),
@@ -100,27 +109,31 @@ pub fn perform_agent_centric_foraging(
             // Stock abundance ratio (Charnov Marginal Value Theorem: patch departure when returns diminish)
             let abundance_ratio = (node.maturity * node.maturity).clamp(0.02, 1.0);
 
-            // Physiological urgency weighting
+            // Physiological urgency weighting & Gossen's diminishing marginal utility
             let urgency_weight = if is_sick && herb_count == 0 && node.item_id == ItemId::HERBAL_MEDICINE {
                 15.0 // Desperate need for medicine to cure illness
             } else if calorie_reserve < 3500.0 && node.is_edible {
                 10.0 // Hungry/starving: food has maximum marginal utility
             } else if timber_count < 3 && node.item_id == ItemId::TIMBER {
                 6.0 // Firewood needed for thermoregulation against cold
-            } else if node.is_edible && calorie_reserve < 6000.0 {
-                4.0 // Well-fed maintenance buffer
-            } else if node.item_id == ItemId::TIMBER && timber_count < 10 {
-                3.0 // Raw material for tool/basket crafting
-            } else if node.item_id == ItemId::SALT {
-                2.5 // Food preservation medium
-            } else if node.item_id == ItemId::HERBAL_MEDICINE && herb_count < 3 {
-                2.0 // Small preventive medical stock
+            } else if meat_fish_count > 0 && salt_count < 2 && node.item_id == ItemId::SALT {
+                5.5 // Urgent preservation: Salt needed to cure perishable meat/fish before spoilage
             } else if node.item_id == ItemId::STONE && (!has_axe || !has_spear || stone_count < 2) {
-                3.5 // Raw material for Stone Axe and Hunting Spear crafting
-            } else if node.item_id == ItemId::CLAY && clay_count < 6 {
-                2.2 // Raw material for ceramic pottery crafting
+                4.5 // Raw material for Stone Axe and Hunting Spear crafting
+            } else if node.item_id == ItemId::CLAY && clay_count < 4 {
+                3.8 // Raw material for ceramic pottery jars and clay debt tablets
+            } else if node.item_id == ItemId::SHELLS && shell_count < 5 {
+                3.5 // Ancient maritime commodity currency (Carl Menger saleability)
+            } else if node.item_id == ItemId::SALT && salt_count < 3 {
+                3.2 // Food preservation medium and high-liquidity store of value
+            } else if node.item_id == ItemId::TIMBER && timber_count < 8 {
+                3.0 // Raw material for tool/basket/raft crafting
+            } else if node.is_edible && (calorie_reserve < 5500.0 || food_count < 3) {
+                3.0 // Well-fed maintenance buffer
+            } else if node.item_id == ItemId::HERBAL_MEDICINE && herb_count < 2 {
+                2.0 // Small preventive medical stock
             } else {
-                0.2 // Hoarding disincentive for saturated goods
+                0.2 // Hoarding disincentive for saturated goods (diminishing marginal utility)
             };
 
             let score = urgency_weight * tool_multiplier * abundance_ratio;

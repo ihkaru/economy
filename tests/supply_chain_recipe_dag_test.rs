@@ -14,7 +14,7 @@ use economy::core::systems::exchange::perform_autonomous_crafting;
 #[test]
 fn test_canonical_recipe_registry_specifications() {
     let registry = RecipeRegistry::canonical();
-    assert_eq!(registry.all().len(), 17, "Expected 17 canonical recipes");
+    assert_eq!(registry.all().len(), 18, "Expected 18 canonical recipes");
 
     let stone_axe_recipe = registry.get_recipe(2).expect("Recipe 2 (Stone Axe) should exist");
     assert_eq!(stone_axe_recipe.name, "Polished Stone Axe");
@@ -76,6 +76,14 @@ fn test_canonical_recipe_registry_specifications() {
     let charcoal_recipe = registry.get_recipe(17).expect("Recipe 17 (Charcoal) should exist");
     assert_eq!(charcoal_recipe.outputs[0].item_id, ItemId::CHARCOAL);
     assert_eq!(cured_meat_recipe.outputs[0].item_id, ItemId::CURED_MEAT);
+
+    let tablet_recipe = registry.get_recipe(18).expect("Recipe 18 (Clay Tablet) should exist");
+    assert_eq!(tablet_recipe.name, "Inscribed Clay Tablet");
+    assert_eq!(tablet_recipe.category, "tablet_crafting");
+    assert_eq!(tablet_recipe.required_knowledge, Some(ItemId::KNOWLEDGE_POTTERY_MAKING));
+    assert_eq!(tablet_recipe.inputs[0].item_id, ItemId::CLAY);
+    assert_eq!(tablet_recipe.outputs[0].item_id, ItemId::CLAY_TABLET);
+    assert_eq!(tablet_recipe.outputs[0].quantity, 2);
 }
 
 #[test]
