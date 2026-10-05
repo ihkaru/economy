@@ -30,9 +30,17 @@ pub fn perform_agent_centric_foraging(
             if let Some(agent) = agent_store.get_human(agent_id) {
                 let meat_fish = agent.inventory.get(&ItemId::RAW_MEAT).copied().unwrap_or(0)
                     + agent.inventory.get(&ItemId::FISH).copied().unwrap_or(0);
+                let preserved_food = agent.inventory.get(&ItemId::CURED_FISH).copied().unwrap_or(0)
+                    + agent.inventory.get(&ItemId::CURED_MEAT).copied().unwrap_or(0)
+                    + agent.inventory.get(&ItemId::SMOKED_FISH).copied().unwrap_or(0)
+                    + agent.inventory.get(&ItemId::SMOKED_MEAT).copied().unwrap_or(0)
+                    + agent.inventory.get(&ItemId::DRIED_BERRIES).copied().unwrap_or(0)
+                    + agent.inventory.get(&ItemId::FLATBREAD).copied().unwrap_or(0)
+                    + agent.inventory.get(&ItemId::GRAIN_FLOUR).copied().unwrap_or(0);
                 let food = agent.inventory.get(&ItemId::BERRIES).copied().unwrap_or(0)
                     + agent.inventory.get(&ItemId::GRAIN).copied().unwrap_or(0)
-                    + meat_fish;
+                    + meat_fish
+                    + preserved_food;
                 (
                     agent.location,
                     agent.calorie_reserve,
@@ -56,16 +64,29 @@ pub fn perform_agent_centric_foraging(
             }
         };
 
-        // If carrying capacity is fully saturated (less than 0.5 kg remaining), agent cannot forage raw goods
-        // Instead, agent steps back toward central settlement to trade or deposit goods
+        // If carrying capacity is fully saturated (less than 0.5 kg remaining):
+        // Well-fed agents step back toward central settlement to trade or deposit goods
         let remaining_capacity_kg = capacity - inventory_weight;
         if remaining_capacity_kg < 0.5 {
-            if loc != settlement_loc {
-                if let Some(agent) = agent_store.get_human_mut(agent_id) {
-                    agent.location = agent.location.step_towards(&settlement_loc);
+            if calorie_reserve >= 4500.0 && food_count >= 2 {
+                if loc != settlement_loc {
+                    if let Some(agent) = agent_store.get_human_mut(agent_id) {
+                        agent.location = agent.location.step_towards(&settlement_loc);
+                    }
+                }
+                continue;
+            }
+
+            // Food-insecure or hungry agents discard heavy raw mineral deadweight to make room for subsistence
+            if let Some(agent) = agent_store.get_human_mut(agent_id) {
+                if agent.inventory.get(&ItemId::STONE).copied().unwrap_or(0) > 4 {
+                    let _ = agent.remove_item(ItemId::STONE, 2);
+                } else if agent.inventory.get(&ItemId::ANIMAL_BONE).copied().unwrap_or(0) > 4 {
+                    let _ = agent.remove_item(ItemId::ANIMAL_BONE, 2);
+                } else if agent.inventory.get(&ItemId::CLAY).copied().unwrap_or(0) > 4 {
+                    let _ = agent.remove_item(ItemId::CLAY, 2);
                 }
             }
-            continue;
         }
 
         // 1. Evaluate candidate resource nodes using Charnov's Marginal Value Theorem

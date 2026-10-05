@@ -107,7 +107,17 @@ impl LifecycleSystem {
                     if !inventory_items.is_empty() {
                         if let Some(heir_agent) = agent_store.get_human_mut(heir) {
                             for (item_id, qty) in inventory_items {
-                                *heir_agent.inventory.entry(item_id).or_insert(0) += qty;
+                                // Bulky raw materials and redundant heavy fixtures are bounded to household carrying capacity
+                                let max_transfer = match item_id {
+                                    ItemId::STONE | ItemId::CLAY | ItemId::ANIMAL_BONE | ItemId::TIMBER => 4,
+                                    ItemId::SADDLE_QUERN => 1,
+                                    _ => u32::MAX,
+                                };
+                                let current_qty = heir_agent.inventory.get(&item_id).copied().unwrap_or(0);
+                                if current_qty < max_transfer {
+                                    let allowed = (max_transfer - current_qty).min(qty);
+                                    *heir_agent.inventory.entry(item_id).or_insert(0) += allowed;
+                                }
                             }
                         }
                     }
